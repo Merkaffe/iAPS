@@ -58,13 +58,13 @@ struct FreeAPSSettings: JSON, Equatable {
     var profilesOrTempTargets: Bool = false
     var allowBolusShortcut: Bool = false
     var allowedRemoteBolusAmount: Decimal = 0.0
-    var eventualBG: Bool = false
-    var minumimPrediction: Bool = false
+    var eventualBG: Bool = true
+    var minumimPrediction: Bool = true
     var minimumSMB: Decimal = 0.3
     var useInsulinBars: Bool = false
     var disableCGMError: Bool = true
     var uploadVersion: Bool = true
-    var birtDate = Date.now
+    var birthDate = Date.distantPast
     // var sex: Sex = .secret
     var sexSetting: Int = 3
 }
@@ -332,8 +332,8 @@ extension FreeAPSSettings: Decodable {
             settings.uploadVersion = uploadVersion
         }
 
-        if let birtDate = try? container.decode(Date.self, forKey: .birtDate) {
-            settings.birtDate = birtDate
+        if let birthDate = try? container.decode(Date.self, forKey: .birthDate) {
+            settings.birthDate = birthDate
         }
 
         if let sexSetting = try? container.decode(Int.self, forKey: .sexSetting) {
