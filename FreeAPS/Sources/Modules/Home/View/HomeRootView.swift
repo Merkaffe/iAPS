@@ -592,6 +592,8 @@ extension Home {
         }
 
         @ViewBuilder private func headerView(_ geo: GeometryProxy) -> some View {
+            let extraSpace: CGFloat = (scrollOffset > scrollAmount && !state.skipGlucoseChart) ? 98 : 0
+
             addHeaderBackground()
                 .frame(
                     maxHeight: fontSize < .extraExtraLarge ? 125 + geo.safeAreaInsets.top : 135 + geo
