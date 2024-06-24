@@ -49,6 +49,27 @@ struct CompactSectionSpacing: ViewModifier {
     }
 }
 
+struct ScrollTargetLayoutModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 17, *) {
+            return content
+                .scrollTargetLayout()
+        } else {
+            return content }
+    }
+}
+
+struct ScrollPositionModifier: ViewModifier {
+    @Binding var id: Int?
+    func body(content: Content) -> some View {
+        if #available(iOS 17, *) {
+            return content
+                .scrollPosition(id: $id)
+        } else {
+            return content }
+    }
+}
+
 struct AddShadow: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
     func body(content: Content) -> some View {
@@ -322,6 +343,14 @@ extension View {
 
     func compactSectionSpacing() -> some View {
         modifier(CompactSectionSpacing())
+    }
+
+    func scrollTargetLayoutiOS17() -> some View {
+        modifier(ScrollTargetLayoutModifier())
+    }
+
+    func scrollPositioniOS17(id: Binding<Int?>) -> some View {
+        modifier(ScrollPositionModifier(id: id))
     }
 
     func asAny() -> AnyView { .init(self) }
