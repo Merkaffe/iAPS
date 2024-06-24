@@ -18,7 +18,7 @@ extension Home {
 
         @Namespace var scrollSpace
 
-        let scrollAmount: CGFloat = 275
+        let scrollAmount: CGFloat = 250
         let buttonFont = Font.custom("TimeButtonFont", size: 14)
 
         @Environment(\.managedObjectContext) var moc
@@ -285,8 +285,8 @@ extension Home {
                                 .symbolRenderingMode(.hierarchical)
                                 .resizable()
                                 .frame(
-                                    width: IAPSconfig.buttonSize * 0.9,
-                                    height: IAPSconfig.buttonSize
+                                    width: IAPSconfig.buttonSize * 0.8,
+                                    height: IAPSconfig.buttonSize * 0.9
                                 )
                                 .foregroundColor(.gray)
                         }
@@ -626,17 +626,22 @@ extension Home {
 
         var glucosePreview: some View {
             let data = state.glucose
-
             let minimum = data.compactMap(\.glucose).min() ?? 0
             let minimumRange = Double(minimum) * 0.8
             let maximum = Double(data.compactMap(\.glucose).max() ?? 0) * 1.2
+
+            let high = state.highGlucose
+            let low = state.lowGlucose
 
             return Chart(data) {
                 PointMark(
                     x: .value("Time", $0.dateString),
                     y: .value("Glucose", Double($0.glucose ?? 0) * (state.units == .mmolL ? 0.0555 : 1.0))
                 )
-                .foregroundStyle(Color(.darkGreen))
+                .foregroundStyle(
+                    Decimal($0.glucose ?? 0) > high ? Color(.yellow) : Decimal($0.glucose ?? 0) < low ? Color(.red) :
+                        Color(.darkGreen)
+                )
                 .symbolSize(8)
             }
             .chartXAxis {
