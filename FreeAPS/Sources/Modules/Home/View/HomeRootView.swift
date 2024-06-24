@@ -15,6 +15,7 @@ extension Home {
         @State var showCancelTTAlert = false
         @State var triggerUpdate = false
         @State var scrollOffset = CGFloat.zero
+        @State var display = false
 
         @Namespace var scrollSpace
 
@@ -591,11 +592,9 @@ extension Home {
         }
 
         @ViewBuilder private func headerView(_ geo: GeometryProxy) -> some View {
-            let extraSpace: CGFloat = (scrollOffset > scrollAmount && !state.skipGlucoseChart) ? 98 : 0
-
             addHeaderBackground()
                 .frame(
-                    maxHeight: fontSize < .extraExtraLarge ? 125 + extraSpace + geo.safeAreaInsets.top : 135 + extraSpace + geo
+                    maxHeight: fontSize < .extraExtraLarge ? 125 + geo.safeAreaInsets.top : 135 + geo
                         .safeAreaInsets.top
                 )
                 .overlay {
@@ -616,10 +615,21 @@ extension Home {
                             .dynamicTypeSize(...DynamicTypeSize.xxLarge)
                             .padding(.horizontal, 10)
                         }
-                        if !state.skipGlucoseChart, scrollOffset > scrollAmount {
-                            glucosePreview.transition(.move(edge: .top))
+                    }.padding(.top, geo.safeAreaInsets.top).padding(.bottom, 10)
+                }
+                .clipShape(Rectangle())
+        }
+
+        @ViewBuilder private func glucoseHeaderView() -> some View {
+            addHeaderBackground()
+                .frame(maxHeight: 90)
+                .overlay {
+                    VStack {
+                        ZStack {
+                            glucosePreview.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                                .dynamicTypeSize(...DynamicTypeSize.medium)
                         }
-                    }.padding(.top, geo.safeAreaInsets.top).padding(.bottom, colorScheme == .dark ? 0 : 10)
+                    }
                 }
                 .clipShape(Rectangle())
         }
@@ -628,7 +638,7 @@ extension Home {
             let data = state.glucose
             let minimum = data.compactMap(\.glucose).min() ?? 0
             let minimumRange = Double(minimum) * 0.8
-            let maximum = Double(data.compactMap(\.glucose).max() ?? 0) * 1.2
+            let maximum = Double(data.compactMap(\.glucose).max() ?? 0) * 1.1
 
             let high = state.highGlucose
             let low = state.lowGlucose
@@ -642,7 +652,7 @@ extension Home {
                     Decimal($0.glucose ?? 0) > high ? Color(.yellow) : Decimal($0.glucose ?? 0) < low ? Color(.red) :
                         Color(.darkGreen)
                 )
-                .symbolSize(8)
+                .symbolSize(7)
             }
             .chartXAxis {
                 AxisMarks(values: .stride(by: .hour, count: 2)) { _ in
@@ -653,6 +663,9 @@ extension Home {
                     AxisGridLine()
                 }
             }
+            .chartYAxis {
+                AxisMarks(values: .automatic(desiredCount: 3))
+            }
             .chartYScale(
                 domain: minimumRange * (state.units == .mmolL ? 0.0555 : 1.0) ... maximum * (state.units == .mmolL ? 0.0555 : 1.0)
             )
@@ -662,7 +675,8 @@ extension Home {
             .frame(maxHeight: 70)
             .padding(.leading, 30)
             .padding(.trailing, 32)
-            .padding(.top, 20)
+            .padding(.top, 10)
+            .padding(.bottom, 10)
         }
 
         var timeSetting: some View {
@@ -683,8 +697,13 @@ extension Home {
 
         var body: some View {
             GeometryReader { geo in
-                VStack {
+                VStack(spacing: 0) {
                     headerView(geo)
+                    if !state.skipGlucoseChart, scrollOffset > scrollAmount {
+                        glucoseHeaderView()
+                            .transition(.move(edge: .top))
+                    }
+
                     ScrollView {
                         ScrollViewReader { _ in
                             LazyVStack {
@@ -708,6 +727,9 @@ extension Home {
                     }
                     .onPreferenceChange(ScrollViewOffsetPreferenceKey.self) { value in
                         scrollOffset = value
+                        if !state.skipGlucoseChart, scrollOffset > scrollAmount {
+                            display.toggle()
+                        }
                     }
                     buttonPanel(geo)
                 }
