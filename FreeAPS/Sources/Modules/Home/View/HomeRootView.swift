@@ -591,7 +591,7 @@ extension Home {
         }
 
         @ViewBuilder private func headerView(_ geo: GeometryProxy) -> some View {
-            let extraSpace: CGFloat = scrollOffset > scrollAmount ? 98 : 0
+            let extraSpace: CGFloat = (scrollOffset > scrollAmount && !state.skipGlucoseChart) ? 98 : 0
 
             addHeaderBackground()
                 .frame(
@@ -616,7 +616,7 @@ extension Home {
                             .dynamicTypeSize(...DynamicTypeSize.xxLarge)
                             .padding(.horizontal, 10)
                         }
-                        if scrollOffset > scrollAmount {
+                        if !state.skipGlucoseChart, scrollOffset > scrollAmount {
                             glucosePreview.transition(.move(edge: .top))
                         }
                     }.padding(.top, geo.safeAreaInsets.top).padding(.bottom, colorScheme == .dark ? 0 : 10)
