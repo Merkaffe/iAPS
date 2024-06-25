@@ -7,6 +7,11 @@ extension Settings {
         let resolver: Resolver
         @StateObject var state = StateModel()
         @State private var showShareSheet = false
+        // @State private var imported = false
+        @State private var token = false
+        @State private var confirm = false
+        @State private var imported = false
+        @State private var saved = false
 
         @FetchRequest(
             entity: VNr.entity(),
@@ -16,6 +21,14 @@ extension Settings {
         ) var fetchedVersionNumber: FetchedResults<VNr>
 
         var body: some View {
+            if state.noLoop == .distantPast, !state.imported {
+                onboarding
+            } else {
+                settingsView
+            }
+        }
+
+        var settingsView: some View {
             Form {
                 Section {
                     Toggle("Closed loop", isOn: $state.closedLoop)
@@ -182,6 +195,149 @@ extension Settings {
             .navigationBarItems(trailing: Button("Close", action: state.hideSettingsModal))
             .navigationBarTitleDisplayMode(.inline)
             .onDisappear(perform: { state.uploadProfileAndSettings(false) })
+        }
+
+        var onboarding: some View {
+            Form {
+                if !token {
+                    Section {
+                        HStack {
+                            Button { token.toggle() }
+                            label: {
+                                Text("Yes")
+                            }.buttonStyle(.borderless)
+
+                            Spacer()
+
+                            Button { state.close() }
+                            label: {
+                                Text("No")
+                            }
+                            .buttonStyle(.borderless)
+                            .tint(.red)
+                        }
+                    } header: {
+                        Text("Do you have any settings to import?")
+                    }
+                } else if !imported {
+                    Section {
+                        TextField("Token", text: $state.token)
+
+                    } header: {
+                        Text("Enter your secret token")
+                    }
+
+                    Button {
+                        state.importSettings(id: state.token)
+                        imported.toggle()
+                    }
+                    label: {
+                        Text("Start import")
+                    }.disabled(state.token == "")
+                } else if !confirm {
+                    Section {} header: {
+                        Text("\nScroll down to Verify all of your Imported Settings Before Saving").bold()
+                            .foregroundStyle(.orange)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+
+                    if let basals = state.basals {
+                        Section {
+                            List(basals, id: \.start) {
+                                Text($0.start + " " + $0.rate.formatted() + " " + $0.minutes.formatted())
+                            }
+                        } header: {
+                            Text("Basals")
+                        }
+                    }
+
+                    if let crs = state.crs {
+                        Section {
+                            List(crs, id: \.start) {
+                                Text($0.start + " " + $0.ratio.formatted())
+                            }
+                        } header: {
+                            Text("Carb Ratios")
+                        }
+                    }
+
+                    if let isfs = state.isfs {
+                        Section {
+                            List(isfs, id: \.start) {
+                                Text($0.start + " " + $0.sensitivity.formatted())
+                            }
+                        } header: {
+                            Text("Insulin Sensitivities")
+                        }
+                    }
+
+                    if let settings = state.settings {
+                        Section {
+                            Text(
+                                settings.rawJSON.debugDescription
+                                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                                    .replacingOccurrences(of: "\\n", with: "")
+                                    .replacingOccurrences(of: "\\", with: "")
+                                    .replacingOccurrences(of: "}", with: "")
+                                    .replacingOccurrences(of: "{", with: "")
+                                    .replacingOccurrences(
+                                        of: "\"",
+                                        with: "",
+                                        options: NSString.CompareOptions.literal,
+                                        range: nil
+                                    )
+                                    .replacingOccurrences(of: ",", with: "\n")
+                            )
+                        } header: {
+                            Text("OpenAPS Settings")
+                        }
+                    }
+
+                    if let freeapsSettings = state.freeapsSettings {
+                        Section {
+                            Text(
+                                freeapsSettings.rawJSON.debugDescription
+                                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                                    .replacingOccurrences(of: "\\n", with: "")
+                                    .replacingOccurrences(of: "\\", with: "")
+                                    .replacingOccurrences(of: "}", with: "")
+                                    .replacingOccurrences(of: "{", with: "")
+                                    .replacingOccurrences(
+                                        of: "\"",
+                                        with: "",
+                                        options: NSString.CompareOptions.literal,
+                                        range: nil
+                                    )
+                                    .replacingOccurrences(of: ",", with: "\n")
+                            )
+                        } header: {
+                            Text("iAPS Settings")
+                        }
+                    }
+
+                    Button {
+                        confirm.toggle()
+                    }
+                    label: {
+                        Text("Save settings").bold()
+                    }.frame(maxWidth: .infinity, alignment: .center)
+
+                } else if !saved {
+                    Section {
+                        Button {
+                            saved.toggle()
+                            state.close()
+                        }
+                        label: {
+                            Text("OK")
+                        }.frame(maxWidth: .infinity, alignment: .center)
+                    } header: {
+                        Text("Settings imported")
+                    }
+                }
+            }
+            .navigationTitle("Onboarding\n\n")
+            .navigationBarItems(trailing: Button("Close", action: state.close))
         }
     }
 }

@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 extension Settings {
@@ -11,6 +12,18 @@ extension Settings {
         @Published var animatedBackground = false
         @Published var disableCGMError = true
 
+        @Published var noLoop: Date = .distantPast
+
+        @Published var imported: Bool = false
+
+        @Published var token: String = ""
+
+        @Published var basals: [BasalProfileEntry]?
+        @Published var crs: [CarbRatioEntry]?
+        @Published var isfs: [InsulinSensitivityEntry]?
+        @Published var settings: Preferences?
+        @Published var freeapsSettings: FreeAPSSettings?
+
         private(set) var buildNumber = ""
         private(set) var versionNumber = ""
         private(set) var branch = ""
@@ -18,6 +31,9 @@ extension Settings {
 
         override func subscribe() {
             nightscoutManager.fetchVersion()
+
+            noLoop = CoreDataStorage().fetchLoopStats(interval: DateFilter().total).first?.end ?? .distantPast
+
             subscribeSetting(\.debugOptions, on: $debugOptions) { debugOptions = $0 }
             subscribeSetting(\.closedLoop, on: $closedLoop) { closedLoop = $0 }
             subscribeSetting(\.disableCGMError, on: $disableCGMError) { disableCGMError = $0 }
@@ -79,6 +95,49 @@ extension Settings {
 
         func deleteOverrides() {
             nightscoutManager.deleteAllNSoverrrides() // For testing
+        }
+
+        func importSettings(id: String) {
+            fetchPreferences(token: id)
+            fetchSettings(token: id)
+        }
+
+        func close() {
+            imported = true
+        }
+
+        func fetchPreferences(token: String) {
+            let nightscout = NightscoutAPI(url: IAPSconfig.statURL)
+            DispatchQueue.main.async {
+                nightscout.fetchPreferences(token: token)
+                    .sink { completion in
+                        switch completion {
+                        case .finished:
+                            debug(.nightscout, "Preferences fetched from " + IAPSconfig.statURL.absoluteString)
+                        case let .failure(error):
+                            debug(.nightscout, error.localizedDescription)
+                        }
+                    }
+                receiveValue: {
+                    self.settings = $0
+                }
+                .store(in: &self.lifetime)
+            }
+        }
+
+        func fetchSettings(token: String) {
+            let nightscout = NightscoutAPI(url: IAPSconfig.statURL)
+            nightscout.fetchSettings(token: token)
+                .sink { completion in
+                    switch completion {
+                    case .finished:
+                        debug(.nightscout, "Settings fetched from " + IAPSconfig.statURL.absoluteString)
+                    case let .failure(error):
+                        debug(.nightscout, error.localizedDescription)
+                    }
+                }
+            receiveValue: { self.freeapsSettings = $0 }
+                .store(in: &lifetime)
         }
     }
 }
