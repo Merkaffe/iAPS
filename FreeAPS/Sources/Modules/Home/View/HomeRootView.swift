@@ -19,7 +19,7 @@ extension Home {
 
         @Namespace var scrollSpace
 
-        let scrollAmount: CGFloat = 250
+        let scrollAmount: CGFloat = 290
         let buttonFont = Font.custom("TimeButtonFont", size: 14)
 
         @Environment(\.managedObjectContext) var moc
@@ -409,15 +409,9 @@ extension Home {
                     VStack(spacing: 0) {
                         infoPanel
                         mainChart
-                        if state.timeSettings {
-                            timeSetting
-                        }
                     }
                 }
-                .frame(
-                    minHeight: UIScreen.main.bounds
-                        .height / (state.timeSettings ? 1.50 : fontSize < .extraExtraLarge ? 1.46 : 1.49)
-                )
+                .frame(minHeight: UIScreen.main.bounds.height / (fontSize < .extraExtraLarge ? 1.66 : 1.68))
         }
 
         var carbsAndInsulinView: some View {
@@ -708,7 +702,8 @@ extension Home {
                         ScrollViewReader { _ in
                             LazyVStack {
                                 chart
-                                preview.padding(.top, 15)
+                                if state.timeSettings { timeSetting }
+                                preview // .padding(.top, 15)
                                 loopPreview.padding(.top, 15)
                                 if state.iobData.count > 5 {
                                     activeCOBView.padding(.top, 15)
