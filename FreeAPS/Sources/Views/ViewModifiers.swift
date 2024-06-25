@@ -177,7 +177,7 @@ struct TimeEllipse: View {
     let characters: Int
     var body: some View {
         RoundedRectangle(cornerRadius: 15)
-            .fill(Color.gray).opacity(colorScheme == .light ? 0.2 : 0.08)
+            .fill(Color.gray).opacity(colorScheme == .light ? 0.2 : 0.2)
             .frame(width: CGFloat(characters * 7), height: 25)
     }
 }
