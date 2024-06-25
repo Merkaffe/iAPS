@@ -16,6 +16,7 @@ extension Home {
         @Published var isManual: [BloodGlucose] = []
         @Published var announcement: [Announcement] = []
         @Published var suggestion: Suggestion?
+        @Published var dynamicVariables: DynamicVariables?
         @Published var uploadStats = false
         @Published var enactedSuggestion: Suggestion?
         @Published var recentGlucose: BloodGlucose?
@@ -66,12 +67,27 @@ extension Home {
         @Published var totalBolus: Decimal = 0
         @Published var isStatusPopupPresented: Bool = false
         @Published var readings: [Readings] = []
+        @Published var loopStatistics: (Int, Int, Double, String) = (0, 0, 0, "")
         @Published var standing: Bool = false
         @Published var preview: Bool = true
         @Published var useTargetButton: Bool = false
         @Published var overrideHistory: [OverrideHistory] = []
+        @Published var overrides: [Override] = []
         @Published var alwaysUseColors: Bool = true
         @Published var timeSettings: Bool = true
+        @Published var useCalc: Bool = true
+        @Published var minimumSMB: Decimal = 0.3
+        @Published var maxBolus: Decimal = 0
+        @Published var maxBolusValue: Decimal = 1
+        @Published var useInsulinBars: Bool = false
+        @Published var iobData: [IOBData] = []
+        @Published var neg: Int = 0
+        @Published var tddChange: Decimal = 0
+        @Published var tddAverage: Decimal = 0
+        @Published var tddYesterday: Decimal = 0
+        @Published var tdd2DaysAgo: Decimal = 0
+        @Published var tdd3DaysAgo: Decimal = 0
+        @Published var tddActualAverage: Decimal = 0
 
         let coredataContext = CoreDataStack.shared.persistentContainer.viewContext
 
@@ -89,8 +105,12 @@ extension Home {
             setupAnnouncements()
             setupCurrentPumpTimezone()
             setupOverrideHistory()
+            setupLoopStats()
+            setupData()
 
+            // iobData = provider.reasons()
             suggestion = provider.suggestion
+            dynamicVariables = provider.dynamicVariables
             overrideHistory = provider.overrideHistory()
             uploadStats = settingsManager.settings.uploadStats
             enactedSuggestion = provider.enactedSuggestion
@@ -115,6 +135,10 @@ extension Home {
             hours = settingsManager.settings.hours
             alwaysUseColors = settingsManager.settings.alwaysUseColors
             timeSettings = settingsManager.settings.timeSettings
+            useCalc = settingsManager.settings.useCalc
+            minimumSMB = settingsManager.settings.minimumSMB
+            maxBolus = settingsManager.pumpSettings.maxBolus
+            useInsulinBars = settingsManager.settings.useInsulinBars
 
             broadcaster.register(GlucoseObserver.self, observer: self)
             broadcaster.register(SuggestionObserver.self, observer: self)
@@ -127,7 +151,7 @@ extension Home {
             broadcaster.register(EnactedSuggestionObserver.self, observer: self)
             broadcaster.register(PumpBatteryObserver.self, observer: self)
             broadcaster.register(PumpReservoirObserver.self, observer: self)
-            broadcaster.register(OverrideObserver.self, observer: self)
+            broadcaster.register(PumpTimeZoneObserver.self, observer: self)
             animatedBackground = settingsManager.settings.animatedBackground
 
             subscribeSetting(\.hours, on: $hours, initial: {
@@ -238,7 +262,24 @@ extension Home {
         }
 
         func cancelProfile() {
-            OverrideStorage().cancelProfile()
+            let os = OverrideStorage()
+            // Is there a saved Override?
+            if let activeOveride = os.fetchLatestOverride().first {
+                let presetName = os.isPresetName()
+                // Is the Override a Preset?
+                if let preset = presetName {
+                    if let duration = os.cancelProfile() {
+                        // Update in Nightscout
+                        nightscoutManager.editOverride(preset, duration, activeOveride.date ?? Date.now)
+                    }
+                } else {
+                    let nsString = activeOveride.percentage.formatted() != "100" ? activeOveride.percentage
+                        .formatted() + " %" : "Custom"
+                    if let duration = os.cancelProfile() {
+                        nightscoutManager.editOverride(nsString, duration, activeOveride.date ?? Date.now)
+                    }
+                }
+            }
             setupOverrideHistory()
         }
 
@@ -305,6 +346,7 @@ extension Home {
                 self.boluses = self.provider.pumpHistory(hours: self.filteredHours).filter {
                     $0.type == .bolus
                 }
+                self.maxBolusValue = self.boluses.compactMap(\.amount).max() ?? 1
             }
         }
 
@@ -359,6 +401,31 @@ extension Home {
             }
         }
 
+        private func setupLoopStats() {
+            let loopStats = CoreDataStorage().fetchLoopStats(interval: DateFilter().today)
+            let loops = loopStats.compactMap({ each in each.loopStatus }).count
+            let readings = CoreDataStorage().fetchGlucose(interval: DateFilter().today).compactMap({ each in each.glucose }).count
+            let percentage = min(readings != 0 ? (Double(loops) / Double(readings) * 100) : 0, 100)
+            // First loop date
+            let time = (loopStats.last?.start ?? Date.now).addingTimeInterval(-5.minutes.timeInterval)
+
+            let average = -1 * (time.timeIntervalSinceNow / 60) / max(Double(loops), 1)
+
+            loopStatistics = (
+                loops,
+                readings,
+                percentage,
+                average.formatted(.number.grouping(.never).rounded().precision(.fractionLength(1))) + " min"
+            )
+        }
+
+        private func setupOverrides() {
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.overrides = self.provider.overrides()
+            }
+        }
+
         private func setupAnnouncements() {
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
@@ -410,7 +477,40 @@ extension Home {
         }
 
         private func setupCurrentPumpTimezone() {
-            timeZone = provider.pumpTimeZone()
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.timeZone = self.provider.pumpTimeZone()
+            }
+        }
+
+        private func setupData() {
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                if let data = self.provider.reasons() {
+                    self.iobData = data
+                    neg = data.filter({ $0.iob < 0 }).count * 5
+                    let tdds = CoreDataStorage().fetchTDD(interval: DateFilter().tenDays)
+                    let yesterday = (tdds.first(where: {
+                        ($0.timestamp ?? .distantFuture) <= Date().addingTimeInterval(-24.hours.timeInterval)
+                    })?.tdd ?? 0) as Decimal
+                    let oneDaysAgo = CoreDataStorage().fetchTDD(interval: DateFilter().today).last
+                    tddChange = ((tdds.first?.tdd ?? 0) as Decimal) - yesterday
+                    tddYesterday = (oneDaysAgo?.tdd ?? 0) as Decimal
+                    tdd2DaysAgo = (tdds.first(where: {
+                        ($0.timestamp ?? .distantFuture) <= (oneDaysAgo?.timestamp ?? .distantPast)
+                            .addingTimeInterval(-1.days.timeInterval)
+                    })?.tdd ?? 0) as Decimal
+                    tdd3DaysAgo = (tdds.first(where: {
+                        ($0.timestamp ?? .distantFuture) <= (oneDaysAgo?.timestamp ?? .distantPast)
+                            .addingTimeInterval(-2.days.timeInterval)
+                    })?.tdd ?? 0) as Decimal
+
+                    if let tdds_ = self.provider.dynamicVariables {
+                        tddAverage = ((tdds.first?.tdd ?? 0) as Decimal) - tdds_.average_total_data
+                        tddActualAverage = tdds_.average_total_data
+                    }
+                }
+            }
         }
 
         func openCGM() {
@@ -451,11 +551,11 @@ extension Home.StateModel:
     EnactedSuggestionObserver,
     PumpBatteryObserver,
     PumpReservoirObserver,
-    PumpTimeZoneObserver,
-    OverrideObserver
+    PumpTimeZoneObserver
 {
     func glucoseDidUpdate(_: [BloodGlucose]) {
         setupGlucose()
+        setupLoopStats()
     }
 
     func suggestionDidUpdate(_ suggestion: Suggestion) {
@@ -463,10 +563,8 @@ extension Home.StateModel:
         carbsRequired = suggestion.carbsReq
         setStatusTitle()
         setupOverrideHistory()
-    }
-
-    func overrideHistoryDidUpdate(_: [OverrideHistory]) {
-        setupOverrideHistory()
+        setupLoopStats()
+        setupData()
     }
 
     func settingsDidChange(_ settings: FreeAPSSettings) {
@@ -487,8 +585,13 @@ extension Home.StateModel:
         hours = settingsManager.settings.hours
         alwaysUseColors = settingsManager.settings.alwaysUseColors
         timeSettings = settingsManager.settings.timeSettings
+        useCalc = settingsManager.settings.useCalc
+        minimumSMB = settingsManager.settings.minimumSMB
+        maxBolus = settingsManager.pumpSettings.maxBolus
+        useInsulinBars = settingsManager.settings.useInsulinBars
         setupGlucose()
         setupOverrideHistory()
+        setupData()
     }
 
     func pumpHistoryDidUpdate(_: [PumpHistoryEvent]) {
@@ -519,6 +622,8 @@ extension Home.StateModel:
         enactedSuggestion = suggestion
         setStatusTitle()
         setupOverrideHistory()
+        setupLoopStats()
+        setupData()
     }
 
     func pumpBatteryDidChange(_: Battery) {
