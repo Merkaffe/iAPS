@@ -12,7 +12,7 @@ extension Settings {
         @Published var animatedBackground = false
         @Published var disableCGMError = true
 
-        @Published var noLoop: Date = .distantPast
+        @Published var firstRun: Bool = true
 
         @Published var imported: Bool = false
 
@@ -32,7 +32,7 @@ extension Settings {
         override func subscribe() {
             nightscoutManager.fetchVersion()
 
-            noLoop = CoreDataStorage().fetchLoopStats(interval: DateFilter().total).first?.end ?? .distantPast
+            firstRun = CoreDataStorage().fetchOnbarding()
 
             subscribeSetting(\.debugOptions, on: $debugOptions) { debugOptions = $0 }
             subscribeSetting(\.closedLoop, on: $closedLoop) { closedLoop = $0 }
@@ -138,6 +138,11 @@ extension Settings {
                 }
             receiveValue: { self.freeapsSettings = $0 }
                 .store(in: &lifetime)
+        }
+        
+        func onboardingDone() {
+            CoreDataStorage().saveOnbarding()
+            imported = true
         }
     }
 }

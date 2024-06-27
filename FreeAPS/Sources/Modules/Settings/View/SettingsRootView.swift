@@ -21,7 +21,8 @@ extension Settings {
         ) var fetchedVersionNumber: FetchedResults<VNr>
 
         var body: some View {
-            if state.noLoop == .distantPast, !state.imported {
+            // First run (onboarding)
+            if state.firstRun {
                 onboarding
             } else {
                 settingsView
@@ -217,7 +218,9 @@ extension Settings {
                             .tint(.red)
                         }
                     } header: {
-                        Text("Do you have any settings to import?")
+                        Text("Welcome to iAPS,  v\(state.versionNumber)!\nDo you have any settings you want to import now?")
+                            .foregroundStyle(.primary)
+                            .textCase(nil)
                     }
                 } else if !imported {
                     Section {
@@ -232,13 +235,20 @@ extension Settings {
                         imported.toggle()
                     }
                     label: {
-                        Text("Start import")
-                    }.disabled(state.token == "")
+                        Text("Start import").frame(maxWidth: .infinity, alignment: .center)
+                    }
+                    .disabled(state.token == "")
+                    .listRowBackground(!(state.token == "") ? Color(.systemBlue) : Color(.systemGray4))
+                    .tint(.white)
                 } else if !confirm {
                     Section {} header: {
-                        Text("\nScroll down to Verify all of your Imported Settings Before Saving").bold()
-                            .foregroundStyle(.orange)
-                            .frame(maxWidth: .infinity, alignment: .center)
+                        Text(
+                            "\nSettings fetched. Now please scroll down and check that all of your imported settings below are correct."
+                        )
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .textCase(nil)
+                        .font(.previewNormal)
                     }
 
                     if let basals = state.basals {
@@ -247,7 +257,7 @@ extension Settings {
                                 Text($0.start + " " + $0.rate.formatted() + " " + $0.minutes.formatted())
                             }
                         } header: {
-                            Text("Basals")
+                            Text("Basals").foregroundStyle(.blue).textCase(nil)
                         }
                     }
 
@@ -257,7 +267,7 @@ extension Settings {
                                 Text($0.start + " " + $0.ratio.formatted())
                             }
                         } header: {
-                            Text("Carb Ratios")
+                            Text("Carb Ratios").foregroundStyle(.blue).textCase(nil)
                         }
                     }
 
@@ -267,29 +277,7 @@ extension Settings {
                                 Text($0.start + " " + $0.sensitivity.formatted())
                             }
                         } header: {
-                            Text("Insulin Sensitivities")
-                        }
-                    }
-
-                    if let settings = state.settings {
-                        Section {
-                            Text(
-                                settings.rawJSON.debugDescription
-                                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                                    .replacingOccurrences(of: "\\n", with: "")
-                                    .replacingOccurrences(of: "\\", with: "")
-                                    .replacingOccurrences(of: "}", with: "")
-                                    .replacingOccurrences(of: "{", with: "")
-                                    .replacingOccurrences(
-                                        of: "\"",
-                                        with: "",
-                                        options: NSString.CompareOptions.literal,
-                                        range: nil
-                                    )
-                                    .replacingOccurrences(of: ",", with: "\n")
-                            )
-                        } header: {
-                            Text("OpenAPS Settings")
+                            Text("Insulin Sensitivities").foregroundStyle(.blue).textCase(nil)
                         }
                     }
 
@@ -311,16 +299,42 @@ extension Settings {
                                     .replacingOccurrences(of: ",", with: "\n")
                             )
                         } header: {
-                            Text("iAPS Settings")
+                            Text("iAPS Settings").foregroundStyle(.blue).textCase(nil)
+                        }
+                    }
+
+                    if let settings = state.settings {
+                        Section {
+                            Text(
+                                settings.rawJSON.debugDescription
+                                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                                    .replacingOccurrences(of: "\\n", with: "")
+                                    .replacingOccurrences(of: "\\", with: "")
+                                    .replacingOccurrences(of: "}", with: "")
+                                    .replacingOccurrences(of: "{", with: "")
+                                    .replacingOccurrences(
+                                        of: "\"",
+                                        with: "",
+                                        options: NSString.CompareOptions.literal,
+                                        range: nil
+                                    )
+                                    .replacingOccurrences(of: ",", with: "\n")
+                            )
+                        } header: {
+                            Text("OpenAPS Settings").foregroundStyle(.blue).textCase(nil)
                         }
                     }
 
                     Button {
                         confirm.toggle()
+                        state.onboardingDone()
                     }
                     label: {
-                        Text("Save settings").bold()
-                    }.frame(maxWidth: .infinity, alignment: .center)
+                        Text("Yes, save settings")
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .listRowBackground(Color(.systemBlue))
+                    .tint(.white)
 
                 } else if !saved {
                     Section {
@@ -330,12 +344,16 @@ extension Settings {
                         }
                         label: {
                             Text("OK")
-                        }.frame(maxWidth: .infinity, alignment: .center)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .listRowBackground(Color(.systemBlue))
+                        .tint(.white)
                     } header: {
-                        Text("Settings imported")
+                        Text("Settings saved").textCase(nil)
                     }
                 }
             }
+            .onAppear(perform: configureView)
             .navigationTitle("Onboarding\n\n")
             .navigationBarItems(trailing: Button("Close", action: state.close))
         }

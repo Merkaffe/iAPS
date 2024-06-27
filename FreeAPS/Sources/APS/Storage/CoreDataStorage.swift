@@ -206,4 +206,21 @@ final class CoreDataStorage {
         }
         return presetsArray
     }
+    
+    func fetchOnbarding() -> Bool {
+        var firstRun = true
+        coredataContext.performAndWait {
+            let requestBool = Onboarding.fetchRequest() as NSFetchRequest<Onboarding>
+            try? firstRun = self.coredataContext.fetch(requestBool).first?.firstRun ?? true
+        }
+        return firstRun
+    }
+    
+    func saveOnbarding() {
+        coredataContext.performAndWait { [self] in
+            let save = Onboarding(context: self.coredataContext)
+            save.firstRun = true
+            try? self.coredataContext.save()
+        }
+    }
 }
