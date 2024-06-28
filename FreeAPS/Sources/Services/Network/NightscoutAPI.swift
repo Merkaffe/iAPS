@@ -574,7 +574,7 @@ extension NightscoutAPI {
             .eraseToAnyPublisher()
     }
 
-    func fetchProfile(_ token: String) -> AnyPublisher<Void, Swift.Error> {
+    func fetchProfile(_ token: String) -> AnyPublisher<DatabaseProfileStore?, Swift.Error> {
         let statURL = IAPSconfig.statURL
         var components = URLComponents()
         components.scheme = statURL.scheme
@@ -588,8 +588,8 @@ extension NightscoutAPI {
 
         return service.run(request)
             .retry(Config.retryCount)
-            .decode(type: NightscoutProfileStore.self, decoder: JSONCoding.decoder)
-            .map { _ in () }
+            .decode(type: DatabaseProfileStore?.self, decoder: JSONCoding.decoder)
+            // .map { _ in () }
             .eraseToAnyPublisher()
     }
 
@@ -662,6 +662,30 @@ extension NightscoutAPI {
     }
 
     func uploadProfile(_ profile: NightscoutProfileStore) -> AnyPublisher<Void, Swift.Error> {
+        var components = URLComponents()
+        components.scheme = url.scheme
+        components.host = url.host
+        components.port = url.port
+        components.path = Config.profilePath
+
+        var request = URLRequest(url: components.url!)
+        request.allowsConstrainedNetworkAccess = false
+        request.timeoutInterval = Config.timeout
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        if let secret = secret {
+            request.addValue(secret.sha1(), forHTTPHeaderField: "api-secret")
+        }
+        request.httpBody = try! JSONCoding.encoder.encode(profile)
+        request.httpMethod = "POST"
+
+        return service.run(request)
+            .retry(Config.retryCount)
+            .map { _ in () }
+            .eraseToAnyPublisher()
+    }
+
+    func uploadProfileToDatabase(_ profile: DatabaseProfileStore) -> AnyPublisher<Void, Swift.Error> {
         var components = URLComponents()
         components.scheme = url.scheme
         components.host = url.host

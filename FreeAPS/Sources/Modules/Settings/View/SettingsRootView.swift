@@ -13,6 +13,8 @@ extension Settings {
         @State private var imported = false
         @State private var saved = false
 
+        @State private var b: [BasalProfileEntry]?
+
         @FetchRequest(
             entity: VNr.entity(),
             sortDescriptors: [NSSortDescriptor(key: "date", ascending: false)], predicate: NSPredicate(
@@ -103,7 +105,7 @@ extension Settings {
                     if state.debugOptions {
                         Group {
                             HStack {
-                                Text("NS Upload Profile and Settings")
+                                Text("Upload Profile and Settings")
                                 Button("Upload") { state.uploadProfileAndSettings(true) }
                                     .frame(maxWidth: .infinity, alignment: .trailing)
                                     .buttonStyle(.borderedProminent)
@@ -119,6 +121,13 @@ extension Settings {
 
                             HStack {
                                 Toggle("Ignore flat CGM readings", isOn: $state.disableCGMError)
+                            }
+
+                            HStack {
+                                Text("Start Onboarding")
+                                Button("Start") { state.firstRun = true }
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .buttonStyle(.borderedProminent)
                             }
                         }
                         Group {
@@ -207,9 +216,7 @@ extension Settings {
                             label: {
                                 Text("Yes")
                             }.buttonStyle(.borderless)
-
                             Spacer()
-
                             Button { state.close() }
                             label: {
                                 Text("No")
@@ -218,17 +225,14 @@ extension Settings {
                             .tint(.red)
                         }
                     } header: {
-                        Text("Welcome to iAPS,  v\(state.versionNumber)!\nDo you have any settings you want to import now?")
+                        Text("Welcome to iAPS, v\(state.versionNumber)!\nDo you have any settings you want to import?")
                             .foregroundStyle(.primary)
                             .textCase(nil)
                     }
                 } else if !imported {
                     Section {
                         TextField("Token", text: $state.token)
-
-                    } header: {
-                        Text("Enter your secret token")
-                    }
+                    } header: { Text("Enter your unique identifier").foregroundStyle(.primary).textCase(nil) }
 
                     Button {
                         state.importSettings(id: state.token)
@@ -251,52 +255,93 @@ extension Settings {
                         .font(.previewNormal)
                     }
 
-                    if let basals = state.basals {
-                        Section {
-                            List(basals, id: \.start) {
-                                Text($0.start + " " + $0.rate.formatted() + " " + $0.minutes.formatted())
-                            }
-                        } header: {
-                            Text("Basals").foregroundStyle(.blue).textCase(nil)
-                        }
-                    }
+                    if let profiles = state.profiles {
+                        if let defaultProfiles = profiles.store["default"] {
+                            // Basals
+                            let basals_ = defaultProfiles.basal.map({
+                                basal in
+                                BasalProfileEntry(
+                                    start: basal.time + ":00",
+                                    minutes: state.offset(basal.time) / 60,
+                                    rate: basal.value
+                                )
+                            })
 
-                    if let crs = state.crs {
-                        Section {
-                            List(crs, id: \.start) {
-                                Text($0.start + " " + $0.ratio.formatted())
+                            Section {
+                                ForEach(basals_, id: \.start) { item in
+                                    HStack {
+                                        Text(item.start)
+                                        Spacer()
+                                        Text(item.rate.formatted())
+                                        Text("U/h")
+                                    }
+                                }
+                            } header: {
+                                Text("Basals").foregroundStyle(.blue).textCase(nil)
                             }
-                        } header: {
-                            Text("Carb Ratios").foregroundStyle(.blue).textCase(nil)
-                        }
-                    }
 
-                    if let isfs = state.isfs {
-                        Section {
-                            List(isfs, id: \.start) {
-                                Text($0.start + " " + $0.sensitivity.formatted())
+                            Section {
+                                let crs_ = defaultProfiles.carbratio.map({
+                                    cr in
+                                    CarbRatioEntry(start: cr.time, offset: (cr.timeAsSeconds ?? 0) / 60, ratio: cr.value)
+                                })
+                                ForEach(crs_, id: \.start) { item in
+                                    HStack {
+                                        Text(item.start)
+                                        Spacer()
+                                        Text(item.ratio.formatted())
+                                    }
+                                }
+                            } header: { Text("Carb Ratios").foregroundStyle(.blue).textCase(nil) }
+
+                            Section {
+                                let isfs_ = defaultProfiles.sens.map({
+                                    isf in
+                                    InsulinSensitivityEntry(
+                                        sensitivity: isf.value,
+                                        offset: (isf.timeAsSeconds ?? 0) / 60,
+                                        start: isf.time
+                                    )
+                                })
+
+                                ForEach(isfs_, id: \.start) { item in
+                                    HStack {
+                                        Text(item.start)
+                                        Spacer()
+                                        Text(item.sensitivity.formatted())
+                                    }
+                                }
+                            } header: {
+                                Text("Insulin Sensitivities").foregroundStyle(.blue).textCase(nil)
                             }
-                        } header: {
-                            Text("Insulin Sensitivities").foregroundStyle(.blue).textCase(nil)
+
+                            // Targets
+                            Section {
+                                let targets_ = defaultProfiles.target_low.map({
+                                    target in
+                                    BGTargetEntry(
+                                        low: target.value,
+                                        high: target.value,
+                                        start: target.time,
+                                        offset: (target.timeAsSeconds ?? 0) / 60
+                                    )
+                                })
+
+                                ForEach(targets_, id: \.start) { item in
+                                    HStack {
+                                        Text(item.start)
+                                        Spacer()
+                                        Text(item.low.formatted())
+                                    }
+                                }
+                            } header: { Text("Targets").foregroundStyle(.blue).textCase(nil) }
                         }
                     }
 
                     if let freeapsSettings = state.freeapsSettings {
                         Section {
                             Text(
-                                freeapsSettings.rawJSON.debugDescription
-                                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                                    .replacingOccurrences(of: "\\n", with: "")
-                                    .replacingOccurrences(of: "\\", with: "")
-                                    .replacingOccurrences(of: "}", with: "")
-                                    .replacingOccurrences(of: "{", with: "")
-                                    .replacingOccurrences(
-                                        of: "\"",
-                                        with: "",
-                                        options: NSString.CompareOptions.literal,
-                                        range: nil
-                                    )
-                                    .replacingOccurrences(of: ",", with: "\n")
+                                trim(freeapsSettings.rawJSON.debugDescription)
                             )
                         } header: {
                             Text("iAPS Settings").foregroundStyle(.blue).textCase(nil)
@@ -306,19 +351,7 @@ extension Settings {
                     if let settings = state.settings {
                         Section {
                             Text(
-                                settings.rawJSON.debugDescription
-                                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                                    .replacingOccurrences(of: "\\n", with: "")
-                                    .replacingOccurrences(of: "\\", with: "")
-                                    .replacingOccurrences(of: "}", with: "")
-                                    .replacingOccurrences(of: "{", with: "")
-                                    .replacingOccurrences(
-                                        of: "\"",
-                                        with: "",
-                                        options: NSString.CompareOptions.literal,
-                                        range: nil
-                                    )
-                                    .replacingOccurrences(of: ",", with: "\n")
+                                trim(settings.rawJSON.debugDescription)
                             )
                         } header: {
                             Text("OpenAPS Settings").foregroundStyle(.blue).textCase(nil)
@@ -330,12 +363,11 @@ extension Settings {
                         state.onboardingDone()
                     }
                     label: {
-                        Text("Yes, save settings")
+                        Text("Save settings")
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     .listRowBackground(Color(.systemBlue))
                     .tint(.white)
-
                 } else if !saved {
                     Section {
                         Button {
@@ -349,13 +381,41 @@ extension Settings {
                         .listRowBackground(Color(.systemBlue))
                         .tint(.white)
                     } header: {
-                        Text("Settings saved").textCase(nil)
-                    }
+                        Text("Settings saved").foregroundStyle(.primary).textCase(nil)
+                            .frame(maxWidth: .infinity, alignment: .center) }
                 }
             }
             .onAppear(perform: configureView)
             .navigationTitle("Onboarding\n\n")
-            .navigationBarItems(trailing: Button("Close", action: state.close))
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(trailing: Button("Cancel") {
+                state.close()
+                token = false
+            })
+        }
+
+        private func trim(_ string: String) -> String {
+            let trim = string
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: "\\n", with: "")
+                .replacingOccurrences(of: "\\", with: "")
+                .replacingOccurrences(of: "}", with: "")
+                .replacingOccurrences(of: "{", with: "")
+                .replacingOccurrences(
+                    of: "\"",
+                    with: "",
+                    options: NSString.CompareOptions.literal,
+                    range: nil
+                )
+                .replacingOccurrences(of: ",", with: "\n")
+                .replacingOccurrences(of: "[", with: "\n")
+                .replacingOccurrences(of: "]", with: "\n")
+                .replacingOccurrences(of: "basal", with: "Basal Rates")
+                .replacingOccurrences(of: "sens", with: "Sensitivities")
+                .replacingOccurrences(of: "dia", with: "DIA")
+                .replacingOccurrences(of: "carbratio", with: "Carb ratios")
+
+            return trim
         }
     }
 }

@@ -751,7 +751,13 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         let defaultProfile = "default"
 
         let now = Date()
-        let p = NightscoutProfileStore(
+        let p = DatabaseProfileStore(
+            units: nsUnits,
+            enteredBy: NigtscoutTreatment.local,
+            store: [defaultProfile: ps]
+        )
+
+        var q = NightscoutProfileStore(
             defaultProfile: defaultProfile,
             startDate: now,
             mills: Int(now.timeIntervalSince1970) * 1000,
@@ -784,7 +790,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         } else {
             if let ns = nightscoutAPI, isUploadEnabled {
                 processQueue.async {
-                    ns.uploadProfile(p)
+                    ns.uploadProfileToDatabase(p)
                         .sink { completion in
                             switch completion {
                             case .finished:
@@ -798,7 +804,6 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                 }
             }
             if isStatsUploadEnabled {
-                var q = p
                 q.enteredBy = getIdentifier()
                 processQueue.async {
                     nightscout.uploadSettingsToDatabase(q)
