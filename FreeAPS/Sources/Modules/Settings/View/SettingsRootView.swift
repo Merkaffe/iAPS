@@ -125,9 +125,11 @@ extension Settings {
 
                             HStack {
                                 Text("Start Onboarding")
-                                Button("Start") { state.firstRun = true }
-                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                    .buttonStyle(.borderedProminent)
+                                Button("Start") {
+                                    reset()
+                                }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .buttonStyle(.borderedProminent)
                             }
                         }
                         Group {
@@ -371,8 +373,7 @@ extension Settings {
                 } else if !saved {
                     Section {
                         Button {
-                            saved.toggle()
-                            state.close()
+                            state.firstRun = false
                         }
                         label: {
                             Text("OK")
@@ -389,8 +390,7 @@ extension Settings {
             .navigationTitle("Onboarding\n\n")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(trailing: Button("Cancel") {
-                state.close()
-                token = false
+                reset()
             })
         }
 
@@ -416,6 +416,14 @@ extension Settings {
                 .replacingOccurrences(of: "carbratio", with: "Carb ratios")
 
             return trim
+        }
+
+        private func reset() {
+            state.firstRun = true
+            saved = false
+            confirm = false
+            imported = false
+            token = false
         }
     }
 }
