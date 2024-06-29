@@ -227,9 +227,14 @@ extension Settings {
                             .tint(.red)
                         }
                     } header: {
-                        Text("Welcome to iAPS, v\(state.versionNumber)!\nDo you have any settings you want to import?")
+                        Text("Welcome to iAPS, v\(state.versionNumber)!\n\nDo you have any settings you want to import?")
                             .foregroundStyle(.primary)
                             .textCase(nil)
+                    }
+                    footer: {
+                        Text(
+                            "\nIf you've made any backup of your settings to the online database you now can choose to import all of these settings to iAPS using your recovery token (your identifier).\n\nTo enable daily auto backups of your current settings and statistics make sure to enable the setting \"Share all statistics\" in the Sharing settings. In the Sharing settings you can see and copy your current recovery token."
+                        ).textCase(nil).foregroundStyle(.primary)
                     }
                 } else if !imported {
                     Section {
@@ -382,7 +387,7 @@ extension Settings {
                         .listRowBackground(Color(.systemBlue))
                         .tint(.white)
                     } header: {
-                        Text("Settings saved").foregroundStyle(.primary).textCase(nil)
+                        Text("Settings saved\n").foregroundStyle(.primary).textCase(nil)
                             .frame(maxWidth: .infinity, alignment: .center) }
                 }
             }
