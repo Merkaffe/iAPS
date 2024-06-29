@@ -233,8 +233,8 @@ extension Settings {
                     }
                     footer: {
                         Text(
-                            "\nIf you've made any backup of your settings to the online database you now can choose to import all of these settings to iAPS using your recovery token (your identifier).\n\nTo enable daily auto backups of your current settings and statistics make sure to enable the setting \"Share all statistics\" in the Sharing settings. In the Sharing settings you can see and copy your current recovery token."
-                        ).textCase(nil).foregroundStyle(.primary)
+                            "\nIf you've previously made any backup of your settings and statistics to the online database you now can choose to import all of these settings to iAPS using your recovery token (your identifier). The recovery token you can find on your old phone in Sharing settings.\n\nTo enable daily auto backups of your current settings and statistics make sure to enable the setting \"Share all statistics\" in the Sharing settings."
+                        ).textCase(nil) // .foregroundStyle(.primary)
                     }
                 } else if !imported {
                     Section {
