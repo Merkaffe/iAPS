@@ -7,13 +7,11 @@ extension Settings {
         let resolver: Resolver
         @StateObject var state = StateModel()
         @State private var showShareSheet = false
-        // @State private var imported = false
         @State private var token = false
         @State private var confirm = false
+        @State private var next = false
         @State private var imported = false
         @State private var saved = false
-
-        @State private var b: [BasalProfileEntry]?
 
         @FetchRequest(
             entity: VNr.entity(),
@@ -25,7 +23,7 @@ extension Settings {
         var body: some View {
             // First run (onboarding)
             if state.firstRun {
-                onboarding
+                onboardingView
             } else {
                 settingsView
             }
@@ -112,11 +110,11 @@ extension Settings {
                             }
                             /*
                              HStack {
-                                 Text("Delete All NS Overrides")
-                                 Button("Delete") { state.deleteOverrides() }
-                                     .frame(maxWidth: .infinity, alignment: .trailing)
-                                     .buttonStyle(.borderedProminent)
-                                     .tint(.red)
+                             Text("Delete All NS Overrides")
+                             Button("Delete") { state.deleteOverrides() }
+                             .frame(maxWidth: .infinity, alignment: .trailing)
+                             .buttonStyle(.borderedProminent)
+                             .tint(.red)
                              }*/
 
                             HStack {
@@ -127,6 +125,7 @@ extension Settings {
                                 Text("Start Onboarding")
                                 Button("Start") {
                                     reset()
+                                    state.firstRun = true
                                 }
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                                 .buttonStyle(.borderedProminent)
@@ -209,259 +208,362 @@ extension Settings {
             .onDisappear(perform: { state.uploadProfileAndSettings(false) })
         }
 
-        var onboarding: some View {
+        private var onboardingView: some View {
             Form {
                 if !token {
-                    Section {
-                        HStack {
-                            Button { token.toggle() }
-                            label: {
-                                Text("Yes")
-                            }.buttonStyle(.borderless)
-                            Spacer()
-                            Button { state.close() }
-                            label: {
-                                Text("No")
-                            }
-                            .buttonStyle(.borderless)
-                            .tint(.red)
-                        }
-                    } header: {
-                        Text("Welcome to iAPS, v\(state.versionNumber)!\n\n\nDo you have any settings you want to import?")
-                            .foregroundStyle(.primary)
-                            .textCase(nil)
-                            .font(.previewHeadline)
-                    }
-                    footer: {
-                        Text(
-                            "\n\nIf you've previously made any backup of your settings and statistics to the online database you now can choose to import all of these settings to iAPS using your recovery token (your identifier). The recovery token you can find on your old phone in the Sharing settings.\n\nIf you don't have any settings saved to import make sure to enable the setting \"Share all statistics\" in the Sharing settings later, as this will enable daily auto backups of your current settings and statistics."
-                        )
-                        .textCase(nil)
-                        .font(.previewNormal)
-                    }
+                    onboarding
                 } else if !imported {
-                    Section {
-                        TextField("Token", text: $state.token)
-                    } header: {
-                        Text("Enter your unique identifier").foregroundStyle(.primary).textCase(nil).font(.previewHeadline)
-                    }
-                    footer: {
-                        Text("\nThe recovery token you can find on your old phone in the Sharing settings.")
-                            .textCase(nil)
-                            .font(.previewNormal)
-                    }
-
+                    tokenView
                     if state.token != "" {
-                        Section {
-                            Button {
-                                state.importSettings(id: state.token)
-                                imported.toggle()
-                            }
-                            label: {
-                                Text("Start import").frame(maxWidth: .infinity, alignment: .center)
-                            }
-                            .listRowBackground(!(state.token == "") ? Color(.systemBlue) : Color(.systemGray4))
-                            .tint(.white)
-                        }
+                        startImportView
                     }
-
+                } else if !next {
+                    importedView
                 } else if !confirm {
-                    Section {} header: {
-                        Text(
-                            "\nSettings fetched. Now please scroll down and check that all of your imported settings below are correct."
-                        )
-                        .foregroundStyle(.primary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .textCase(nil)
-                        .font(.previewNormal)
-                    }
+                    fetchingView
+                    listFetchedView
+                } else if saved {
+                    savedView
+                }
 
-                    if let profiles = state.profiles {
-                        if let defaultProfiles = profiles.store["default"] {
-                            // Basals
-                            let basals_ = defaultProfiles.basal.map({
-                                basal in
-                                BasalProfileEntry(
-                                    start: basal.time + ":00",
-                                    minutes: state.offset(basal.time) / 60,
-                                    rate: basal.value
+            }.onAppear(perform: configureView)
+                .navigationTitle("Onboarding")
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationBarItems(trailing: Button("Cancel") {
+                    reset()
+                    onBoardingDone()
+                })
+        }
+
+        private var onboarding: some View {
+            Section {
+                HStack {
+                    Button { token.toggle() }
+                    label: {
+                        Text("Yes")
+                    }.buttonStyle(.borderless)
+                    Spacer()
+                    Button { state.close() }
+                    label: {
+                        Text("No")
+                    }
+                    .buttonStyle(.borderless)
+                    .tint(.red)
+                }
+            } header: {
+                VStack {
+                    Text("Welcome to iAPS, v\(state.versionNumber)!")
+                        .font(.previewHeadline).frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.bottom, 40)
+
+                    Text("Do you have any settings you want to import?").font(.previewNormal)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .textCase(nil)
+                .foregroundStyle(.primary)
+            }
+            footer: {
+                Text(
+                    "\n\nIf you've previously made any backup of your settings and statistics to the online database you now can choose to import all of these settings to iAPS using your recovery token (your identifier). The recovery token you can find on your old phone in the Sharing settings.\n\nIf you don't have any settings saved to import make sure to enable the setting \"Share all statistics\" in the Sharing settings later, as this will enable daily auto backups of your current settings and statistics."
+                )
+                .textCase(nil)
+                .font(.previewNormal)
+            }
+        }
+
+        private var tokenView: some View {
+            Section {
+                TextField("Token", text: $state.token)
+            }
+            header: {
+                Text("Enter your recovery token").foregroundStyle(.primary).textCase(nil).font(.previewNormal)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+            footer: {
+                Text("\nThe recovery token you can find on your old phone in the Sharing settings.")
+                    .textCase(nil)
+                    .font(.previewNormal)
+            }
+        }
+
+        private var startImportView: some View {
+            Section {
+                Button {
+                    state.importSettings(id: state.token)
+                    imported.toggle()
+                }
+                label: {
+                    Text("Start import").frame(maxWidth: .infinity, alignment: .center)
+                }
+                .listRowBackground(!(state.token == "") ? Color(.systemBlue) : Color(.systemGray4))
+                .tint(.white)
+            }
+        }
+
+        private var fetchingView: some View {
+            Section {} header: {
+                Text(
+                    "\nFetching done. Now please scroll down and check that all of your fetched settings below are correct, before saving."
+                )
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .textCase(nil)
+                .font(.previewNormal)
+            }
+        }
+
+        private var listFetchedView: some View {
+            Group {
+                if let profiles = state.profiles {
+                    if let defaultProfiles = profiles.store["default"] {
+                        // Basals
+                        let basals_ = defaultProfiles.basal.map({
+                            basal in
+                            BasalProfileEntry(
+                                start: basal.time + ":00",
+                                minutes: state.offset(basal.time) / 60,
+                                rate: basal.value
+                            )
+                        })
+                        Section {
+                            ForEach(basals_, id: \.start) { item in
+                                HStack {
+                                    Text(item.start)
+                                    Spacer()
+                                    Text(item.rate.formatted())
+                                    Text("U/h")
+                                }
+                            }
+                        } header: {
+                            Text("Basals").foregroundStyle(.blue).textCase(nil)
+                        }
+
+                        // CRs
+                        Section {
+                            let crs_ = defaultProfiles.carbratio.map({
+                                cr in
+                                CarbRatioEntry(start: cr.time, offset: (cr.timeAsSeconds ?? 0) / 60, ratio: cr.value)
+                            })
+                            ForEach(crs_, id: \.start) { item in
+                                HStack {
+                                    Text(item.start)
+                                    Spacer()
+                                    Text(item.ratio.formatted())
+                                }
+                            }
+                        } header: { Text("Carb Ratios").foregroundStyle(.blue).textCase(nil) }
+
+                        // ISFs
+                        Section {
+                            let isfs_ = defaultProfiles.sens.map({
+                                isf in
+                                InsulinSensitivityEntry(
+                                    sensitivity: isf.value,
+                                    offset: (isf.timeAsSeconds ?? 0) / 60,
+                                    start: isf.time
                                 )
                             })
 
-                            Section {
-                                ForEach(basals_, id: \.start) { item in
-                                    HStack {
-                                        Text(item.start)
-                                        Spacer()
-                                        Text(item.rate.formatted())
-                                        Text("U/h")
-                                    }
+                            ForEach(isfs_, id: \.start) { item in
+                                HStack {
+                                    Text(item.start)
+                                    Spacer()
+                                    Text(item.sensitivity.formatted())
                                 }
-                            } header: {
-                                Text("Basals").foregroundStyle(.blue).textCase(nil)
                             }
+                        } header: {
+                            Text("Insulin Sensitivities").foregroundStyle(.blue).textCase(nil)
+                        }
 
-                            Section {
-                                let crs_ = defaultProfiles.carbratio.map({
-                                    cr in
-                                    CarbRatioEntry(start: cr.time, offset: (cr.timeAsSeconds ?? 0) / 60, ratio: cr.value)
-                                })
-                                ForEach(crs_, id: \.start) { item in
-                                    HStack {
-                                        Text(item.start)
-                                        Spacer()
-                                        Text(item.ratio.formatted())
-                                    }
+                        // Targets
+                        Section {
+                            let targets_ = defaultProfiles.target_low.map({
+                                target in
+                                BGTargetEntry(
+                                    low: target.value,
+                                    high: target.value,
+                                    start: target.time,
+                                    offset: (target.timeAsSeconds ?? 0) / 60
+                                )
+                            })
+
+                            ForEach(targets_, id: \.start) { item in
+                                HStack {
+                                    Text(item.start)
+                                    Spacer()
+                                    Text(item.low.formatted())
                                 }
-                            } header: { Text("Carb Ratios").foregroundStyle(.blue).textCase(nil) }
-
-                            Section {
-                                let isfs_ = defaultProfiles.sens.map({
-                                    isf in
-                                    InsulinSensitivityEntry(
-                                        sensitivity: isf.value,
-                                        offset: (isf.timeAsSeconds ?? 0) / 60,
-                                        start: isf.time
-                                    )
-                                })
-
-                                ForEach(isfs_, id: \.start) { item in
-                                    HStack {
-                                        Text(item.start)
-                                        Spacer()
-                                        Text(item.sensitivity.formatted())
-                                    }
-                                }
-                            } header: {
-                                Text("Insulin Sensitivities").foregroundStyle(.blue).textCase(nil)
                             }
-
-                            // Targets
-                            Section {
-                                let targets_ = defaultProfiles.target_low.map({
-                                    target in
-                                    BGTargetEntry(
-                                        low: target.value,
-                                        high: target.value,
-                                        start: target.time,
-                                        offset: (target.timeAsSeconds ?? 0) / 60
-                                    )
-                                })
-
-                                ForEach(targets_, id: \.start) { item in
-                                    HStack {
-                                        Text(item.start)
-                                        Spacer()
-                                        Text(item.low.formatted())
-                                    }
-                                }
-                            } header: { Text("Targets").foregroundStyle(.blue).textCase(nil) }
-                        }
+                        } header: { Text("Targets").foregroundStyle(.blue).textCase(nil) }
                     }
-
-                    if let freeapsSettings = state.freeapsSettings {
-                        Section {
-                            Text(
-                                trim(freeapsSettings.rawJSON.debugDescription)
-                            )
-                        } header: {
-                            Text("iAPS Settings").foregroundStyle(.blue).textCase(nil)
-                        }
-                    }
-
-                    if let settings = state.settings {
-                        Section {
-                            Text(
-                                trim(settings.rawJSON.debugDescription)
-                            )
-                        } header: {
-                            Text("OpenAPS Settings").foregroundStyle(.blue).textCase(nil)
-                        }
-                    }
-
-                    Button {
-                        confirm.toggle()
-                        state.save()
-                    }
-                    label: {
-                        Text("Save settings")
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .listRowBackground(Color(.systemBlue))
-                    .tint(.white)
-                } else if !saved {
-                    Section {
-                        HStack {
-                            Text("Basals")
-                            Spacer()
-                            Text(state.basalsOK ? "Imported" : "Not imported")
-                                .foregroundStyle(state.basalsOK ? Color(.darkGreen) : .red)
-                        }
-
-                        HStack {
-                            Text("Carb Ratios")
-                            Spacer()
-                            Text(state.crsOK ? "Imported" : "Not imported")
-                                .foregroundStyle(state.crsOK ? Color(.darkGreen) : .red)
-                        }
-
-                        HStack {
-                            Text("Insulin Sensitivites")
-                            Spacer()
-                            Text(state.isfsOK ? "Imported" : "Not imported")
-                                .foregroundStyle(state.isfsOK ? Color(.darkGreen) : .red)
-                        }
-
-                        HStack {
-                            Text("Targets")
-                            Spacer()
-                            Text(state.targetsOK ? "Imported" : "Not imported")
-                                .foregroundStyle(state.targetsOK ? Color(.darkGreen) : .red)
-                        }
-
-                        HStack {
-                            Text("Preferences")
-                            Spacer()
-                            Text(state.settingsOK ? "Imported" : "Not imported")
-                                .foregroundStyle(state.settingsOK ? Color(.darkGreen) : .red)
-                        }
-
-                        HStack {
-                            Text("iAPS Settings")
-                            Spacer()
-                            Text(state.freeapsSettingsOK ? "Imported" : "Not imported")
-                                .foregroundStyle(state.freeapsSettingsOK ? Color(.darkGreen) : .red)
-                        }
-                    } header: {
-                        Text("Settings saved").font(.previewNormal)
-                    }
-
-                    Button {
-                        state.firstRun = false
-                    }
-                    label: {
-                        Text("OK")
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .listRowBackground(Color(.systemBlue))
-                    .tint(.white)
                 }
+
+                // iAPS Settings
+                if let freeapsSettings = state.freeapsSettings {
+                    Section {
+                        Text(trim(freeapsSettings.rawJSON.debugDescription))
+                    } header: {
+                        Text("iAPS Settings").foregroundStyle(.blue).textCase(nil)
+                    }
+                }
+
+                // OpenAPS Settings
+                if let settings = state.settings {
+                    Section {
+                        Text(
+                            trim(settings.rawJSON.debugDescription)
+                        )
+                    } header: {
+                        Text("OpenAPS Settings").foregroundStyle(.blue).textCase(nil)
+                    }
+                }
+
+                // Save
+                Button {
+                    state.save()
+                    saved.toggle()
+                    confirm.toggle()
+                }
+                label: {
+                    Text("Save settings")
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .listRowBackground(Color(.systemBlue))
+                .tint(.white)
             }
-            .onAppear(perform: configureView)
-            .navigationTitle("Onboarding\n\n")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Cancel") {
-                reset()
-                state.firstRun = false
-            })
+        }
+
+        private var importedView: some View {
+            Group {
+                Section {
+                    HStack {
+                        Text("Basals")
+                        Spacer()
+                        Text(state.basalsOK ? "OK" : "Not imported")
+                            .foregroundStyle(state.basalsOK ? Color(.darkGreen) : .red)
+                    }
+
+                    HStack {
+                        Text("Carb Ratios")
+                        Spacer()
+                        Text(state.crsOK ? "OK" : "Not imported")
+                            .foregroundStyle(state.crsOK ? Color(.darkGreen) : .red)
+                    }
+
+                    HStack {
+                        Text("Insulin Sensitivites")
+                        Spacer()
+                        Text(state.isfsOK ? "OK" : "Not imported")
+                            .foregroundStyle(state.isfsOK ? Color(.darkGreen) : .red)
+                    }
+
+                    HStack {
+                        Text("Targets")
+                        Spacer()
+                        Text(state.targetsOK ? "OK" : "Not imported")
+                            .foregroundStyle(state.targetsOK ? Color(.darkGreen) : .red)
+                    }
+
+                    HStack {
+                        Text("Preferences")
+                        Spacer()
+                        Text(state.settingsOK ? "OK" : "Not imported")
+                            .foregroundStyle(state.settingsOK ? Color(.darkGreen) : .red)
+                    }
+
+                    HStack {
+                        Text("iAPS Settings")
+                        Spacer()
+                        Text(state.freeapsSettingsOK ? "OK" : "Not imported")
+                            .foregroundStyle(state.freeapsSettingsOK ? Color(.darkGreen) : .red)
+                    }
+                } header: {
+                    Text("Fetched settings").font(.previewNormal)
+                }
+
+                Button {
+                    next.toggle()
+                }
+                label: {
+                    Text("Continue")
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .listRowBackground(Color(.systemBlue))
+                .tint(.white)
+            }
+        }
+
+        private var savedView: some View {
+            Group {
+                Section {
+                    HStack {
+                        Text("Basals")
+                        Spacer()
+                        Text(state.basalsSaved ? "Saved" : "Not saved")
+                            .foregroundStyle(state.basalsSaved ? Color(.darkGreen) : .red)
+                    }
+
+                    HStack {
+                        Text("Carb Ratios")
+                        Spacer()
+                        Text(state.crsOKSaved ? "Saved" : "Not saved")
+                            .foregroundStyle(state.crsOKSaved ? Color(.darkGreen) : .red)
+                    }
+
+                    HStack {
+                        Text("Insulin Sensitivites")
+                        Spacer()
+                        Text(state.isfsSaved ? "Saved" : "Not saved")
+                            .foregroundStyle(state.isfsSaved ? Color(.darkGreen) : .red)
+                    }
+
+                    HStack {
+                        Text("Targets")
+                        Spacer()
+                        Text(state.targetsSaved ? "Saved" : "Not saved")
+                            .foregroundStyle(state.targetsSaved ? Color(.darkGreen) : .red)
+                    }
+
+                    HStack {
+                        Text("Preferences")
+                        Spacer()
+                        Text(state.settingsSaved ? "Saved" : "Not saved")
+                            .foregroundStyle(state.settingsSaved ? Color(.darkGreen) : .red)
+                    }
+
+                    HStack {
+                        Text("iAPS Settings")
+                        Spacer()
+                        Text(state.freeapsSettingsSaved ? "Saved" : "Not saved")
+                            .foregroundStyle(state.freeapsSettingsSaved ? Color(.darkGreen) : .red)
+                    }
+                } header: {
+                    Text("Saved settings").font(.previewNormal)
+                }
+
+                Button {
+                    reset()
+                    onBoardingDone()
+                }
+                label: {
+                    Text("OK")
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .listRowBackground(Color(.systemBlue))
+                .tint(.white)
+            }
         }
 
         private func reset() {
-            state.firstRun = true
             saved = false
             confirm = false
             imported = false
             token = false
+            next = false
+        }
+
+        private func onBoardingDone() {
+            state.firstRun = false
         }
 
         private func trim(_ string: String) -> String {

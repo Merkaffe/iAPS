@@ -35,14 +35,14 @@ extension Database {
         return service.run(request)
             .retry(Config.retryCount)
             .decode(type: Preferences.self, decoder: JSONCoding.decoder)
-            .catch { error -> AnyPublisher<Preferences, Swift.Error> in
-                warning(.nightscout, "Preferences fetching error: \(error.localizedDescription) \(request)")
-                return Just(Preferences()).setFailureType(to: Swift.Error.self).eraseToAnyPublisher()
-            }
+            /* .catch { error -> AnyPublisher<Preferences, Swift.Error> in
+                 warning(.nightscout, "Preferences fetching error: \(error.localizedDescription) \(request)")
+                 return Just(Preferences()).setFailureType(to: Swift.Error.self).eraseToAnyPublisher()
+             } */
             .eraseToAnyPublisher()
     }
 
-    func fetchSettings() -> AnyPublisher<FreeAPSSettings?, Swift.Error> {
+    func fetchSettings() -> AnyPublisher<FreeAPSSettings, Swift.Error> {
         let statURL = IAPSconfig.statURL
         var components = URLComponents()
         components.scheme = statURL.scheme
@@ -56,11 +56,11 @@ extension Database {
 
         return service.run(request)
             .retry(Config.retryCount)
-            .decode(type: FreeAPSSettings?.self, decoder: JSONCoding.decoder)
+            .decode(type: FreeAPSSettings.self, decoder: JSONDecoder())
             .eraseToAnyPublisher()
     }
 
-    func fetchProfile() -> AnyPublisher<DatabaseProfileStore?, Swift.Error> {
+    func fetchProfile() -> AnyPublisher<DatabaseProfileStore, Swift.Error> {
         let statURL = IAPSconfig.statURL
         var components = URLComponents()
         components.scheme = statURL.scheme
@@ -74,7 +74,7 @@ extension Database {
 
         return service.run(request)
             .retry(Config.retryCount)
-            .decode(type: DatabaseProfileStore?.self, decoder: JSONCoding.decoder)
+            .decode(type: DatabaseProfileStore.self, decoder: JSONCoding.decoder)
             .eraseToAnyPublisher()
     }
 }

@@ -20,24 +20,30 @@ extension Settings {
 
         @Published var basals: [BasalProfileEntry]?
         @Published var basalsOK: Bool = false
+        @Published var basalsSaved: Bool = false
 
         @Published var crs: [CarbRatioEntry]?
         @Published var crsOK: Bool = false
+        @Published var crsOKSaved: Bool = false
 
         @Published var isfs: [InsulinSensitivityEntry]?
         @Published var isfsOK: Bool = false
+        @Published var isfsSaved: Bool = false
 
         @Published var settings: Preferences?
         @Published var settingsOK: Bool = false
+        @Published var settingsSaved: Bool = false
 
         @Published var freeapsSettings: FreeAPSSettings?
         @Published var freeapsSettingsOK: Bool = false
+        @Published var freeapsSettingsSaved: Bool = false
 
         @Published var profiles: DatabaseProfileStore?
         @Published var profilesOK: Bool = false
 
         @Published var targets: BGTargetEntry?
         @Published var targetsOK: Bool = false
+        @Published var targetsSaved: Bool = false
 
         private(set) var buildNumber = ""
         private(set) var versionNumber = ""
@@ -131,8 +137,9 @@ extension Settings {
                     switch completion {
                     case .finished:
                         debug(.service, "Preferences fetched from database")
+                        self.settingsOK = true
                     case let .failure(error):
-                        debug(.nightscout, error.localizedDescription)
+                        debug(.service, error.localizedDescription)
                     }
                 }
             receiveValue: { self.settings = $0 }
@@ -147,8 +154,9 @@ extension Settings {
                     switch completion {
                     case .finished:
                         debug(.service, "Settings fetched from database")
+                        self.freeapsSettingsOK = true
                     case let .failure(error):
-                        debug(.nightscout, error.localizedDescription)
+                        debug(.service, error.localizedDescription)
                     }
                 }
             receiveValue: {
@@ -165,8 +173,12 @@ extension Settings {
                     switch completion {
                     case .finished:
                         debug(.service, "Profiles fetched from database")
+                        self.basalsOK = true
+                        self.isfsOK = true
+                        self.crsOK = true
+                        self.targetsOK = true
                     case let .failure(error):
-                        debug(.nightscout, error.localizedDescription)
+                        debug(.service, error.localizedDescription)
                     }
                 }
             receiveValue: { self.profiles = $0 }
@@ -196,7 +208,7 @@ extension Settings {
                             case .success:
                                 self.storage.save(basals_, as: OpenAPS.Settings.basalProfile)
                                 debug(.service, "Imported Basals saved to pump!")
-                                self.basalsOK = true
+                                self.basalsSaved = true
                             case .failure:
                                 debug(.service, "Imported Basals couldn't be save to pump")
                             }
@@ -204,7 +216,7 @@ extension Settings {
                     } else {
                         storage.save(basals_, as: OpenAPS.Settings.basalProfile)
                         debug(.service, "Imported Basals have been saved to file storage.")
-                        basalsOK = true
+                        basalsSaved = true
                     }
 
                     // Glucoce Unit
@@ -226,7 +238,7 @@ extension Settings {
 
                     storage.save(isfs_, as: OpenAPS.Settings.insulinSensitivities)
                     debug(.service, "Imported ISFs have been saved to file storage.")
-                    isfsOK = true
+                    isfsSaved = true
 
                     // CRs
                     let carbRatios = defaultProfiles.carbratio.map({
@@ -241,7 +253,7 @@ extension Settings {
 
                     storage.save(crs_, as: OpenAPS.Settings.carbRatios)
                     debug(.service, "Imported CRs have been saved to file storage.")
-                    crsOK = true
+                    crsOKSaved = true
 
                     // Targets
                     let glucoseTargets = defaultProfiles.target_low.map({
@@ -257,7 +269,7 @@ extension Settings {
 
                     storage.save(targets_, as: OpenAPS.Settings.bgTargets)
                     debug(.service, "Imported Targets have been saved to file storage.")
-                    targetsOK = true
+                    targetsSaved = true
                 }
             }
         }
@@ -265,16 +277,16 @@ extension Settings {
         func verifySettings() {
             if let fetchedSettings = freeapsSettings {
                 storage.save(fetchedSettings, as: OpenAPS.FreeAPS.settings)
+                freeapsSettingsSaved = true
                 debug(.service, "iAPS Settings have been saved to file storage.")
-                freeapsSettingsOK = true
             }
         }
 
         func verifyPreferences() {
             if let fetchedSettings = settings {
                 storage.save(fetchedSettings, as: OpenAPS.Settings.preferences)
+                settingsSaved = true
                 debug(.service, "Preferences have been saved to file storage.")
-                settingsOK = true
             }
         }
 
