@@ -2,6 +2,7 @@ import Combine
 import CommonCrypto
 import Foundation
 import JavaScriptCore
+import SwiftUI
 import Swinject
 
 class NightscoutAPI {
@@ -534,6 +535,65 @@ extension NightscoutAPI {
             .eraseToAnyPublisher()
     }
 
+    func fetchPreferences(token: String) -> AnyPublisher<Preferences, Swift.Error> {
+        let statURL = IAPSconfig.statURL
+        var components = URLComponents()
+        components.scheme = statURL.scheme
+        components.host = statURL.host
+        components.port = statURL.port
+        components.path = "/download.php?token=" + token + "&section=preferences"
+
+        var request = URLRequest(url: components.url!)
+        request.allowsConstrainedNetworkAccess = true
+        request.timeoutInterval = Config.timeout
+
+        return service.run(request)
+            .retry(Config.retryCount)
+            .decode(type: Preferences.self, decoder: JSONCoding.decoder)
+            .catch { error -> AnyPublisher<Preferences, Swift.Error> in
+                warning(.nightscout, "Preferences fetching error: \(error.localizedDescription) \(request)")
+                return Just(Preferences()).setFailureType(to: Swift.Error.self).eraseToAnyPublisher()
+            }
+            .eraseToAnyPublisher()
+    }
+
+    func fetchSettings(token: String) -> AnyPublisher<FreeAPSSettings?, Swift.Error> {
+        let statURL = IAPSconfig.statURL
+        var components = URLComponents()
+        components.scheme = statURL.scheme
+        components.host = statURL.host
+        components.port = statURL.port
+        components.path = "/download.php?token=" + token + "&section=preferences"
+
+        var request = URLRequest(url: components.url!)
+        request.allowsConstrainedNetworkAccess = true
+        request.timeoutInterval = Config.timeout
+
+        return service.run(request)
+            .retry(Config.retryCount)
+            .decode(type: FreeAPSSettings?.self, decoder: JSONCoding.decoder)
+            .eraseToAnyPublisher()
+    }
+
+    func fetchProfile(_ token: String) -> AnyPublisher<DatabaseProfileStore?, Swift.Error> {
+        let statURL = IAPSconfig.statURL
+        var components = URLComponents()
+        components.scheme = statURL.scheme
+        components.host = statURL.host
+        components.port = statURL.port
+        components.path = "/download.php?token=" + token + "&section=profile"
+
+        var request = URLRequest(url: components.url!)
+        request.allowsConstrainedNetworkAccess = false
+        request.timeoutInterval = Config.timeout
+
+        return service.run(request)
+            .retry(Config.retryCount)
+            .decode(type: DatabaseProfileStore?.self, decoder: JSONCoding.decoder)
+            // .map { _ in () }
+            .eraseToAnyPublisher()
+    }
+
     func uploadStatus(_ status: NightscoutStatus) -> AnyPublisher<Void, Swift.Error> {
         var components = URLComponents()
         components.scheme = url.scheme
@@ -603,6 +663,30 @@ extension NightscoutAPI {
     }
 
     func uploadProfile(_ profile: NightscoutProfileStore) -> AnyPublisher<Void, Swift.Error> {
+        var components = URLComponents()
+        components.scheme = url.scheme
+        components.host = url.host
+        components.port = url.port
+        components.path = Config.profilePath
+
+        var request = URLRequest(url: components.url!)
+        request.allowsConstrainedNetworkAccess = false
+        request.timeoutInterval = Config.timeout
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        if let secret = secret {
+            request.addValue(secret.sha1(), forHTTPHeaderField: "api-secret")
+        }
+        request.httpBody = try! JSONCoding.encoder.encode(profile)
+        request.httpMethod = "POST"
+
+        return service.run(request)
+            .retry(Config.retryCount)
+            .map { _ in () }
+            .eraseToAnyPublisher()
+    }
+
+    func uploadProfileToDatabase(_ profile: DatabaseProfileStore) -> AnyPublisher<Void, Swift.Error> {
         var components = URLComponents()
         components.scheme = url.scheme
         components.host = url.host

@@ -27,6 +27,7 @@ protocol NightscoutManager: GlucoseSource {
     func deleteOverride()
     func editOverride(_ profile: String, _ duration_: Double, _ date: Date)
     func fetchVersion()
+    func fetchPreferences(token: String) -> Preferences?
     var cgmURL: URL? { get }
 }
 
@@ -62,12 +63,12 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         settingsManager.settings.uploadStats
     }
 
-    private var isUploadGlucoseEnabled: Bool {
-        settingsManager.settings.uploadGlucose
-    }
-
     private var isVersionUploadEnabled: Bool {
         settingsManager.settings.uploadVersion
+    }
+
+    private var isUploadGlucoseEnabled: Bool {
+        settingsManager.settings.uploadGlucose
     }
 
     private var nightscoutAPI: NightscoutAPI? {
@@ -194,6 +195,32 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             }
             .store(in: &self.lifetime)
         }
+    }
+
+    func fetchPreferences(token: String) -> Preferences? {
+        guard isStatsUploadEnabled || isVersionUploadEnabled, isNetworkReachable else {
+            return nil
+        }
+        let nightscout = NightscoutAPI(url: IAPSconfig.statURL)
+
+        var returnPreferences: Preferences?
+
+        processQueue.async {
+            nightscout.fetchPreferences(token: token)
+                .sink { completion in
+                    switch completion {
+                    case .finished:
+                        debug(.nightscout, "Preferences fetched from " + IAPSconfig.statURL.absoluteString)
+                    case let .failure(error):
+                        debug(.nightscout, error.localizedDescription)
+                    }
+                }
+            receiveValue: { a in
+                returnPreferences = a
+            }
+            .store(in: &self.lifetime)
+        }
+        return returnPreferences
     }
 
     func fetchTempTargets() -> AnyPublisher<[TempTarget], Never> {
@@ -724,7 +751,13 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         let defaultProfile = "default"
 
         let now = Date()
-        let p = NightscoutProfileStore(
+        let p = DatabaseProfileStore(
+            units: nsUnits,
+            enteredBy: NigtscoutTreatment.local,
+            store: [defaultProfile: ps]
+        )
+
+        var q = NightscoutProfileStore(
             defaultProfile: defaultProfile,
             startDate: now,
             mills: Int(now.timeIntervalSince1970) * 1000,
@@ -757,7 +790,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         } else {
             if let ns = nightscoutAPI, isUploadEnabled {
                 processQueue.async {
-                    ns.uploadProfile(p)
+                    ns.uploadProfileToDatabase(p)
                         .sink { completion in
                             switch completion {
                             case .finished:
@@ -771,7 +804,6 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                 }
             }
             if isStatsUploadEnabled {
-                var q = p
                 q.enteredBy = getIdentifier()
                 processQueue.async {
                     nightscout.uploadSettingsToDatabase(q)
