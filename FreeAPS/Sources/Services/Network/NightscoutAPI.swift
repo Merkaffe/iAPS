@@ -2,7 +2,6 @@ import Combine
 import CommonCrypto
 import Foundation
 import JavaScriptCore
-import SwiftUI
 import Swinject
 
 class NightscoutAPI {
@@ -532,65 +531,6 @@ extension NightscoutAPI {
                 warning(.nightscout, "Version fetching error: \(error.localizedDescription) \(request)")
                 return Just(Version(main: "", dev: "")).setFailureType(to: Swift.Error.self).eraseToAnyPublisher()
             }
-            .eraseToAnyPublisher()
-    }
-
-    func fetchPreferences(token: String) -> AnyPublisher<Preferences, Swift.Error> {
-        let statURL = IAPSconfig.statURL
-        var components = URLComponents()
-        components.scheme = statURL.scheme
-        components.host = statURL.host
-        components.port = statURL.port
-        components.path = "/download.php?token=" + token + "&section=preferences"
-
-        var request = URLRequest(url: components.url!)
-        request.allowsConstrainedNetworkAccess = true
-        request.timeoutInterval = Config.timeout
-
-        return service.run(request)
-            .retry(Config.retryCount)
-            .decode(type: Preferences.self, decoder: JSONCoding.decoder)
-            .catch { error -> AnyPublisher<Preferences, Swift.Error> in
-                warning(.nightscout, "Preferences fetching error: \(error.localizedDescription) \(request)")
-                return Just(Preferences()).setFailureType(to: Swift.Error.self).eraseToAnyPublisher()
-            }
-            .eraseToAnyPublisher()
-    }
-
-    func fetchSettings(token: String) -> AnyPublisher<FreeAPSSettings?, Swift.Error> {
-        let statURL = IAPSconfig.statURL
-        var components = URLComponents()
-        components.scheme = statURL.scheme
-        components.host = statURL.host
-        components.port = statURL.port
-        components.path = "/download.php?token=" + token + "&section=preferences"
-
-        var request = URLRequest(url: components.url!)
-        request.allowsConstrainedNetworkAccess = true
-        request.timeoutInterval = Config.timeout
-
-        return service.run(request)
-            .retry(Config.retryCount)
-            .decode(type: FreeAPSSettings?.self, decoder: JSONCoding.decoder)
-            .eraseToAnyPublisher()
-    }
-
-    func fetchProfile(_ token: String) -> AnyPublisher<DatabaseProfileStore?, Swift.Error> {
-        let statURL = IAPSconfig.statURL
-        var components = URLComponents()
-        components.scheme = statURL.scheme
-        components.host = statURL.host
-        components.port = statURL.port
-        components.path = "/download.php?token=" + token + "&section=profile"
-
-        var request = URLRequest(url: components.url!)
-        request.allowsConstrainedNetworkAccess = false
-        request.timeoutInterval = Config.timeout
-
-        return service.run(request)
-            .retry(Config.retryCount)
-            .decode(type: DatabaseProfileStore?.self, decoder: JSONCoding.decoder)
-            // .map { _ in () }
             .eraseToAnyPublisher()
     }
 

@@ -27,7 +27,6 @@ protocol NightscoutManager: GlucoseSource {
     func deleteOverride()
     func editOverride(_ profile: String, _ duration_: Double, _ date: Date)
     func fetchVersion()
-    func fetchPreferences(token: String) -> Preferences?
     var cgmURL: URL? { get }
 }
 
@@ -195,32 +194,6 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             }
             .store(in: &self.lifetime)
         }
-    }
-
-    func fetchPreferences(token: String) -> Preferences? {
-        guard isStatsUploadEnabled || isVersionUploadEnabled, isNetworkReachable else {
-            return nil
-        }
-        let nightscout = NightscoutAPI(url: IAPSconfig.statURL)
-
-        var returnPreferences: Preferences?
-
-        processQueue.async {
-            nightscout.fetchPreferences(token: token)
-                .sink { completion in
-                    switch completion {
-                    case .finished:
-                        debug(.nightscout, "Preferences fetched from " + IAPSconfig.statURL.absoluteString)
-                    case let .failure(error):
-                        debug(.nightscout, error.localizedDescription)
-                    }
-                }
-            receiveValue: { a in
-                returnPreferences = a
-            }
-            .store(in: &self.lifetime)
-        }
-        return returnPreferences
     }
 
     func fetchTempTargets() -> AnyPublisher<[TempTarget], Never> {
