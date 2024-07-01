@@ -241,13 +241,20 @@ extension Settings {
                     label: {
                         Text("Yes")
                     }.buttonStyle(.borderless)
+                        .padding(.leading, 10)
+
                     Spacer()
-                    Button { state.close() }
+
+                    Button {
+                        state.close()
+                        state.onboardingDone()
+                    }
                     label: {
                         Text("No")
                     }
                     .buttonStyle(.borderless)
                     .tint(.red)
+                    .padding(.trailing, 10)
                 }
             } header: {
                 VStack {
