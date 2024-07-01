@@ -262,7 +262,7 @@ extension Settings {
                         .font(.previewHeadline).frame(maxWidth: .infinity, alignment: .center)
                         .padding(.bottom, 40)
 
-                    Text("Do you have any settings you want to import?").font(.previewNormal)
+                    Text("Do you have any settings you want to import?\n").font(.previewNormal)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .textCase(nil)
@@ -270,7 +270,7 @@ extension Settings {
             }
             footer: {
                 Text(
-                    "\n\nIf you've previously made any backup of your settings and statistics to the online database you now can choose to import all of these settings to iAPS using your recovery token (your identifier). The recovery token you can find on your old phone in the Sharing settings.\n\nIf you don't have any settings saved to import make sure to enable the setting \"Share all statistics\" in the Sharing settings later, as this will enable daily auto backups of your current settings and statistics."
+                    "\n\nIf you've previously made any backup of your settings and statistics to the online database you now can choose to import all of these settings to iAPS using your recovery token. The recovery token you can find in your old iAPS app in the Sharing settings.\n\nIf you don't have any settings saved to import make sure to enable the setting \"Share all statistics\" in the Sharing settings later, as this will enable daily auto backups of your current settings and statistics."
                 )
                 .textCase(nil)
                 .font(.previewNormal)
