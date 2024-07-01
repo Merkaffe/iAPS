@@ -331,6 +331,9 @@ extension Settings {
                                 rate: basal.value
                             )
                         })
+
+                        let units: String = state.freeapsSettings?.units.rawValue ?? "mmol/l"
+
                         Section {
                             ForEach(basals_, id: \.start) { item in
                                 HStack {
@@ -341,7 +344,7 @@ extension Settings {
                                 }
                             }
                         } header: {
-                            Text("Basals").foregroundStyle(.blue).textCase(nil)
+                            Text("Basals")
                         }
 
                         // CRs
@@ -355,9 +358,10 @@ extension Settings {
                                     Text(item.start)
                                     Spacer()
                                     Text(item.ratio.formatted())
+                                    Text("g/U")
                                 }
                             }
-                        } header: { Text("Carb Ratios").foregroundStyle(.blue).textCase(nil) }
+                        } header: { Text("Carb Ratios") }
 
                         // ISFs
                         Section {
@@ -375,10 +379,11 @@ extension Settings {
                                     Text(item.start)
                                     Spacer()
                                     Text(item.sensitivity.formatted())
+                                    Text(units + "/U")
                                 }
                             }
                         } header: {
-                            Text("Insulin Sensitivities").foregroundStyle(.blue).textCase(nil)
+                            Text("Insulin Sensitivities")
                         }
 
                         // Targets
@@ -398,29 +403,28 @@ extension Settings {
                                     Text(item.start)
                                     Spacer()
                                     Text(item.low.formatted())
+                                    Text(units)
                                 }
                             }
-                        } header: { Text("Targets").foregroundStyle(.blue).textCase(nil) }
+                        } header: { Text("Targets") }
                     }
                 }
 
                 // iAPS Settings
                 if let freeapsSettings = state.freeapsSettings {
                     Section {
-                        Text(trim(freeapsSettings.rawJSON.debugDescription))
+                        Text(trim(freeapsSettings.rawJSON.debugDescription)).font(.previewSmall)
                     } header: {
-                        Text("iAPS Settings").foregroundStyle(.blue).textCase(nil)
+                        Text("iAPS Settings")
                     }
                 }
 
                 // OpenAPS Settings
                 if let settings = state.settings {
                     Section {
-                        Text(
-                            trim(settings.rawJSON.debugDescription)
-                        )
+                        Text(trim(settings.rawJSON.debugDescription)).font(.previewSmall)
                     } header: {
-                        Text("OpenAPS Settings").foregroundStyle(.blue).textCase(nil)
+                        Text("OpenAPS Settings")
                     }
                 }
 
@@ -585,15 +589,16 @@ extension Settings {
                     options: NSString.CompareOptions.literal,
                     range: nil
                 )
-                .replacingOccurrences(of: ",", with: "\n")
                 .replacingOccurrences(of: "[", with: "\n")
                 .replacingOccurrences(of: "]", with: "\n")
-                .replacingOccurrences(of: "basal", with: "Basal Rates")
-                .replacingOccurrences(of: "sens", with: "Sensitivities")
                 .replacingOccurrences(of: "dia", with: "DIA")
-                .replacingOccurrences(of: "carbratio", with: "Carb ratios")
+            let data = trim.components(separatedBy: ",").sorted { $0.count < $1.count }
+                .debugDescription.replacingOccurrences(of: ",", with: "\n")
+                .replacingOccurrences(of: "[", with: "")
+                .replacingOccurrences(of: "]", with: "")
+                .replacingOccurrences(of: "\"", with: "")
 
-            return trim
+            return data
         }
     }
 }
