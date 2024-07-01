@@ -21,7 +21,6 @@ extension Settings {
         ) var fetchedVersionNumber: FetchedResults<VNr>
 
         var body: some View {
-            // First run (onboarding)
             if state.firstRun {
                 onboardingView
             } else {
