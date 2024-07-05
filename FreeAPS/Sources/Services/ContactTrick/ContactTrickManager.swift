@@ -6,6 +6,7 @@ import Swinject
 
 protocol ContactTrickManager {
     func updateContacts(contacts: [ContactTrickEntry], completion: @escaping (Result<[ContactTrickEntry], Error>) -> Void)
+    var currentContacts: [ContactTrickEntry] { get }
 }
 
 final class BaseContactTrickManager: NSObject, ContactTrickManager, Injectable {
@@ -19,6 +20,10 @@ final class BaseContactTrickManager: NSObject, ContactTrickManager, Injectable {
 
     private var knownIds: [String] = []
     private var contacts: [ContactTrickEntry] = []
+
+    var currentContacts: [ContactTrickEntry] {
+        contacts
+    }
 
     private let coreDataStorage = CoreDataStorage()
 
@@ -36,7 +41,7 @@ final class BaseContactTrickManager: NSObject, ContactTrickManager, Injectable {
         knownIds = contacts.compactMap(\.contactId)
 
         processQueue.async {
-            self.renderContacts()
+            self.renderContacts(forceSave: false)
         }
     }
 
@@ -54,47 +59,53 @@ final class BaseContactTrickManager: NSObject, ContactTrickManager, Injectable {
                     print("contacts cleanup, failed to delete contact \(contactId)")
                 }
             }
-            self.renderContacts()
+            self.renderContacts(forceSave: true)
             self.knownIds = self.contacts.compactMap(\.contactId)
             completion(.success(self.contacts))
         }
     }
 
-    private func renderContacts() {
+    private func renderContacts(forceSave: Bool) {
         if let workItem = workItem, !workItem.isCancelled {
             workItem.cancel()
         }
 
-        let readings = coreDataStorage.fetchGlucose(interval: DateFilter().twoHours)
-        let glucoseValues = glucoseText(readings)
+        if contacts.isNotEmpty, CNContactStore.authorizationStatus(for: .contacts) == .authorized {
+            let readings = coreDataStorage.fetchGlucose(interval: DateFilter().twoHours)
+            let glucoseValues = glucoseText(readings)
 
-        let suggestion: Suggestion? = storage.retrieve(OpenAPS.Enact.suggested, as: Suggestion.self)
+            let suggestion: Suggestion? = storage.retrieve(OpenAPS.Enact.suggested, as: Suggestion.self)
 
-        let state = ContactTrickState(
-            glucose: glucoseValues.glucose,
-            trend: glucoseValues.trend,
-            delta: glucoseValues.delta,
-            lastLoopDate: suggestion?.timestamp,
-            iob: suggestion?.iob,
-            iobText: suggestion?.iob.map { iob in
-                iobFormatter.string(from: iob as NSNumber)!
-            },
-            cob: suggestion?.cob,
-            cobText: suggestion?.cob.map { cob in
-                cobFormatter.string(from: cob as NSNumber)!
-            },
-            eventualBG: eventualBGString(suggestion),
-            maxIOB: settingsManager.preferences.maxIOB,
-            maxCOB: settingsManager.preferences.maxCOB
-        )
+            let state = ContactTrickState(
+                glucose: glucoseValues.glucose,
+                trend: glucoseValues.trend,
+                delta: glucoseValues.delta,
+                lastLoopDate: suggestion?.timestamp,
+                iob: suggestion?.iob,
+                iobText: suggestion?.iob.map { iob in
+                    iobFormatter.string(from: iob as NSNumber)!
+                },
+                cob: suggestion?.cob,
+                cobText: suggestion?.cob.map { cob in
+                    cobFormatter.string(from: cob as NSNumber)!
+                },
+                eventualBG: eventualBGString(suggestion),
+                maxIOB: settingsManager.preferences.maxIOB,
+                maxCOB: settingsManager.preferences.maxCOB
+            )
 
-        contacts = contacts.enumerated().map { index, entry in renderContact(entry, index + 1, state) }
+            let newContacts = contacts.enumerated().map { index, entry in renderContact(entry, index + 1, state) }
 
-        storage.save(contacts, as: OpenAPS.Settings.contactTrick)
+            if forceSave || newContacts != contacts {
+                // when we create new contacts we store the IDs, in that case we need to write into the settings storage
+                storage.save(newContacts, as: OpenAPS.Settings.contactTrick)
+            }
+            contacts = newContacts
+        }
 
         workItem = DispatchWorkItem(block: {
             print("in renderContacts, no updates received for more than 5 minutes")
-            self.renderContacts()
+            self.renderContacts(forceSave: false)
         })
         DispatchQueue.main.asyncAfter(deadline: .now() + 5 * 60 + 15, execute: workItem!)
     }
@@ -319,10 +330,10 @@ extension BaseContactTrickManager:
     SettingsObserver
 {
     func suggestionDidUpdate(_: Suggestion) {
-        renderContacts()
+        renderContacts(forceSave: false)
     }
 
     func settingsDidChange(_: FreeAPSSettings) {
-        renderContacts()
+        renderContacts(forceSave: false)
     }
 }

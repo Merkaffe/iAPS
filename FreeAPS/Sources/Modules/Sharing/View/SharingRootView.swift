@@ -33,17 +33,18 @@ extension Sharing {
             Form {
                 Section {
                     Toggle("Share all of your Statistics", isOn: $state.uploadStats)
-
-                    Picker("Sex", selection: $state.sex) {
-                        ForEach(Sex.allCases) { sex in
-                            Text(NSLocalizedString(sex.rawValue, comment: "")).tag(Optional(sex.rawValue))
+                    if state.uploadStats {
+                        Picker("Sex", selection: $state.sex) {
+                            ForEach(Sex.allCases) { sex in
+                                Text(NSLocalizedString(sex.rawValue, comment: "")).tag(Optional(sex.rawValue))
+                            }
+                        }.onChange(of: state.sex) { _ in
+                            state.saveSetting()
                         }
-                    }.onChange(of: state.sex) { _ in
-                        state.saveSetting()
-                    }
-                    HStack {
-                        DatePicker("Birth Date", selection: $state.birtDate, in: dateRange, displayedComponents: [.date])
-                            .datePickerStyle(.compact)
+                        HStack {
+                            DatePicker("Birth Date", selection: $state.birthDate, in: dateRange, displayedComponents: [.date])
+                                .datePickerStyle(.compact)
+                        }
                     }
                 } header: { Text("Statistics") }
 
@@ -55,13 +56,9 @@ extension Sharing {
 
                 Section {}
                 footer: {
-                    VStack {
-                        Text(
-                            "Every bit of information you choose to share is uploaded anonymously. To prevent duplicate uploads, the data is identified with a unique random string saved on your phone."
-                        )
-                        Text("https://open-iaps.app/statistics")
-                            .multilineTextAlignment(.center)
-                    }
+                    Text(
+                        "Every bit of information you choose to share is uploaded anonymously. To prevent duplicate uploads, the data is identified with a unique random string saved on your phone."
+                    )
                 }
 
                 Section {
@@ -81,7 +78,19 @@ extension Sharing {
                 }
                 header: { Text("Your identifier") }
                 footer: { Text((copied && display) ? "Copied" : "") }
+
+                Section {}
+                footer: {
+                    let statisticsLink = URL(string: "https://open-iaps.app/user/" + state.identfier)!
+
+                    Button("View Personal Statistics") {
+                        UIApplication.shared.open(statisticsLink, options: [:], completionHandler: nil)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .font(.system(size: 15))
+                }
             }
+            .dynamicTypeSize(...DynamicTypeSize.xxLarge)
             .onAppear {
                 configureView()
                 state.savedSettings()

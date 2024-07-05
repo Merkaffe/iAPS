@@ -5,6 +5,7 @@ struct DateFilter {
     var twoHours = Date().addingTimeInterval(-2.hours.timeInterval) as NSDate
     var today = Calendar.current.startOfDay(for: Date()) as NSDate
     var day = Date().addingTimeInterval(-24.hours.timeInterval) as NSDate
+    var twoDays = Date().addingTimeInterval(-2.days.timeInterval) as NSDate
     var week = Date().addingTimeInterval(-7.days.timeInterval) as NSDate
     var month = Date().addingTimeInterval(-30.days.timeInterval) as NSDate
     var total = Date().addingTimeInterval(-90.days.timeInterval) as NSDate
@@ -24,6 +25,7 @@ public enum IAPSconfig {
     static let id = "iAPS.identifier"
     static let version = "iAPS.version"
     static let newVersion = "iAPS.newVersion"
+    static let inBolusView = "iAPS.inBolusView"
     static let statURL = URL(string: "https://submit.open-iaps.app")!
 }
 
