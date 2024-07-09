@@ -77,7 +77,7 @@ extension Profiles {
                     }
                 } header: {
                     HStack {
-                        Text("Load Profile")
+                        Text("Load Profile from")
                         Image(systemName: "cloud").textCase(nil).foregroundStyle(colorScheme == .dark ? .white : .black)
                     }
                 }
@@ -112,7 +112,6 @@ extension Profiles {
                         selectedProfile = preset.name ?? ""
                         id = state.getIdentifier()
                         onboardingView.toggle()
-                        // state.activeProfile(selectedProfile)
                     }
             }
         }

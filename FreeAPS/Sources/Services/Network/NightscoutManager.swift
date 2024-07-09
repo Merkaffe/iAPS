@@ -664,9 +664,8 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
     func uploadProfileAndSettings(_ force: Bool) {
         var loaded = Loaded()
 
-        // Start trying retrieving files twice (Sometimes for some reason the files can't be retrieved...
-
-        let sensitivities = storage.retrieveTwice(OpenAPS.Settings.insulinSensitivities, as: InsulinSensitivities.self)
+        // Start trying retrieving files
+        let sensitivities = storage.retrieveFile(OpenAPS.Settings.insulinSensitivities, as: InsulinSensitivities.self)
         if sensitivities != nil {
             loaded.sens = true
             debug(.nightscout, "NightscoutManager uploadProfile: file insulinSensitivities loaded")
@@ -674,35 +673,35 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             debug(.nightscout, "NightscoutManager uploadProfile: error loading insulinSensitivities")
         }
 
-        let settings = storage.retrieveTwice(OpenAPS.FreeAPS.settings, as: FreeAPSSettings.self)
+        let settings = storage.retrieveFile(OpenAPS.FreeAPS.settings, as: FreeAPSSettings.self)
         if settings != nil {
             loaded.settings = true
         } else {
             debug(.nightscout, "NightscoutManager uploadProfile: error loading settings")
         }
 
-        let preferences = storage.retrieveTwice(OpenAPS.Settings.preferences, as: Preferences.self)
+        let preferences = storage.retrieveFile(OpenAPS.Settings.preferences, as: Preferences.self)
         if preferences != nil {
             loaded.preferences = true
         } else {
             debug(.nightscout, "NightscoutManager uploadProfile: error loading preferences")
         }
 
-        let targets = storage.retrieveTwice(OpenAPS.Settings.bgTargets, as: BGTargets.self)
+        let targets = storage.retrieveFile(OpenAPS.Settings.bgTargets, as: BGTargets.self)
         if targets != nil {
             loaded.targets = true
         } else {
             debug(.nightscout, "NightscoutManager uploadProfile: error loading bgTargets")
         }
 
-        let carbRatios = storage.retrieveTwice(OpenAPS.Settings.carbRatios, as: CarbRatios.self)
+        let carbRatios = storage.retrieveFile(OpenAPS.Settings.carbRatios, as: CarbRatios.self)
         if carbRatios != nil {
             loaded.carbratios = true
         } else {
             debug(.nightscout, "NightscoutManager uploadProfile: error loading carbRatios")
         }
 
-        let basalProfile = storage.retrieveTwice(OpenAPS.Settings.basalProfile, as: [BasalProfileEntry].self)
+        let basalProfile = storage.retrieveFile(OpenAPS.Settings.basalProfile, as: [BasalProfileEntry].self)
         if basalProfile != nil {
             loaded.basalProfiles = true
         } else {
@@ -815,7 +814,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             )
 
             // UPLOAD Profiles WHEN CHANGED
-            if let uploadedProfile = storage.retrieveTwice(OpenAPS.Nightscout.uploadedProfile, as: NightscoutProfileStore.self),
+            if let uploadedProfile = storage.retrieveFile(OpenAPS.Nightscout.uploadedProfile, as: NightscoutProfileStore.self),
                (uploadedProfile.store["default"]?.rawJSON ?? "").sorted() == ps.rawJSON.sorted(), !force
             {
                 NSLog("NightscoutManager uploadProfile, no profile change")
@@ -838,7 +837,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             }
 
             // UPLOAD Profiles to database WHEN CHANGED
-            if let uploadedProfile = storage.retrieveTwice(
+            if let uploadedProfile = storage.retrieveFile(
                 OpenAPS.Nightscout.uploadedProfileToDatabase,
                 as: DatabaseProfileStore.self
             ),
@@ -889,7 +888,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         }
 
         // UPLOAD PumpSettings WHEN CHANGED
-        if let pumpSettings = storage.retrieveTwice(OpenAPS.Settings.settings, as: PumpSettings.self) {
+        if let pumpSettings = storage.retrieveFile(OpenAPS.Settings.settings, as: PumpSettings.self) {
             if let uploadedSettings = storage.retrieve(OpenAPS.Nightscout.uploadedPumpSettings, as: PumpSettings.self),
                uploadedSettings.rawJSON.sorted() == pumpSettings.rawJSON.sorted(), !force
             {
@@ -901,7 +900,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         }
 
         // UPLOAD Temp Targets WHEN CHANGED
-        if let tempTargets = storage.retrieveTwice(OpenAPS.FreeAPS.tempTargetsPresets, as: [TempTarget].self) {
+        if let tempTargets = storage.retrieveFile(OpenAPS.FreeAPS.tempTargetsPresets, as: [TempTarget].self) {
             if let uploadedTempTargets = storage.retrieve(
                 OpenAPS.Nightscout.uploadedTempTargetsDatabase,
                 as: [TempTarget].self

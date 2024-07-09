@@ -51,7 +51,6 @@ extension ProfilePicker {
         @State var diaOK: Bool = false
         @State var diaSaved: Bool = false
 
-        @State var firstRun = false
         @State var imported = false
         @State var viewInt = 0
 
@@ -424,8 +423,11 @@ extension ProfilePicker {
 
                 Button {
                     if noneFetched {
-                        reset()
-                        firstRun = false
+                        if int == 2 {
+                            close()
+                        } else {
+                            reset()
+                        }
                     } else {
                         viewInt += 1
                     }
