@@ -21,10 +21,10 @@
 		190F8CF72BC6F70800EDB473 /* IllustrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 190F8CF62BC6F70800EDB473 /* IllustrationView.swift */; };
 		191A9D162BED00A500028D48 /* Version.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191A9D152BED00A500028D48 /* Version.swift */; };
 		191A9D182BED24B000028D48 /* ActiveIOBView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191A9D172BED24B000028D48 /* ActiveIOBView.swift */; };
-		191DF1502C3C113F003E36F6 /* ProfilePickerDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191DF14F2C3C113F003E36F6 /* ProfilePickerDataFlow.swift */; };
-		191DF1522C3C1152003E36F6 /* ProfilePickerProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191DF1512C3C1152003E36F6 /* ProfilePickerProvider.swift */; };
-		191DF1542C3C116E003E36F6 /* ProfilePrickerStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191DF1532C3C116E003E36F6 /* ProfilePrickerStateModel.swift */; };
-		191DF1562C3C1185003E36F6 /* ProfilePickerRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191DF1552C3C1185003E36F6 /* ProfilePickerRootView.swift */; };
+		191DF1502C3C113F003E36F6 /* RestoreDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191DF14F2C3C113F003E36F6 /* RestoreDataFlow.swift */; };
+		191DF1522C3C1152003E36F6 /* RestoreProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191DF1512C3C1152003E36F6 /* RestoreProvider.swift */; };
+		191DF1542C3C116E003E36F6 /* RestoreStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191DF1532C3C116E003E36F6 /* RestoreStateModel.swift */; };
+		191DF1562C3C1185003E36F6 /* RestoreRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191DF1552C3C1185003E36F6 /* RestoreRootView.swift */; };
 		1920BF5D2B9DF53200E861FE /* BolusShortcut.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1920BF5C2B9DF53200E861FE /* BolusShortcut.swift */; };
 		19229B962AFBB84800CD91CA /* Predictions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19229B952AFBB84800CD91CA /* Predictions.swift */; };
 		1922ACBD2C30B25300B28CF3 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1922ACBC2C30B25300B28CF3 /* Database.swift */; };
@@ -578,10 +578,10 @@
 		1918333A26ADA46800F45722 /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		191A9D152BED00A500028D48 /* Version.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Version.swift; sourceTree = "<group>"; };
 		191A9D172BED24B000028D48 /* ActiveIOBView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveIOBView.swift; sourceTree = "<group>"; };
-		191DF14F2C3C113F003E36F6 /* ProfilePickerDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePickerDataFlow.swift; sourceTree = "<group>"; };
-		191DF1512C3C1152003E36F6 /* ProfilePickerProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePickerProvider.swift; sourceTree = "<group>"; };
-		191DF1532C3C116E003E36F6 /* ProfilePrickerStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePrickerStateModel.swift; sourceTree = "<group>"; };
-		191DF1552C3C1185003E36F6 /* ProfilePickerRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePickerRootView.swift; sourceTree = "<group>"; };
+		191DF14F2C3C113F003E36F6 /* RestoreDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreDataFlow.swift; sourceTree = "<group>"; };
+		191DF1512C3C1152003E36F6 /* RestoreProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreProvider.swift; sourceTree = "<group>"; };
+		191DF1532C3C116E003E36F6 /* RestoreStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreStateModel.swift; sourceTree = "<group>"; };
+		191DF1552C3C1185003E36F6 /* RestoreRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreRootView.swift; sourceTree = "<group>"; };
 		1920BF5C2B9DF53200E861FE /* BolusShortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BolusShortcut.swift; sourceTree = "<group>"; };
 		192202902BAB567800B95BE8 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		19229B952AFBB84800CD91CA /* Predictions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Predictions.swift; sourceTree = "<group>"; };
@@ -1214,21 +1214,21 @@
 			path = Shortcuts;
 			sourceTree = "<group>";
 		};
-		191DF14D2C3C110D003E36F6 /* ProfilePicker */ = {
+		191DF14D2C3C110D003E36F6 /* Restore */ = {
 			isa = PBXGroup;
 			children = (
-				191DF14F2C3C113F003E36F6 /* ProfilePickerDataFlow.swift */,
-				191DF1512C3C1152003E36F6 /* ProfilePickerProvider.swift */,
-				191DF1532C3C116E003E36F6 /* ProfilePrickerStateModel.swift */,
+				191DF14F2C3C113F003E36F6 /* RestoreDataFlow.swift */,
+				191DF1512C3C1152003E36F6 /* RestoreProvider.swift */,
+				191DF1532C3C116E003E36F6 /* RestoreStateModel.swift */,
 				191DF14E2C3C1124003E36F6 /* View */,
 			);
-			path = ProfilePicker;
+			path = Restore;
 			sourceTree = "<group>";
 		};
 		191DF14E2C3C1124003E36F6 /* View */ = {
 			isa = PBXGroup;
 			children = (
-				191DF1552C3C1185003E36F6 /* ProfilePickerRootView.swift */,
+				191DF1552C3C1185003E36F6 /* RestoreRootView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -1461,7 +1461,7 @@
 		3811DE0325C9D31700A708ED /* Modules */ = {
 			isa = PBXGroup;
 			children = (
-				191DF14D2C3C110D003E36F6 /* ProfilePicker */,
+				191DF14D2C3C110D003E36F6 /* Restore */,
 				19462AA32C396413009AA396 /* Profiles */,
 				F2159A472BA60A0300A0B716 /* ContactTrick */,
 				19F191D92BE4F93400F6297E /* Sharing */,
@@ -3068,7 +3068,7 @@
 				3811DE3225C9D49500A708ED /* HomeDataFlow.swift in Sources */,
 				CE1856F52ADC4858007E39C7 /* AddCarbPresetIntent.swift in Sources */,
 				38569347270B5DFB0002C50D /* CGMType.swift in Sources */,
-				191DF1562C3C1185003E36F6 /* ProfilePickerRootView.swift in Sources */,
+				191DF1562C3C1185003E36F6 /* RestoreRootView.swift in Sources */,
 				3821ED4C25DD18BA00BC42AD /* Constants.swift in Sources */,
 				384E803425C385E60086DB71 /* JavaScriptWorker.swift in Sources */,
 				3811DE5D25C9D4D500A708ED /* Publisher.swift in Sources */,
@@ -3081,7 +3081,7 @@
 				CEB434E728B9053300B70274 /* LoopUIColorPalette+Default.swift in Sources */,
 				CECA4775298DA8310095139F /* DexcomSourceG5.swift in Sources */,
 				19F95FF329F10FBC00314DDC /* StatDataFlow.swift in Sources */,
-				191DF1522C3C1152003E36F6 /* ProfilePickerProvider.swift in Sources */,
+				191DF1522C3C1152003E36F6 /* RestoreProvider.swift in Sources */,
 				3811DE2225C9D48300A708ED /* MainProvider.swift in Sources */,
 				3811DE0C25C9D32F00A708ED /* BaseProvider.swift in Sources */,
 				19F191E02BE4F98F00F6297E /* SharingStateModel.swift in Sources */,
@@ -3096,7 +3096,7 @@
 				BD7DA9A92AE06E9200601B20 /* BolusCalculatorStateModel.swift in Sources */,
 				CEB434E528B8FF5D00B70274 /* UIColor.swift in Sources */,
 				190EBCCB29FF13CB00BA767D /* StatConfigRootView.swift in Sources */,
-				191DF1502C3C113F003E36F6 /* ProfilePickerDataFlow.swift in Sources */,
+				191DF1502C3C113F003E36F6 /* RestoreDataFlow.swift in Sources */,
 				3811DEA925C9D88300A708ED /* AppearanceManager.swift in Sources */,
 				19C14F442C29807C009A7E07 /* ScrollOffset.swift in Sources */,
 				CE7950242997D81700FA576E /* CGMSettingsView.swift in Sources */,
@@ -3208,7 +3208,7 @@
 				38192E07261BA9960094D973 /* FetchTreatmentsManager.swift in Sources */,
 				19012CDC291D2CB900FB8210 /* LoopStats.swift in Sources */,
 				6632A0DC746872439A858B44 /* ISFEditorDataFlow.swift in Sources */,
-				191DF1542C3C116E003E36F6 /* ProfilePrickerStateModel.swift in Sources */,
+				191DF1542C3C116E003E36F6 /* RestoreStateModel.swift in Sources */,
 				DBA5254DBB2586C98F61220C /* ISFEditorProvider.swift in Sources */,
 				1BBB001DAD60F3B8CEA4B1C7 /* ISFEditorStateModel.swift in Sources */,
 				F816826028DB441800054060 /* BluetoothTransmitter.swift in Sources */,

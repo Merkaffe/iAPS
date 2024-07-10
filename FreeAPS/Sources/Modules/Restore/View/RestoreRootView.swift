@@ -2,7 +2,7 @@ import LoopKit
 import SwiftUI
 import Swinject
 
-extension ProfilePicker {
+extension Restore {
     struct RootView: BaseView {
         let resolver: Resolver
         @StateObject var state = StateModel()
@@ -51,7 +51,6 @@ extension ProfilePicker {
         @State var diaOK: Bool = false
         @State var diaSaved: Bool = false
 
-        @State var imported = false
         @State var viewInt = 0
 
         var fetchedVersionNumber = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
@@ -173,7 +172,7 @@ extension ProfilePicker {
             Section {} header: {
                 Text(
                     !noneFetched ?
-                        "\nConfirm the fetched settings before saving" : "No fetched setting"
+                        "\nConfirm the fetched settings before saving" : "No fetched settings"
                 )
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -404,7 +403,7 @@ extension ProfilePicker {
                             .foregroundStyle(freeapsSettingsOK ? Color(.darkGreen) : .red)
                     }
                 } header: {
-                    Text("Fetched settings").font(.previewNormal)
+                    Text("Fetching settings...").font(.previewNormal)
                 }
 
                 if !allDone {
@@ -498,7 +497,7 @@ extension ProfilePicker {
                             .foregroundStyle(freeapsSettingsSaved ? Color(.darkGreen) : .red)
                     }
                 } header: {
-                    Text("Saved settings").font(.previewNormal)
+                    Text("Saving settings...").font(.previewNormal)
                 }
 
                 Button {
@@ -783,7 +782,6 @@ extension ProfilePicker {
 
         private func onboardingDone() {
             CoreDataStorage().saveOnbarding()
-            imported = true
         }
 
         private func offset(_ string: String) -> Int {

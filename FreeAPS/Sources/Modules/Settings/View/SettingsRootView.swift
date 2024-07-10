@@ -35,7 +35,7 @@ extension Settings {
 
         var body: some View {
             if onboardingDone.first?.firstRun ?? false {
-                ProfilePicker.RootView(resolver: resolver, int: $int, profile: $selectedProfile, inSitu: $inSitu, id_: $id)
+                Restore.RootView(resolver: resolver, int: $int, profile: $selectedProfile, inSitu: $inSitu, id_: $id)
             } else {
                 settingsView
             }

@@ -97,7 +97,7 @@ extension Profiles {
             .navigationTitle("Profiles")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $onboardingView) {
-                ProfilePicker.RootView(resolver: resolver, int: $int, profile: $selectedProfile, inSitu: $inSitu, id_: $id)
+                Restore.RootView(resolver: resolver, int: $int, profile: $selectedProfile, inSitu: $inSitu, id_: $id)
             }
         }
 

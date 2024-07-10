@@ -3,7 +3,7 @@ import Foundation
 import LoopKit
 import Swinject
 
-extension ProfilePicker {
+extension Restore {
     final class StateModel: BaseStateModel<Provider> {
         @Injected() var keychain: Keychain!
         @Injected() var storage: FileStorage!
