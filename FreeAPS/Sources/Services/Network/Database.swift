@@ -41,6 +41,42 @@ extension Database {
             .eraseToAnyPublisher()
     }
 
+    func moveProfiles(token: String, restoreToken: String) -> AnyPublisher<Void, Swift.Error> {
+        var components = URLComponents()
+        components.scheme = url.scheme
+        components.host = url.host
+        components.port = url.port
+        components.path = "/download.php?token=" + restoreToken + "&new_token=" + token
+
+        var request = URLRequest(url: components.url!)
+        request.allowsConstrainedNetworkAccess = true
+        request.timeoutInterval = Config.timeout
+
+        request.httpMethod = "POST"
+
+        return service.run(request)
+            .retry(Config.retryCount)
+            .map { _ in () }
+            .eraseToAnyPublisher()
+    }
+
+    func fetchProfiles() -> AnyPublisher<ProfileList, Swift.Error> {
+        var components = URLComponents()
+        components.scheme = url.scheme
+        components.host = url.host
+        components.port = url.port
+        components.path = "/download.php?token=" + token + "&section=profile_list"
+
+        var request = URLRequest(url: components.url!)
+        request.allowsConstrainedNetworkAccess = true
+        request.timeoutInterval = Config.timeout
+
+        return service.run(request)
+            .retry(Config.retryCount)
+            .decode(type: ProfileList.self, decoder: JSONCoding.decoder)
+            .eraseToAnyPublisher()
+    }
+
     func fetchSettings(_ name: String) -> AnyPublisher<FreeAPSSettings, Swift.Error> {
         var components = URLComponents()
         components.scheme = url.scheme
@@ -75,6 +111,23 @@ extension Database {
         return service.run(request)
             .retry(Config.retryCount)
             .decode(type: NightscoutProfileStore.self, decoder: JSONCoding.decoder)
+            .eraseToAnyPublisher()
+    }
+
+    func deleteProfile(_ name: String) -> AnyPublisher<Void, Swift.Error> {
+        var components = URLComponents()
+        components.scheme = url.scheme
+        components.host = url.host
+        components.port = url.port
+        components.path = "/upload.php?token=" + token + "?profiles_delete&profile=" + name
+
+        var request = URLRequest(url: components.url!)
+        request.allowsConstrainedNetworkAccess = true
+        request.timeoutInterval = Config.timeout
+
+        return service.run(request)
+            .retry(Config.retryCount)
+            .map { _ in () }
             .eraseToAnyPublisher()
     }
 

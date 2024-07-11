@@ -6,13 +6,13 @@ extension Restore {
     struct RootView: BaseView {
         let resolver: Resolver
         @StateObject var state = StateModel()
-
-        @Environment(\.dismiss) private var dismiss
-
         @Binding var int: Int
         @Binding var profile: String
         @Binding var inSitu: Bool
         @Binding var id_: String
+        var uniqueID: String
+
+        @Environment(\.dismiss) private var dismiss
 
         @State var basals: [BasalProfileEntry]?
         @State var basalsOK: Bool = false
@@ -51,13 +51,13 @@ extension Restore {
         @State var diaOK: Bool = false
         @State var diaSaved: Bool = false
 
+        @State var profileList: String?
+
         @State var viewInt = 0
+        @State var token: String = ""
+        @State var lifetime = Lifetime()
 
         var fetchedVersionNumber = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
-
-        @State var token: String = ""
-
-        @State var lifetime = Lifetime()
 
         var GlucoseFormatter: NumberFormatter {
             let formatter = NumberFormatter()
@@ -165,6 +165,13 @@ extension Restore {
                 }
                 .listRowBackground(!(token == "") ? Color(.systemBlue) : Color(.systemGray4))
                 .tint(.white)
+            }
+        }
+
+        private func migrateProfiles() {
+            if state.fetchSettingProfileNames().isNilOrEmpty {
+                changeToken(restoreToken: token)
+                retrieveProfiles(restoreToken: token)
             }
         }
 
@@ -328,6 +335,7 @@ extension Restore {
                 Button {
                     save()
                     viewInt += 1
+                    migrateProfiles()
                 }
                 label: { Text("Save settings") }
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -412,6 +420,8 @@ extension Restore {
                             importSettings(id: inSitu ? id_ : token)
                             let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
                             impactHeavy.impactOccurred()
+
+                            // migrateProfiles()
                         }
                         label: { Text("Try Again") }
                             .frame(maxWidth: .infinity, alignment: .center)
@@ -552,6 +562,58 @@ extension Restore {
             onboardingDone()
         }
 
+        private func fetchProfiles() {
+            guard let profiles = profileList else { return }
+            print("Profiles: \(profiles)")
+            let string = profiles.components(separatedBy: ",")
+            print("Profiles string: \(string)")
+            for item in string {
+                CoreDataStorage().migrateProfileSettingName(name: item)
+            }
+        }
+
+        func changeToken(restoreToken: String) {
+            if token != restoreToken {
+                let database = Database(token: token)
+                database.moveProfiles(token: token, restoreToken: restoreToken)
+                    .sink { completion in
+                        switch completion {
+                        case .finished:
+                            debug(.service, "List of profiles moved to a new token")
+                            self.fetchProfiles()
+                        case let .failure(error):
+                            debug(.service, "Failed moving profiles to a new token " + error.localizedDescription)
+                        }
+                    }
+                receiveValue: {}
+                    .store(in: &lifetime)
+            }
+        }
+
+        func retrieveProfiles(restoreToken: String) {
+            let database = Database(token: restoreToken)
+            let coreData = CoreDataStorage()
+
+            database.fetchProfiles()
+                .receive(on: DispatchQueue.main)
+                .sink { completion in
+                    switch completion {
+                    case .finished:
+                        debug(.service, "List of profiles fetched from database")
+                        self.fetchProfiles()
+                        if !coreData.checkIfActiveProfile() {
+                            coreData.activeProfile(name: "default")
+                            debug(.service, "default is current profile")
+                        }
+                    case let .failure(error):
+                        debug(.service, "Failed fetching List of profiles from database")
+                        debug(.service, error.localizedDescription)
+                    }
+                }
+            receiveValue: { self.profileList = $0.profiles }
+                .store(in: &lifetime)
+        }
+
         private func fetchPreferences(token: String, name: String) {
             let database = Database(token: token)
             database.fetchPreferences(name)
@@ -679,7 +741,6 @@ extension Restore {
                         }
                     } else {
                         state.saveFile(basals_, filename: OpenAPS.Settings.basalProfile)
-                        // state.storage.save(basals_, as: OpenAPS.Settings.basalProfile)
                         debug(.service, "Imported Basals have been saved to file storage.")
                         basalsSaved = true
                     }
@@ -702,7 +763,6 @@ extension Restore {
                         sensitivities: sensitivities
                     )
 
-                    // state.storage.save(isfs_, as: OpenAPS.Settings.insulinSensitivities)
                     state.saveFile(isfs_, filename: OpenAPS.Settings.insulinSensitivities)
 
                     debug(.service, "Imported ISFs have been saved to file storage.")
@@ -719,7 +779,6 @@ extension Restore {
                     })
                     let crs_ = CarbRatios(units: CarbUnit.grams, schedule: carbRatios)
 
-                    // state.storage.save(crs_, as: OpenAPS.Settings.carbRatios)
                     state.saveFile(crs_, filename: OpenAPS.Settings.carbRatios)
                     debug(.service, "Imported CRs have been saved to file storage.")
                     crsOKSaved = true
@@ -736,7 +795,6 @@ extension Restore {
                     })
                     let targets_ = BGTargets(units: preferredUnit, userPrefferedUnits: preferredUnit, targets: glucoseTargets)
 
-                    // state.storage.save(targets_, as: OpenAPS.Settings.bgTargets)
                     state.saveFile(targets_, filename: OpenAPS.Settings.bgTargets)
                     debug(.service, "Imported Targets have been saved to file storage.")
                     targetsSaved = true
@@ -796,7 +854,9 @@ extension Restore {
             verifyPreferences()
             verifyPumpSettings()
             verifyTempTargets()
-            state.activeProfile(profile)
+            if !profile.isEmpty {
+                state.activeProfile(profile)
+            }
         }
 
         private func trim(_ string: String) -> String {

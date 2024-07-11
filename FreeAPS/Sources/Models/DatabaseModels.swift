@@ -50,3 +50,7 @@ struct Loaded {
     var carbratios = false
     var basalProfiles = false
 }
+
+struct ProfileList: JSON {
+    var profiles: String
+}

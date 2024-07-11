@@ -5,7 +5,7 @@ import Swinject
 
 extension Restore {
     final class StateModel: BaseStateModel<Provider> {
-        @Injected() var keychain: Keychain!
+        // @Injected() var keychain: Keychain!
         @Injected() var storage: FileStorage!
         @Injected() var apsManager: APSManager!
 
@@ -32,18 +32,12 @@ extension Restore {
             backup = settingsManager.settings.uploadStats
         }
 
-        func getIdentifier() -> String {
-            var identfier = keychain.getValue(String.self, forKey: IAPSconfig.id) ?? ""
-            guard identfier.count > 1 else {
-                identfier = UUID().uuidString
-                keychain.setValue(identfier, forKey: IAPSconfig.id)
-                return identfier
-            }
-            return identfier
-        }
-
         func activeProfile(_ selectedProfile: String) {
             coreData.activeProfile(name: selectedProfile)
+        }
+
+        func fetchSettingProfileNames() -> [Profiles]? {
+            coreData.fetchSettingProfileNames()
         }
     }
 }
