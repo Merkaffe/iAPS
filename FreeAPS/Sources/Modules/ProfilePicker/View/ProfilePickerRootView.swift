@@ -137,11 +137,14 @@ extension ProfilePicker {
                     .sink { completion in
                         switch completion {
                         case .finished:
-                            debug(.service, "Profiles \(profile.name ?? "") deleted from database")
+                            debug(.service, "Profile \(profile.name ?? "") deleted from database")
                             self.moc.delete(profile)
                             do { try moc.save() } catch { /* To do: add error */ }
                         case let .failure(error):
-                            debug(.service, "Failed deleting \(profile.name ?? "") from database. " + error.localizedDescription)
+                            debug(
+                                .service,
+                                "Failed deleting the profile \(profile.name ?? "") from database. " + error.localizedDescription
+                            )
                         }
                     }
                 receiveValue: {}

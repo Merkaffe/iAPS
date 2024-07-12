@@ -238,14 +238,17 @@ final class CoreDataStorage {
     }
 
     func fetchSettingProfileName() -> String? {
-        var presetsArray: String?
+        var activeArray: String = "default"
         coredataContext.performAndWait {
-            let requestProfiles = Profiles.fetchRequest() as NSFetchRequest<Profiles>
+            let requestActiveProfile = ActiveProfile.fetchRequest() as NSFetchRequest<ActiveProfile>
             let sort = NSSortDescriptor(key: "date", ascending: false)
-            requestProfiles.sortDescriptors = [sort]
-            try? presetsArray = self.coredataContext.fetch(requestProfiles).first?.name
+            requestActiveProfile.sortDescriptors = [sort]
+            requestActiveProfile.predicate = NSPredicate(
+                format: "active == true"
+            )
+            try? activeArray = self.coredataContext.fetch(requestActiveProfile).first?.name ?? "default"
         }
-        return presetsArray
+        return activeArray
     }
 
     func fetchSettingProfileNames() -> [Profiles]? {

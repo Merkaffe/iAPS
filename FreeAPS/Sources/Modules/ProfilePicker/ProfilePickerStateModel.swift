@@ -34,22 +34,5 @@ extension ProfilePicker {
         func activeProfile(_ selectedProfile: String) {
             coreData.activeProfile(name: selectedProfile)
         }
-
-        func deleteProfileFromDatabase(name: String) {
-            let database = Database(token: getIdentifier())
-
-            database.deleteProfile(name)
-                .sink { completion in
-                    switch completion {
-                    case .finished:
-                        debug(.service, "Profiles \(name) deleted from database")
-
-                    case let .failure(error):
-                        debug(.service, "Failed deleting \(name) from database. " + error.localizedDescription)
-                    }
-                }
-            receiveValue: {}
-                .store(in: &lifetime)
-        }
     }
 }
