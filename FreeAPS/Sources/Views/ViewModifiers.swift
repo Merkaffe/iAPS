@@ -49,24 +49,21 @@ struct CompactSectionSpacing: ViewModifier {
     }
 }
 
-struct ScrollTargetLayoutModifier: ViewModifier {
+struct InfoPanelBackground: ViewModifier {
+    let colorScheme: ColorScheme
     func body(content: Content) -> some View {
-        if #available(iOS 17, *) {
-            return content
-                .scrollTargetLayout()
+        content
+        if #available(iOS 17.0, *) {
+            Rectangle()
+                .stroke(.gray, lineWidth: 2)
+                .fill(colorScheme == .light ? .white : .black)
+                .frame(height: 24)
         } else {
-            return content }
-    }
-}
-
-struct ScrollPositionModifier: ViewModifier {
-    @Binding var id: Int?
-    func body(content: Content) -> some View {
-        if #available(iOS 17, *) {
-            return content
-                .scrollPosition(id: $id)
-        } else {
-            return content }
+            Rectangle()
+                .strokeBorder(.gray, lineWidth: 2)
+                .background(Rectangle().fill(colorScheme == .light ? .white : .black))
+                .frame(height: 24)
+        }
     }
 }
 
@@ -307,6 +304,10 @@ extension View {
         modifier(AddShadow())
     }
 
+    func infopanelBackground(colorScheme: ColorScheme) -> some View {
+        modifier(InfoPanelBackground(colorScheme: colorScheme))
+    }
+
     func addBackground() -> some View {
         ColouredRoundedBackground()
     }
@@ -343,14 +344,6 @@ extension View {
 
     func compactSectionSpacing() -> some View {
         modifier(CompactSectionSpacing())
-    }
-
-    func scrollTargetLayoutiOS17() -> some View {
-        modifier(ScrollTargetLayoutModifier())
-    }
-
-    func scrollPositioniOS17(id: Binding<Int?>) -> some View {
-        modifier(ScrollPositionModifier(id: id))
     }
 
     func asAny() -> AnyView { .init(self) }

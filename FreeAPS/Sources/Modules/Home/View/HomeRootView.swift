@@ -233,14 +233,7 @@ extension Home {
         var infoPanel: some View {
             info.frame(height: 26)
                 .background {
-                    if #available(iOS 17.0, *) {
-                        Rectangle()
-                            .stroke(.gray, lineWidth: 2)
-                            .fill(colorScheme == .dark ? .black : .white)
-                            .frame(height: 24)
-                    } else {
-                        // Fallback on earlier versions
-                    }
+                    infopanelBackground(colorScheme: colorScheme)
                 }
         }
 
@@ -640,7 +633,7 @@ extension Home {
                             .padding(.horizontal, 10)
                         }
                         // Small glucose View, past 24 hours.
-                        if scrolling { glucoseHeaderView() }
+                        if displayGlucose { glucoseHeaderView().transition(.slideDownAndUp) }
 
                         if !scrolling {
                             infoPanel
@@ -835,8 +828,8 @@ extension Home {
 extension AnyTransition {
     static var slideDownAndUp: AnyTransition {
         .asymmetric(
-            insertion: .move(edge: .top).combined(with: .opacity),
-            removal: .move(edge: .top).combined(with: .opacity)
+            insertion: .move(edge: .top),
+            removal: .move(edge: .top)
         )
     }
 }
