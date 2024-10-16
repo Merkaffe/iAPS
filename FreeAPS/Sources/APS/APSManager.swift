@@ -1007,8 +1007,8 @@ final class BaseAPSManager: APSManager, Injectable {
         let newVersion = UserDefaults.standard.bool(forKey: IAPSconfig.newVersion)
         // Only save and upload twice per day
         guard ((-1 * (stats.first?.lastrun ?? .distantPast).timeIntervalSinceNow.hours) > 10) || newVersion else {
-             return
-         }
+            return
+        }
 
         if settingsManager.settings.uploadStats {
             let units = settingsManager.settings.units
