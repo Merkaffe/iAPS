@@ -1,3 +1,4 @@
+import CoreData
 import HealthKit
 import SwiftUI
 import Swinject
@@ -21,6 +22,15 @@ extension Settings {
                 format: "name != %@", "" as String
             )
         ) var fetchedProfiles: FetchedResults<OverridePresets>
+
+        @FetchRequest(
+            entity: Configurations.entity(),
+            sortDescriptors: [NSSortDescriptor(key: "date", ascending: false)], predicate: NSPredicate(
+                format: "name != %@", "" as String
+            )
+        ) var configurations: FetchedResults<Configurations>
+
+        @State private var activeProfile = false
 
         var body: some View {
             Form {
@@ -67,6 +77,11 @@ extension Settings {
                     }
                     Text("Notifications").navigationLink(to: .notificationsConfig, from: self)
                 } header: { Text("Services") }
+
+                Section {
+                    Text("\(configurations.first?.name ?? "default")").foregroundStyle(.green).bold()
+                        .navigationLink(to: .profiles, from: self)
+                } header: { Text("Configuration Profiles") }
 
                 Section {
                     Text("Pump Settings").navigationLink(to: .pumpSettingsEditor, from: self)

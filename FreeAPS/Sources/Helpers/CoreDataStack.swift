@@ -9,6 +9,14 @@ class CoreDataStack: ObservableObject {
     lazy var persistentContainer: NSPersistentCloudKitContainer = {
         let container = NSPersistentCloudKitContainer(name: "Core_Data")
 
+        container.viewContext.automaticallyMergesChangesFromParent = true
+        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        do {
+            try container.viewContext.setQueryGenerationFrom(.current)
+        } catch {
+            fatalError("Failed to pin viewContext to the current generation:\(error)")
+        }
+
         container.loadPersistentStores(completionHandler: { _, error in
             guard let error = error as NSError? else { return }
             fatalError("Unresolved error: \(error), \(error.userInfo)")

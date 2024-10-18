@@ -24,6 +24,13 @@
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="enteredBy" optional="YES" attributeType="String"/>
     </entity>
+    <entity name="Configurations" representedClassName="Configurations" syncable="YES" codeGenerationType="class">
+        <attribute name="active" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719343120" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String" defaultValueString="Default"/>
+        <relationship name="settings_iAPS" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Settings_iAPS" inverseName="configurations" inverseEntity="Settings_iAPS"/>
+        <relationship name="settings_oref0" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Settings_ore0" inverseName="configurations" inverseEntity="Settings_ore0"/>
+    </entity>
     <entity name="Fat" representedClassName="Fat" syncable="YES" codeGenerationType="class">
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="enteredBy" optional="YES" attributeType="String"/>
@@ -167,6 +174,16 @@
         <attribute name="minPredBG" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="mmol" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="target" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+    </entity>
+    <entity name="Settings_iAPS" representedClassName="Settings_iAPS" syncable="YES" codeGenerationType="class">
+        <attribute name="dynamicCR" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="dynamicISF" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <relationship name="configurations" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Configurations" inverseName="settings_iAPS" inverseEntity="Configurations"/>
+    </entity>
+    <entity name="Settings_ore0" representedClassName="Settings_ore0" syncable="YES" codeGenerationType="class">
+        <attribute name="maxSMB" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="maxUAM" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="configurations" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Configurations" inverseName="settings_oref0" inverseEntity="Configurations"/>
     </entity>
     <entity name="StatsData" representedClassName="StatsData" syncable="YES" codeGenerationType="class">
         <attribute name="lastrun" attributeType="Date" defaultDateTimeInterval="704497620" usesScalarValueType="NO"/>
