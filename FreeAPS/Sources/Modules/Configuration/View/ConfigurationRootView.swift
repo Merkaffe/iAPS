@@ -31,11 +31,7 @@ extension Configuration {
         var body: some View {
             Form {
                 Section {
-                    HStack {
-                        Text("Current configuration:").foregroundStyle(.secondary)
-                        Spacer()
-                        Text(active ?? "default")
-                    }
+                    Text(active ?? "Default")
                 } header: { Text("Active configuration") }
 
                 Section {

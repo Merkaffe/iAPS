@@ -79,7 +79,7 @@ extension Settings {
                 } header: { Text("Services") }
 
                 Section {
-                    Text("\(configurations.first?.name ?? "default")").foregroundStyle(.green).bold()
+                    Text("\(configurations.first?.name ?? "Default")").foregroundStyle(.green).bold()
                         .navigationLink(to: .profiles, from: self)
                 } header: { Text("Configuration Profiles") }
 
