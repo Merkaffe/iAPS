@@ -27,7 +27,7 @@
     <entity name="Configurations" representedClassName="Configurations" syncable="YES" codeGenerationType="class">
         <attribute name="active" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719343120" usesScalarValueType="NO"/>
-        <attribute name="name" optional="YES" attributeType="String" defaultValueString="Default"/>
+        <attribute name="name" optional="YES" attributeType="String" defaultValueString="Empty"/>
         <relationship name="settings_iAPS" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Settings_iAPS" inverseName="configurations" inverseEntity="Settings_iAPS"/>
         <relationship name="settings_oref0" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Settings_ore0" inverseName="configurations" inverseEntity="Settings_ore0"/>
     </entity>

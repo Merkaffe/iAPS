@@ -16,7 +16,7 @@ extension Configuration {
             entity: Configurations.entity(),
             sortDescriptors: [NSSortDescriptor(key: "date", ascending: false)],
             predicate: NSPredicate(
-                format: "name != %@", "" as String
+                format: "name != %@", "Empty" as String
             )
         ) var configurations: FetchedResults<Configurations>
 
@@ -30,13 +30,14 @@ extension Configuration {
 
         var body: some View {
             Form {
+                // Diplay current configuration as header
                 Section {
                     Text(active ?? "Default")
                 } header: { Text("Active configuration") }
 
+                // Save new configuration
                 Section {
                     TextField("Name", text: $name)
-
                     Button("Save") {
                         save()
                     }
@@ -44,15 +45,18 @@ extension Configuration {
 
                 } header: { Text("Save as new profile") }
 
-                Section {
+                // Load saved configuration
+                if !configurations.isEmpty {
                     Section {
-                        ForEach(configurations) { profile in
-                            profilesView(for: profile)
-                                .deleteDisabled(profile.name == "default")
+                        Section {
+                            ForEach(configurations) { profile in
+                                profilesView(for: profile)
+                                    .deleteDisabled(profile.name == "default")
+                            }
+                            .onDelete(perform: removeConfigurations)
                         }
-                        .onDelete(perform: removeProfile)
-                    }
-                } header: { Text("Load Profile") }
+                    } header: { Text("Load Profile") }
+                }
             }
             .dynamicTypeSize(...DynamicTypeSize.xxLarge)
             .onAppear { configureView() }
@@ -63,6 +67,7 @@ extension Configuration {
             }
         }
 
+        // List of saved configurations
         @ViewBuilder private func profilesView(for configuration: Configurations) -> some View {
             Text(configuration.name ?? "").foregroundStyle(.blue)
                 .onTapGesture {
@@ -71,7 +76,7 @@ extension Configuration {
                 }
         }
 
-        private func removeProfile(at offsets: IndexSet) {
+        private func removeConfigurations(at offsets: IndexSet) {
             for index in offsets {
                 let configuration = configurations[index]
                 moc.delete(configuration)
