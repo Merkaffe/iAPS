@@ -34,7 +34,7 @@ extension Home {
         @FetchRequest(
             entity: OverridePresets.entity(),
             sortDescriptors: [NSSortDescriptor(key: "name", ascending: true)], predicate: NSPredicate(
-                format: "name != %@", "" as String
+                format: "name != %@", "Empty" as String
             )
         ) var fetchedProfiles: FetchedResults<OverridePresets>
 

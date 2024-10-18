@@ -64,7 +64,7 @@
     <entity name="LoopStatRecord" representedClassName="LoopStatRecord" syncable="YES" codeGenerationType="class">
         <attribute name="duration" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="end" optional="YES" attributeType="Date" defaultDateTimeInterval="719348220" usesScalarValueType="NO"/>
-        <attribute name="error" optional="YES" attributeType="String" defaultValueString="&quot;&quot;"/>
+        <attribute name="error" optional="YES" attributeType="String" defaultValueString="Empty"/>
         <attribute name="interval" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="loopStatus" optional="YES" attributeType="String" defaultValueString="&quot;&quot;"/>
         <attribute name="start" optional="YES" attributeType="Date" defaultDateTimeInterval="719348280" usesScalarValueType="NO"/>
@@ -77,8 +77,11 @@
         <attribute name="fat" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="fpuID" optional="YES" attributeType="String" defaultValueString="&quot;&quot;"/>
         <attribute name="id" optional="YES" attributeType="String" defaultValueString="&quot;&quot;"/>
-        <attribute name="note" optional="YES" attributeType="String" defaultValueString="&quot;&quot;"/>
+        <attribute name="note" optional="YES" attributeType="String" defaultValueString="Empty"/>
         <attribute name="protein" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+    </entity>
+    <entity name="Migration" representedClassName="Migration" syncable="YES" codeGenerationType="class">
+        <attribute name="hasMigrated" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
     </entity>
     <entity name="NotUploaded" representedClassName="NotUploaded" syncable="YES" codeGenerationType="class">
         <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348340" usesScalarValueType="NO"/>
@@ -139,7 +142,7 @@
     </entity>
     <entity name="Presets" representedClassName="Presets" syncable="YES" codeGenerationType="class">
         <attribute name="carbs" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="dish" optional="YES" attributeType="String" defaultValueString="&quot;&quot;"/>
+        <attribute name="dish" optional="YES" attributeType="String" defaultValueString="Empty"/>
         <attribute name="fat" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="protein" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
     </entity>
@@ -176,13 +179,98 @@
         <attribute name="target" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
     </entity>
     <entity name="Settings_iAPS" representedClassName="Settings_iAPS" syncable="YES" codeGenerationType="class">
-        <attribute name="dynamicCR" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
-        <attribute name="dynamicISF" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="addSourceInfoToGlucoseNotifications" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="allowAnnouncements" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="animatedBackground" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="carbsRequiredThreshold" optional="YES" attributeType="Decimal" defaultValueString="20"/>
+        <attribute name="closedLoop" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="debugOptions" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="delay" optional="YES" attributeType="Integer 16" defaultValueString="60" usesScalarValueType="YES"/>
+        <attribute name="displayCalendarEmojis" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="displayCalendarIOBandCOB" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="displayHR" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="glucoseBadge" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="glucoseNotificationsAlways" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="high" optional="YES" attributeType="Decimal" defaultValueString="145"/>
+        <attribute name="highGlucose" optional="YES" attributeType="Decimal" defaultValueString="270"/>
+        <attribute name="hours" optional="YES" attributeType="Integer 16" defaultValueString="6" usesScalarValueType="YES"/>
+        <attribute name="individualAdjustmentFactor" optional="YES" attributeType="Decimal" defaultValueString="0"/>
+        <attribute name="isUploadEnabled" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="localGlucosePort" optional="YES" attributeType="Integer 16" defaultValueString="8080" usesScalarValueType="YES"/>
+        <attribute name="low" optional="YES" attributeType="Decimal" defaultValueString="70"/>
+        <attribute name="lowGlucose" optional="YES" attributeType="Decimal" defaultValueString="72"/>
+        <attribute name="minuteInterval" optional="YES" attributeType="Integer 16" defaultValueString="30" usesScalarValueType="YES"/>
+        <attribute name="oneDimensionalGraph" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="overrideHbA1cUnit" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="rulerMarks" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="skipBolusScreenAfterCarbs" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="smoothGlucose" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="timeCap" optional="YES" attributeType="Integer 16" defaultValueString="8" usesScalarValueType="YES"/>
+        <attribute name="uploadGlucose" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="uploadStats" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="useAlarmSound" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="useAppleHealth" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="useAutotune" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="useCalendar" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="useFPUconversion" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="useLocalGlucoseSource" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="xGridLines" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="yGridLines" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <relationship name="configurations" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Configurations" inverseName="settings_iAPS" inverseEntity="Configurations"/>
     </entity>
     <entity name="Settings_ore0" representedClassName="Settings_ore0" syncable="YES" codeGenerationType="class">
-        <attribute name="maxSMB" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
-        <attribute name="maxUAM" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="a52RiskEnable" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="adjustmentFactor" optional="YES" attributeType="Decimal" minValueString="0.2" maxValueString="2" defaultValueString="0.5"/>
+        <attribute name="advTargetAdjustments" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="allowSMBWithHighTemptarget" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="autosensMax" optional="YES" attributeType="Decimal" defaultValueString="1.2"/>
+        <attribute name="autosensMin" optional="YES" attributeType="Decimal" defaultValueString="0.8"/>
+        <attribute name="autotuneISFAdjustmentFraction" optional="YES" attributeType="Decimal" defaultValueString="1"/>
+        <attribute name="bolusIncrement" optional="YES" attributeType="Decimal" defaultValueString="0.1"/>
+        <attribute name="carbsReqThreshold" optional="YES" attributeType="Decimal" defaultValueString="20"/>
+        <attribute name="currentBasalSafetyMultiplier" optional="YES" attributeType="Decimal" defaultValueString="3"/>
+        <attribute name="curve" optional="YES" attributeType="String" defaultValueString="rapidActing"/>
+        <attribute name="enableDynamicCR" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="enableSMB_high_bg" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="enableSMB_high_bg_target" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="enableSMBAfterCarbs" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="enableSMBAlways" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="enableSMBWithCOB" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="enableSMBWithTemptarget" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="enableUAM" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="exerciseMode" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="halfBasalExerciseTarget" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="highTemptargetRaisesSensitivity" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="insulinPeakTime" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="lowTemptargetLowersSensitivity" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="maxCOB" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="maxDailySafetyMultiplier" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="maxDeltaBGthreshold" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="maxIOB" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="maxSMBBasalMinutes" optional="YES" attributeType="Decimal" defaultValueString="0"/>
+        <attribute name="maxUAMSMBBasalMinutes" optional="YES" attributeType="Decimal" defaultValueString="0"/>
+        <attribute name="min5mCarbimpact" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="noisyCGMTargetMultiplier" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="remainingCarbsCap" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="remainingCarbsFraction" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="resistanceLowersTarget" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="rewindResetsAutosens" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="sensitivityRaisesTarget" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="sigmoid" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="skipNeutralTemps" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="smbDeliveryRatio" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="smbInterval" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="suspendZerosIOB" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="tddAdjBasal" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="threshold_setting" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="unsuspendIfNoTemp" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="updateInterval" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="useCustomPeakTime" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="useNewFormula" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="useWeightedAverage" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="weightPercentage" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="wideBGTargetRange" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <relationship name="configurations" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Configurations" inverseName="settings_oref0" inverseEntity="Configurations"/>
     </entity>
     <entity name="StatsData" representedClassName="StatsData" syncable="YES" codeGenerationType="class">
@@ -216,6 +304,6 @@
     <entity name="VNr" representedClassName="VNr" syncable="YES" codeGenerationType="class">
         <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348940" usesScalarValueType="NO"/>
         <attribute name="dev" optional="YES" attributeType="String" defaultValueString="&quot;&quot;"/>
-        <attribute name="nr" optional="YES" attributeType="String" defaultValueString="&quot;&quot;"/>
+        <attribute name="nr" optional="YES" attributeType="String" defaultValueString="Empty"/>
     </entity>
 </model>

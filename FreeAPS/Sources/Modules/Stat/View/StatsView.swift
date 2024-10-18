@@ -138,7 +138,7 @@ struct StatsView: View {
     private func errors(_ nonCompleted: Int) -> some View {
         ZStack {
             if nonCompleted > 0 {
-                let errors = fetchRequest.compactMap(\.error)
+                let errors = fetchRequest.filter({ $0.error != "Empty" && $0.error != "" }).compactMap(\.error)
                 if errors.isNotEmpty {
                     let mostFrequent = errors.mostFrequent()?.description ?? ""
                     let mostFrequentCount = errors.filter({ $0 == mostFrequent }).count

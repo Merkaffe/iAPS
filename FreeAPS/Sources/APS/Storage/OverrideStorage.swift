@@ -147,7 +147,7 @@ final class OverrideStorage {
         coredataContext.performAndWait {
             let requestPresets = OverridePresets.fetchRequest() as NSFetchRequest<OverridePresets>
             requestPresets.predicate = NSPredicate(
-                format: "name != %@", "" as String
+                format: "name != %@", "Empty" as String
             )
             try? presetsArray = self.coredataContext.fetch(requestPresets)
         }
@@ -170,7 +170,7 @@ final class OverrideStorage {
         coredataContext.performAndWait {
             let requestPresets = OverridePresets.fetchRequest() as NSFetchRequest<OverridePresets>
             requestPresets.predicate = NSPredicate(
-                format: "name != %@", "" as String
+                format: "name != %@", "Empty" as String
             )
             try? presetsArray = self.coredataContext.fetch(requestPresets)
         }

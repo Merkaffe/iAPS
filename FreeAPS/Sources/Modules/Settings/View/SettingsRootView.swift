@@ -12,21 +12,21 @@ extension Settings {
         @FetchRequest(
             entity: VNr.entity(),
             sortDescriptors: [NSSortDescriptor(key: "date", ascending: false)], predicate: NSPredicate(
-                format: "nr != %@", "" as String
+                format: "nr != %@", "Empty" as String
             )
         ) var fetchedVersionNumber: FetchedResults<VNr>
 
         @FetchRequest(
             entity: OverridePresets.entity(),
             sortDescriptors: [NSSortDescriptor(key: "name", ascending: true)], predicate: NSPredicate(
-                format: "name != %@", "" as String
+                format: "name != %@", "Empty" as String
             )
         ) var fetchedProfiles: FetchedResults<OverridePresets>
 
         @FetchRequest(
             entity: Configurations.entity(),
             sortDescriptors: [NSSortDescriptor(key: "date", ascending: false)], predicate: NSPredicate(
-                format: "name != %@", "" as String
+                format: "name != %@", "Empty" as String
             )
         ) var configurations: FetchedResults<Configurations>
 

@@ -200,7 +200,7 @@ final class CoreDataStorage {
         coredataContext.performAndWait {
             let requestPresets = Presets.fetchRequest() as NSFetchRequest<Presets>
             requestPresets.predicate = NSPredicate(
-                format: "dish != %@", "" as String
+                format: "dish != %@", "Empty" as String
             )
             try? presetsArray = self.coredataContext.fetch(requestPresets)
         }
@@ -345,5 +345,14 @@ final class CoreDataStorage {
             try? lastLoop = coredataContext.fetch(requestLastLoop)
         }
         return lastLoop.first
+    }
+    
+    func hasMigrated() -> Bool {
+        var migration = [Migration]()
+        coredataContext.performAndWait {
+            let requestMigrationData = Migration.fetchRequest() as NSFetchRequest<Migration>
+            try? migration = coredataContext.fetch(requestMigrationData)
+        }
+        return migration.first?.hasMigrated ?? false
     }
 }
