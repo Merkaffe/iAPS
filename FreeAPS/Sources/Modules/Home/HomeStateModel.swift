@@ -546,16 +546,17 @@ extension Home {
             let ratio = min(c / (target + c - 100), maxValue)
             return (ratio * 100)
         }
-        
+
         private func settingMigration() {
             if !CoreDataStorage().hasMigrated() {
-                //Begin migration of settings
-                
-                //Read JSONs once
-                guard let oref0 = provider.storage.retrieve(OpenAPS.Settings.preferences, as: Preferences.self), let iAPS = provider.storage.retrieve(OpenAPS.FreeAPS.settings, as: FreeAPSSettings.self) else { return }
-                
-                
-                
+                // Begin migration of settings
+
+                // Read JSONs once
+                guard let oref0 = provider.storage.retrieve(OpenAPS.Settings.preferences, as: Preferences.self),
+                      let iAPS = provider.storage.retrieve(
+                          OpenAPS.FreeAPS.settings,
+                          as: FreeAPSSettings.self
+                      ) else { return }
             }
         }
     }

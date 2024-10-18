@@ -346,7 +346,7 @@ final class CoreDataStorage {
         }
         return lastLoop.first
     }
-    
+
     func hasMigrated() -> Bool {
         var migration = [Migration]()
         coredataContext.performAndWait {

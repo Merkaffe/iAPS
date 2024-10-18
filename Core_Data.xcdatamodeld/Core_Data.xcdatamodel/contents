@@ -114,7 +114,7 @@
         <attribute name="uamMinutes" optional="YES" attributeType="Decimal" defaultValueString="30"/>
     </entity>
     <entity name="OverrideHistory" representedClassName="OverrideHistory" syncable="YES" codeGenerationType="class">
-        <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348520" usesScalarValueType="NO"/>
+        <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348520" usesScalarValueType="YES"/>
         <attribute name="duration" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="target" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
     </entity>
@@ -230,19 +230,19 @@
         <attribute name="carbsReqThreshold" optional="YES" attributeType="Decimal" defaultValueString="20"/>
         <attribute name="currentBasalSafetyMultiplier" optional="YES" attributeType="Decimal" defaultValueString="3"/>
         <attribute name="curve" optional="YES" attributeType="String" defaultValueString="rapidActing"/>
-        <attribute name="enableDynamicCR" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="enableSMB_high_bg" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="enableDynamicCR" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="enableSMB_high_bg" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="enableSMB_high_bg_target" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="enableSMBAfterCarbs" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="enableSMBAlways" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="enableSMBWithCOB" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="enableSMBWithTemptarget" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="enableUAM" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="exerciseMode" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="enableSMBAfterCarbs" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="enableSMBAlways" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="enableSMBWithCOB" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="enableSMBWithTemptarget" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="enableUAM" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="exerciseMode" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="halfBasalExerciseTarget" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="highTemptargetRaisesSensitivity" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="highTemptargetRaisesSensitivity" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="insulinPeakTime" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="lowTemptargetLowersSensitivity" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="lowTemptargetLowersSensitivity" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="maxCOB" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="maxDailySafetyMultiplier" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="maxDeltaBGthreshold" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
@@ -252,19 +252,19 @@
         <attribute name="min5mCarbimpact" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="noisyCGMTargetMultiplier" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="remainingCarbsCap" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="remainingCarbsFraction" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="resistanceLowersTarget" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="rewindResetsAutosens" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="sensitivityRaisesTarget" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="sigmoid" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="skipNeutralTemps" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="smbDeliveryRatio" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="smbInterval" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="suspendZerosIOB" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="tddAdjBasal" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
-        <attribute name="threshold_setting" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="unsuspendIfNoTemp" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="remainingCarbsFraction" optional="YES" attributeType="Decimal" defaultValueString="8"/>
+        <attribute name="resistanceLowersTarget" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="rewindResetsAutosens" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="sensitivityRaisesTarget" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="sigmoid" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="skipNeutralTemps" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="smbDeliveryRatio" optional="YES" attributeType="Decimal" defaultValueString="0.5"/>
+        <attribute name="smbInterval" optional="YES" attributeType="Decimal" defaultValueString="3"/>
+        <attribute name="suspendZerosIOB" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="tddAdjBasal" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="threshold_setting" optional="YES" attributeType="Decimal" defaultValueString="80"/>
+        <attribute name="timestamp" optional="YES" attributeType="Date" defaultDateTimeInterval="687828360" usesScalarValueType="NO"/>
+        <attribute name="unsuspendIfNoTemp" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="updateInterval" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="useCustomPeakTime" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="useNewFormula" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
