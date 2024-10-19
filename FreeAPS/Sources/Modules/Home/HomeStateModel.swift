@@ -9,7 +9,7 @@ extension Home {
         @Injected() var broadcaster: Broadcaster!
         @Injected() var apsManager: APSManager!
         @Injected() var nightscoutManager: NightscoutManager!
-        @Injected() var storage: TempTargetsStorage!
+        @Injected() var tempTargetSstorage: TempTargetsStorage!
         private let timer = DispatchTimer(timeInterval: 5)
         private(set) var filteredHours = 24
         @Published var glucose: [BloodGlucose] = []
@@ -95,6 +95,8 @@ extension Home {
         let coredataContext = CoreDataStack.shared.persistentContainer.viewContext
 
         override func subscribe() {
+            // settingMigration()
+
             setupGlucose()
             setupBasals()
             setupBoluses()
@@ -292,7 +294,7 @@ extension Home {
         }
 
         func cancelTempTarget() {
-            storage.storeTempTargets([TempTarget.cancel(at: Date())])
+            tempTargetSstorage.storeTempTargets([TempTarget.cancel(at: Date())])
             coredataContext.performAndWait {
                 let saveToCoreData = TempTargets(context: self.coredataContext)
                 saveToCoreData.active = false
@@ -548,15 +550,21 @@ extension Home {
         }
 
         private func settingMigration() {
-            if !CoreDataStorage().hasMigrated() {
-                // Begin migration of settings
+            let cd = CoreDataStorage()
 
-                // Read JSONs once
-                guard let oref0 = provider.storage.retrieve(OpenAPS.Settings.preferences, as: Preferences.self),
-                      let iAPS = provider.storage.retrieve(
-                          OpenAPS.FreeAPS.settings,
-                          as: FreeAPSSettings.self
-                      ) else { return }
+            guard !cd.hasMigrated() else { return }
+
+            print("Begin migration")
+
+            // Read old JSONs once
+            guard let oref0 = provider.ore0_Settings, let iAPS = provider.iAPS_Settings else {
+                print("Migration error: Can't load files from Disk.")
+                return
+            }
+
+            // Only run once when migrating from JSON to CoreData
+            if cd.migration(oref0: oref0, iAPS: iAPS, configuration: cd.activeConfiguration() ?? "Default") {
+                cd.didMigrate()
             }
         }
     }

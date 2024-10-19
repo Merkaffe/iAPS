@@ -191,6 +191,29 @@ final class BaseAPSManager: APSManager, Injectable {
         deviceDataManager.heartbeat(date: date)
     }
 
+    private func migration() {
+        let cd = CoreDataStorage()
+        guard !cd.hasMigrated() else { return }
+
+        print("Begin migration")
+
+        // Read old JSONs once
+        guard let storage = storage, let oref0 = storage.retrieveFile(OpenAPS.Settings.preferences, as: Preferences.self),
+              let iAPS = storage.retrieveFile(
+                  OpenAPS.FreeAPS.settings,
+                  as: FreeAPSSettings.self
+              )
+        else {
+            print("Migration error: Can't load files from Disk.")
+            return
+        }
+
+        // Only run once when migrating from JSON to CoreData
+        if cd.migration(oref0: oref0, iAPS: iAPS, configuration: cd.activeConfiguration() ?? "Default") {
+            cd.didMigrate()
+        }
+    }
+
     // Loop entry point
     private func loop() {
         // check the last start of looping is more the loopInterval but the previous loop was completed
@@ -343,6 +366,8 @@ final class BaseAPSManager: APSManager, Injectable {
     }
 
     func determineBasal() -> AnyPublisher<Bool, Never> {
+        migration() //Move this function later. For testing
+        
         debug(.apsManager, "Start determine basal")
         guard let glucose = storage.retrieve(OpenAPS.Monitor.glucose, as: [BloodGlucose].self), glucose.isNotEmpty else {
             debug(.apsManager, "Not enough glucose data")
@@ -406,7 +431,7 @@ final class BaseAPSManager: APSManager, Injectable {
     }
 
     func makeProfiles() -> AnyPublisher<Bool, Never> {
-        openAPS.makeProfiles(useAutotune: settings.useAutotune)
+        return openAPS.makeProfiles(useAutotune: settings.useAutotune)
             .map { tunedProfile in
                 if let basalProfile = tunedProfile?.basalProfile {
                     self.processQueue.async {
@@ -885,8 +910,8 @@ final class BaseAPSManager: APSManager, Injectable {
         let glucose = array
         let justGlucoseArray = glucose.compactMap({ each in Int(each.glucose as Int16) })
         let totalReadings = justGlucoseArray.count
-        let highLimit = settingsManager.settings.high
-        let lowLimit = settingsManager.settings.low
+        let highLimit = settings.high // settingsManager.settings.high
+        let lowLimit = settings.high // settingsManager.settings.low
         let hyperArray = glucose.filter({ $0.glucose >= Int(highLimit) })
         let hyperReadings = hyperArray.compactMap({ each in each.glucose as Int16 }).count
         let hyperPercentage = Double(hyperReadings) / Double(totalReadings) * 100
@@ -1010,8 +1035,8 @@ final class BaseAPSManager: APSManager, Injectable {
             return
         }
 
-        if settingsManager.settings.uploadStats {
-            let units = settingsManager.settings.units
+        if settings.uploadStats { // settingsManager.settings.uploadStats {
+            let units = settings.units // settingsManager.settings.units
             let preferences = settingsManager.preferences
 
             // Carbs

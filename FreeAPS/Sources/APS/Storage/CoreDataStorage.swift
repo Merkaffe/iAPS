@@ -355,4 +355,160 @@ final class CoreDataStorage {
         }
         return migration.first?.hasMigrated ?? false
     }
+
+    func didMigrate() {
+        coredataContext.perform { [self] in
+            let migration = Migration(context: self.coredataContext)
+            migration.hasMigrated = true
+            try? self.coredataContext.save()
+        }
+    }
+
+    func activeConfiguration() -> String? {
+        var configuration = [Configurations]()
+        coredataContext.performAndWait {
+            let requestMigrationData = Configurations.fetchRequest() as NSFetchRequest<Configurations>
+            let sort = NSSortDescriptor(key: "date", ascending: false)
+            try? configuration = coredataContext.fetch(requestMigrationData)
+        }
+
+        guard let first = configuration.first, let string = first.name, first.active else {
+            return nil
+        }
+
+        return string
+    }
+
+    func migration(oref0: Preferences, iAPS: FreeAPSSettings, configuration: String) -> Bool {
+        coredataContext.perform { [self] in
+            // OpenAPS Preferences
+            let oref0Settings = Settings_ore0(context: self.coredataContext)
+            oref0Settings.autosensMax = oref0.autosensMax as NSDecimalNumber
+            oref0Settings.autosensMin = oref0.autosensMin as NSDecimalNumber
+            oref0Settings.a52RiskEnable = oref0.a52RiskEnable
+            oref0Settings.adjustmentFactor = oref0.adjustmentFactor as NSDecimalNumber
+            oref0Settings.advTargetAdjustments = oref0.advTargetAdjustments
+            oref0Settings.allowSMBWithHighTemptarget = oref0.allowSMBWithHighTemptarget
+            oref0Settings.autotuneISFAdjustmentFraction = oref0.autotuneISFAdjustmentFraction as NSDecimalNumber
+            oref0Settings.bolusIncrement = oref0.bolusIncrement as NSDecimalNumber
+            oref0Settings.carbsReqThreshold = oref0.carbsReqThreshold as NSDecimalNumber
+            oref0Settings.currentBasalSafetyMultiplier = oref0.currentBasalSafetyMultiplier as NSDecimalNumber
+            oref0Settings.enableDynamicCR = oref0.enableDynamicCR
+            oref0Settings.enableSMBAfterCarbs = oref0.enableSMBAfterCarbs
+            oref0Settings.enableSMBAlways = oref0.enableSMBAlways
+            oref0Settings.enableSMBWithCOB = oref0.enableSMBWithCOB
+            oref0Settings.enableSMBAfterCarbs = oref0.enableSMBAfterCarbs
+            oref0Settings.enableSMBWithTemptarget = oref0.enableSMBWithTemptarget
+            oref0Settings.enableSMB_high_bg_target = oref0.enableSMB_high_bg_target as NSDecimalNumber
+            oref0Settings.enableUAM = oref0.enableUAM
+            oref0Settings.exerciseMode = oref0.exerciseMode
+            oref0Settings.halfBasalExerciseTarget = oref0.halfBasalExerciseTarget as NSDecimalNumber
+            oref0Settings.highTemptargetRaisesSensitivity = oref0.highTemptargetRaisesSensitivity
+            oref0Settings.insulinPeakTime = oref0.insulinPeakTime as NSDecimalNumber
+            oref0Settings.lowTemptargetLowersSensitivity = oref0.lowTemptargetLowersSensitivity
+            oref0Settings.maxCOB = oref0.maxCOB as NSDecimalNumber
+            oref0Settings.maxIOB = oref0.maxIOB as NSDecimalNumber
+            oref0Settings.maxSMBBasalMinutes = oref0.maxSMBBasalMinutes as NSDecimalNumber
+            oref0Settings.maxUAMSMBBasalMinutes = oref0.maxUAMSMBBasalMinutes as NSDecimalNumber
+            oref0Settings.maxDailySafetyMultiplier = oref0.maxDailySafetyMultiplier as NSDecimalNumber
+            oref0Settings.maxDeltaBGthreshold = oref0.maxDeltaBGthreshold as NSDecimalNumber
+            oref0Settings.min5mCarbimpact = oref0.min5mCarbimpact as NSDecimalNumber
+            oref0Settings.noisyCGMTargetMultiplier = oref0.noisyCGMTargetMultiplier as NSDecimalNumber
+            oref0Settings.remainingCarbsCap = oref0.remainingCarbsCap as NSDecimalNumber
+            oref0Settings.remainingCarbsFraction = oref0.remainingCarbsFraction as NSDecimalNumber
+            oref0Settings.resistanceLowersTarget = oref0.resistanceLowersTarget
+            oref0Settings.rewindResetsAutosens = oref0.rewindResetsAutosens
+            oref0Settings.sensitivityRaisesTarget = oref0.sensitivityRaisesTarget
+            oref0Settings.sigmoid = oref0.sigmoid
+            oref0Settings.skipNeutralTemps = oref0.skipNeutralTemps
+            oref0Settings.smbDeliveryRatio = oref0.smbDeliveryRatio as NSDecimalNumber
+            oref0Settings.smbInterval = oref0.smbInterval as NSDecimalNumber
+            oref0Settings.suspendZerosIOB = oref0.suspendZerosIOB
+            oref0Settings.tddAdjBasal = oref0.tddAdjBasal
+            oref0Settings.threshold_setting = oref0.threshold_setting as NSDecimalNumber
+            oref0Settings.timestamp = oref0.timestamp
+            oref0Settings.unsuspendIfNoTemp = oref0.unsuspendIfNoTemp
+            oref0Settings.updateInterval = oref0.updateInterval as NSDecimalNumber
+            oref0Settings.useCustomPeakTime = oref0.useCustomPeakTime
+            oref0Settings.useNewFormula = oref0.useNewFormula
+            oref0Settings.useWeightedAverage = oref0.useWeightedAverage
+            oref0Settings.wideBGTargetRange = oref0.wideBGTargetRange
+
+            // oref0Settings.curve
+            switch oref0.curve {
+            case .rapidActing:
+                oref0Settings.curve = "rapidActing"
+            case .ultraRapid:
+                oref0Settings.curve = "ultraRapid"
+            case .bilinear:
+                oref0Settings.curve = "bilinear"
+            }
+
+            // iAPS settings
+            let iAPSSettings = Settings_iAPS(context: self.coredataContext)
+            iAPSSettings.addSourceInfoToGlucoseNotifications = iAPS.addSourceInfoToGlucoseNotifications
+            iAPSSettings.allowAnnouncements = iAPS.allowAnnouncements
+            iAPSSettings.animatedBackground = iAPS.animatedBackground
+            iAPSSettings.carbsRequiredThreshold = iAPS.carbsRequiredThreshold as NSDecimalNumber
+            iAPSSettings.closedLoop = iAPS.closedLoop
+            iAPSSettings.debugOptions = iAPS.debugOptions
+            iAPSSettings.delay = Int16(iAPS.delay)
+            iAPSSettings.displayCalendarEmojis = iAPS.displayCalendarEmojis
+            iAPSSettings.displayCalendarIOBandCOB = iAPS.displayCalendarIOBandCOB
+            iAPSSettings.displayHR = iAPS.displayHR
+            iAPSSettings.glucoseBadge = iAPS.glucoseBadge
+            iAPSSettings.glucoseNotificationsAlways = iAPS.glucoseNotificationsAlways
+            iAPSSettings.high = iAPS.high as NSDecimalNumber
+            iAPSSettings.hours = Int16(iAPS.hours)
+            iAPSSettings.individualAdjustmentFactor = iAPS.individualAdjustmentFactor as NSDecimalNumber
+            iAPSSettings.isUploadEnabled = iAPS.isUploadEnabled
+            iAPSSettings.localGlucosePort = Int16(iAPS.localGlucosePort)
+            iAPSSettings.low = iAPS.low as NSDecimalNumber
+            iAPSSettings.lowGlucose = iAPS.lowGlucose as NSDecimalNumber
+            iAPSSettings.minuteInterval = Int16(iAPS.minuteInterval)
+            iAPSSettings.oneDimensionalGraph = iAPS.oneDimensionalGraph
+            iAPSSettings.overrideHbA1cUnit = iAPS.overrideHbA1cUnit
+            iAPSSettings.profileID = iAPS.profileID
+            iAPSSettings.rulerMarks = iAPS.rulerMarks
+            iAPSSettings.skipBolusScreenAfterCarbs = iAPS.skipBolusScreenAfterCarbs
+            iAPSSettings.smoothGlucose = iAPS.smoothGlucose
+            iAPSSettings.timeCap = Int16(iAPS.timeCap)
+            iAPSSettings.uploadGlucose = iAPS.uploadGlucose
+            iAPSSettings.uploadStats = iAPS.uploadStats
+            iAPSSettings.useAlarmSound = iAPS.useAlarmSound
+            iAPSSettings.useAppleHealth = iAPS.useAppleHealth
+            iAPSSettings.useAutotune = iAPS.useAutotune
+            iAPSSettings.useCalendar = iAPS.useCalendar
+            iAPSSettings.useFPUconversion = iAPSSettings.useFPUconversion
+            iAPSSettings.useLocalGlucoseSource = iAPSSettings.useLocalGlucoseSource
+            iAPSSettings.xGridLines = iAPS.xGridLines
+            iAPSSettings.yGridLines = iAPS.yGridLines
+
+            // Units
+            switch iAPS.units {
+            case .mmolL:
+                iAPSSettings.units = "mmol"
+            case .mgdL:
+                iAPSSettings.units = "mg/dl"
+            }
+
+            // Configuration
+            let configurations = Configurations(context: self.coredataContext)
+            configurations.name = configuration
+            configurations.date = Date.now
+            configurations.active = true
+            iAPSSettings.addToConfigurations(configurations)
+            oref0Settings.addToConfigurations(configurations)
+
+            do {
+                try self.coredataContext.save()
+            } catch {
+                debug(.apsManager, "JSON settings couldn't be migrated to CoreData. Error: " + "\(error)")
+                return false
+            }
+            // Migration completed
+            debug(.apsManager, "JSON settings migrated successfully to CoreData.")
+            return true
+        }
+    }
 }

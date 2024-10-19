@@ -202,10 +202,12 @@
         <attribute name="minuteInterval" optional="YES" attributeType="Integer 16" defaultValueString="30" usesScalarValueType="YES"/>
         <attribute name="oneDimensionalGraph" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="overrideHbA1cUnit" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="profileID" optional="YES" attributeType="String" defaultValueString="Hypo Treatment"/>
         <attribute name="rulerMarks" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="skipBolusScreenAfterCarbs" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="smoothGlucose" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="timeCap" optional="YES" attributeType="Integer 16" defaultValueString="8" usesScalarValueType="YES"/>
+        <attribute name="units" optional="YES" attributeType="String" defaultValueString="mmol"/>
         <attribute name="uploadGlucose" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
         <attribute name="uploadStats" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="useAlarmSound" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
