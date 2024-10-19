@@ -200,7 +200,7 @@ enum OverrideIntentError: Error {
             if let duration = overrideStorage.cancelProfile(), let last = lastActiveOveride {
                 // let presetName = overrideStorage.isPresetName()
                 let nsString = presetName != nil ? presetName : last.percentage.formatted()
-                nightscoutManager.editOverride(nsString!, duration, last.date ?? Date())
+                nightscoutManager.editOverride(nsString!, duration, last.date ?? Date.now)
             }
         }
         overrideStorage.overrideFromPreset(overridePreset)

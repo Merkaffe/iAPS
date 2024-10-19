@@ -94,7 +94,7 @@
     <entity name="Override" representedClassName="Override" syncable="YES" codeGenerationType="class">
         <attribute name="advancedSettings" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="cr" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
-        <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348400" usesScalarValueType="NO"/>
+        <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="750988200" usesScalarValueType="NO"/>
         <attribute name="duration" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="enabled" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="end" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
@@ -114,7 +114,7 @@
         <attribute name="uamMinutes" optional="YES" attributeType="Decimal" defaultValueString="30"/>
     </entity>
     <entity name="OverrideHistory" representedClassName="OverrideHistory" syncable="YES" codeGenerationType="class">
-        <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348520" usesScalarValueType="YES"/>
+        <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348520" usesScalarValueType="NO"/>
         <attribute name="duration" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="target" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
     </entity>

@@ -66,7 +66,7 @@ final class OverrideStorage {
             let history = OverrideHistory(context: self.coredataContext)
             if let latest = scheduled {
                 history.duration = -1 * (latest.date ?? Date()).timeIntervalSinceNow.minutes
-                history.date = latest.date ?? Date()
+                history.date = latest.date ?? Date.now
                 // Looks better in Home View Main Chart when target isn't == 0.
                 if Double(latest.target ?? 100) < 6 {
                     history.target = 6
