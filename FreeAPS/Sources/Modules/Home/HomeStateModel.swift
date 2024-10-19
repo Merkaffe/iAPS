@@ -548,25 +548,6 @@ extension Home {
             let ratio = min(c / (target + c - 100), maxValue)
             return (ratio * 100)
         }
-
-        private func settingMigration() {
-            let cd = CoreDataStorage()
-
-            guard !cd.hasMigrated() else { return }
-
-            print("Begin migration")
-
-            // Read old JSONs once
-            guard let oref0 = provider.ore0_Settings, let iAPS = provider.iAPS_Settings else {
-                print("Migration error: Can't load files from Disk.")
-                return
-            }
-
-            // Only run once when migrating from JSON to CoreData
-            if cd.migration(oref0: oref0, iAPS: iAPS, configuration: cd.activeConfiguration() ?? "Default") {
-                cd.didMigrate()
-            }
-        }
     }
 }
 

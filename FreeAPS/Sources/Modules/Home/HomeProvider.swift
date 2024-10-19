@@ -19,14 +19,6 @@ extension Home {
             storage.retrieve(OpenAPS.Monitor.dynamicVariables, as: DynamicVariables.self)
         }
 
-        var iAPS_Settings: FreeAPSSettings? {
-            storage.retrieveFile(OpenAPS.FreeAPS.settings, as: FreeAPSSettings.self)
-        }
-
-        var ore0_Settings: Preferences? {
-            storage.retrieveFile(OpenAPS.Settings.preferences, as: Preferences.self)
-        }
-
         let overrideStorage = OverrideStorage()
 
         func overrides() -> [Override] {
