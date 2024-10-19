@@ -366,8 +366,8 @@ final class BaseAPSManager: APSManager, Injectable {
     }
 
     func determineBasal() -> AnyPublisher<Bool, Never> {
-        migration() //Move this function later. For testing
-        
+        migration() // Move this function later. For testing
+
         debug(.apsManager, "Start determine basal")
         guard let glucose = storage.retrieve(OpenAPS.Monitor.glucose, as: [BloodGlucose].self), glucose.isNotEmpty else {
             debug(.apsManager, "Not enough glucose data")
@@ -431,7 +431,7 @@ final class BaseAPSManager: APSManager, Injectable {
     }
 
     func makeProfiles() -> AnyPublisher<Bool, Never> {
-        return openAPS.makeProfiles(useAutotune: settings.useAutotune)
+        openAPS.makeProfiles(useAutotune: settings.useAutotune)
             .map { tunedProfile in
                 if let basalProfile = tunedProfile?.basalProfile {
                     self.processQueue.async {

@@ -465,6 +465,7 @@ final class CoreDataStorage {
             iAPSSettings.localGlucosePort = Int16(iAPS.localGlucosePort)
             iAPSSettings.low = iAPS.low as NSDecimalNumber
             iAPSSettings.lowGlucose = iAPS.lowGlucose as NSDecimalNumber
+            iAPSSettings.maxCarbs = iAPS.maxCarbs as NSDecimalNumber
             iAPSSettings.minuteInterval = Int16(iAPS.minuteInterval)
             iAPSSettings.oneDimensionalGraph = iAPS.oneDimensionalGraph
             iAPSSettings.overrideHbA1cUnit = iAPS.overrideHbA1cUnit

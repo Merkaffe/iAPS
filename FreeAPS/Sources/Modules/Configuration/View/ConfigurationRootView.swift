@@ -56,6 +56,17 @@ extension Configuration {
                             .onDelete(perform: removeConfigurations)
                         }
                     } header: { Text("Load Profile") }
+
+                    Section {
+                        if let settings = configurations.first(where: { $0.active }), let oref0 = settings.settings_oref0 {
+                            Text("Max IOB: \(oref0.maxIOB ?? 0)")
+                        }
+
+                        if let settings = configurations.first(where: { $0.active }), let iAPS = settings.settings_iAPS {
+                            Text("Max Carbs: \(iAPS.maxCarbs ?? 0)")
+                        }
+
+                    } header: { Text("Settings") }
                 }
             }
             .dynamicTypeSize(...DynamicTypeSize.xxLarge)

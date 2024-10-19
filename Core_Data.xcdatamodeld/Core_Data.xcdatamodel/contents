@@ -5,20 +5,6 @@
         <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348040" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String" defaultValueString="Default"/>
     </entity>
-    <entity name="BGaverages" representedClassName="BGaverages" syncable="YES" codeGenerationType="class">
-        <attribute name="average" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="average_1" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="average_7" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="average_30" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348100" usesScalarValueType="NO"/>
-    </entity>
-    <entity name="BGmedian" representedClassName="BGmedian" syncable="YES" codeGenerationType="class">
-        <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348100" usesScalarValueType="NO"/>
-        <attribute name="median" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="median_1" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="median_7" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="median_30" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-    </entity>
     <entity name="Carbohydrates" representedClassName="Carbohydrates" syncable="YES" codeGenerationType="class">
         <attribute name="carbs" optional="YES" attributeType="Decimal" defaultValueString="0"/>
         <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348100" usesScalarValueType="NO"/>
@@ -35,13 +21,6 @@
         <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348160" usesScalarValueType="NO"/>
         <attribute name="enteredBy" optional="YES" attributeType="String" defaultValueString="&quot;&quot;"/>
         <attribute name="fat" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-    </entity>
-    <entity name="HbA1c" representedClassName="HbA1c" syncable="YES" codeGenerationType="class">
-        <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348160" usesScalarValueType="NO"/>
-        <attribute name="hba1c" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="hba1c_1" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="hba1c_7" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="hba1c_30" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
     </entity>
     <entity name="Identifier" representedClassName="Identifier" syncable="YES" codeGenerationType="class">
         <attribute name="id" optional="YES" attributeType="String" defaultValueString="&quot;&quot;"/>
@@ -199,6 +178,7 @@
         <attribute name="localGlucosePort" optional="YES" attributeType="Integer 16" defaultValueString="8080" usesScalarValueType="YES"/>
         <attribute name="low" optional="YES" attributeType="Decimal" defaultValueString="70"/>
         <attribute name="lowGlucose" optional="YES" attributeType="Decimal" defaultValueString="72"/>
+        <attribute name="maxCarbs" optional="YES" attributeType="Decimal" defaultValueString="0"/>
         <attribute name="minuteInterval" optional="YES" attributeType="Integer 16" defaultValueString="30" usesScalarValueType="YES"/>
         <attribute name="oneDimensionalGraph" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="overrideHbA1cUnit" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
