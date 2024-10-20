@@ -57,20 +57,19 @@ extension Configuration {
                         }
                     } header: { Text("Load Profile") }
 
+                    // List all settings
                     Section {
-                        if let settings = configurations.first(where: { $0.active }), let oref0 = settings.settings_oref0 {
-                            Text("Max IOB: \(oref0.maxIOB ?? 0)")
-                        }
-
-                        if let settings = configurations.first(where: { $0.active }), let iAPS = settings.settings_iAPS {
-                            Text("Max Carbs: \(iAPS.maxCarbs ?? 0)")
+                        ForEach(listed(), id: \.id) { item in
+                            Text(item.variable).font(.caption)
                         }
 
                     } header: { Text("Settings") }
                 }
             }
             .dynamicTypeSize(...DynamicTypeSize.xxLarge)
-            .onAppear { configureView() }
+            .onAppear {
+                configureView()
+            }
             .navigationTitle("Configurations")
             .navigationBarTitleDisplayMode(.inline)
             .onDisappear {
@@ -109,5 +108,40 @@ extension Configuration {
             configuration.date = Date.now
             try? moc.save()
         }
+
+        private func listed() -> [ListSettings] {
+            var string = [""]
+            let request: NSFetchRequest<Configurations>
+            request = Configurations.fetchRequest()
+            do {
+                let entities = try moc.fetch(request)
+                for item in entities {
+                    for key in item.entity.propertiesByName.keys {
+                        let value: Any? = item.value(forKey: key)
+
+                        if let variable = value {
+                            string.append("\(key) = \(variable)")
+                        }
+                    }
+                }
+            } catch {}
+            let formatted = string.description.components(separatedBy: ";").filter({ !$0.contains(":") })
+            let mapped = formatted.map { item in
+                let count = item.count
+                let trimmed = String(item.suffix(count - 5))
+                        .replacingOccurrences(of: "\\", with: "")
+                        .replacingOccurrences(of: "\"", with: "")
+                        .replacingOccurrences(of: "]", with: "")
+                return ListSettings(
+                    variable: trimmed
+                )
+            }
+            return mapped
+        }
     }
+}
+
+struct ListSettings {
+    var variable: String
+    var id = UUID()
 }
