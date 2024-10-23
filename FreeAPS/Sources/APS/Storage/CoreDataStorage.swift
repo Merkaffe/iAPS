@@ -347,6 +347,16 @@ final class CoreDataStorage {
         return lastLoop.first
     }
 
+    func insulinConcentration() -> (concentration: Double, increment: Double) {
+        var conc = [InsulinConcentration]()
+        coredataContext.performAndWait {
+            let requestConc = InsulinConcentration.fetchRequest() as NSFetchRequest<InsulinConcentration>
+            try? conc = coredataContext.fetch(requestConc)
+        }
+        let recent = conc.last
+        return (recent?.concentration ?? 1.0, recent?.incrementSetting ?? 0.1)
+    }
+
     func hasMigrated() -> Bool {
         var migration = [Migration]()
         coredataContext.performAndWait {

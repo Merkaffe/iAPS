@@ -95,8 +95,6 @@ extension Home {
         let coredataContext = CoreDataStack.shared.persistentContainer.viewContext
 
         override func subscribe() {
-            // settingMigration()
-
             setupGlucose()
             setupBasals()
             setupBoluses()

@@ -29,6 +29,10 @@
         <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348160" usesScalarValueType="NO"/>
         <attribute name="error" optional="YES" attributeType="String" defaultValueString="&quot;&quot;"/>
     </entity>
+    <entity name="InsulinConcentration" representedClassName="InsulinConcentration" syncable="YES" codeGenerationType="class">
+        <attribute name="concentration" optional="YES" attributeType="Double" defaultValueString="1" usesScalarValueType="YES"/>
+        <attribute name="incrementSetting" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+    </entity>
     <entity name="InsulinDistribution" representedClassName="InsulinDistribution" syncable="YES" codeGenerationType="class">
         <attribute name="bolus" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="date" optional="YES" attributeType="Date" defaultDateTimeInterval="719348220" usesScalarValueType="NO"/>

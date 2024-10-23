@@ -129,9 +129,9 @@ extension Configuration {
             let mapped = formatted.map { item in
                 let count = item.count
                 let trimmed = String(item.suffix(count - 5))
-                        .replacingOccurrences(of: "\\", with: "")
-                        .replacingOccurrences(of: "\"", with: "")
-                        .replacingOccurrences(of: "]", with: "")
+                    .replacingOccurrences(of: "\\", with: "")
+                    .replacingOccurrences(of: "\"", with: "")
+                    .replacingOccurrences(of: "]", with: "")
                 return ListSettings(
                     variable: trimmed
                 )

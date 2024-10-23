@@ -38,6 +38,10 @@ struct PumpView: View {
         return dateFormatter
     }
 
+    @FetchRequest(
+        entity: InsulinConcentration.entity(), sortDescriptors: []
+    ) var concentration: FetchedResults<InsulinConcentration>
+
     var body: some View {
         HStack(spacing: 10) {
             if let reservoir = reservoir {
@@ -73,9 +77,13 @@ struct PumpView: View {
                     .foregroundColor(batteryColor)
                     .offset(x: 0, y: -4)
                     .shadow(radius: 2)
+                    .padding(.leading, (concentration.last?.concentration ?? 1) != 1 ? 4 : 0)
                     .overlay {
                         if let timeZone = timeZone, timeZone.secondsFromGMT() != TimeZone.current.secondsFromGMT() {
                             ClockOffset(mdtPump: true)
+                        }
+                        if (concentration.last?.concentration ?? 1) != 1, state.settingsManager.settings.insulinBadge {
+                            NonStandardInsulin(concentration: concentration.last?.concentration ?? 1, pod: false)
                         }
                     }
             }
@@ -87,9 +95,13 @@ struct PumpView: View {
                     .foregroundColor(colorScheme == .dark ? .secondary : .white)
                     .offset(x: 0, y: -5)
                     .shadow(radius: 2)
+                    .padding(.leading, (concentration.last?.concentration ?? 1) != 1 ? 7 : 0)
                     .overlay {
                         if let timeZone = timeZone, timeZone.secondsFromGMT() != TimeZone.current.secondsFromGMT() {
                             ClockOffset(mdtPump: false)
+                        }
+                        if (concentration.last?.concentration ?? 1) != 1, state.settingsManager.settings.insulinBadge {
+                            NonStandardInsulin(concentration: concentration.last?.concentration ?? 1, pod: true)
                         }
                     }
                 remainingTime(time: date.timeIntervalSince(timerDate))
@@ -109,14 +121,34 @@ struct PumpView: View {
                 let days = Int(time / 1.days.timeInterval)
                 let hours = Int(time / 1.hours.timeInterval)
                 let minutes = Int(time / 1.minutes.timeInterval)
+                let adjustedHours = Int(hours - days * 24)
+
                 if days >= 1 {
-                    Text(" \(days)" + NSLocalizedString("d", comment: "abbreviation for days" + "+"))
+                    HStack(spacing: 0) {
+                        Text(" \(days)")
+                        spacer
+                        Text(NSLocalizedString("d", comment: "abbreviation for days")).foregroundStyle(.secondary)
+                        if adjustedHours >= 0 {
+                            Text(" ")
+                            Text("\(adjustedHours)")
+                            spacer
+                            Text(NSLocalizedString("h", comment: "abbreviation for days")).foregroundStyle(.secondary)
+                        }
+                    }
                 } else if hours >= 1 {
-                    Text(" \(hours)" + NSLocalizedString("h", comment: "abbreviation for hours"))
-                        .foregroundStyle(time < 4 * 60 * 60 ? .red : .primary)
+                    HStack(spacing: 0) {
+                        Text(" \(hours)")
+                        spacer
+                        Text(NSLocalizedString("h", comment: "abbreviation for hours"))
+                            .foregroundStyle(time < 4 * 60 * 60 ? .red : .secondary)
+                    }
                 } else {
-                    Text(" \(minutes)" + NSLocalizedString("m", comment: "abbreviation for minutes"))
-                        .foregroundStyle(time < 4 * 60 * 60 ? .red : .primary)
+                    HStack(spacing: 0) {
+                        Text(" \(minutes)")
+                        spacer
+                        Text(NSLocalizedString("m", comment: "abbreviation for minutes"))
+                            .foregroundStyle(time < 4 * 60 * 60 ? .red : .secondary)
+                    }
                 }
             } else {
                 Text(NSLocalizedString("Replace", comment: "View/Header when pod expired")).foregroundStyle(.red)
@@ -168,5 +200,9 @@ struct PumpView: View {
         default:
             return .green
         }
+    }
+
+    private var spacer: Text {
+        Text(" ").tracking(-3)
     }
 }

@@ -32,6 +32,12 @@ extension Settings {
 
         @State private var activeProfile = false
 
+        private var formatter: NumberFormatter {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            return formatter
+        }
+
         var body: some View {
             Form {
                 Section {
@@ -85,7 +91,7 @@ extension Settings {
 
                 Section {
                     Text("Pump Settings").navigationLink(to: .pumpSettingsEditor, from: self)
-                    Text("Basal Profile").navigationLink(to: .basalProfileEditor, from: self)
+                    Text("Basal Profile").navigationLink(to: .basalProfileEditor(saveNewConcentration: false), from: self)
                     Text("Insulin Sensitivities").navigationLink(to: .isfEditor, from: self)
                     Text("Carb Ratios").navigationLink(to: .crEditor, from: self)
                     Text("Target Glucose").navigationLink(to: .targetsEditor, from: self)

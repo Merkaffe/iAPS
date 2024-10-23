@@ -133,7 +133,6 @@ struct FrostedGlass: View {
 
 struct ColouredRoundedBackground: View {
     @Environment(\.colorScheme) var colorScheme
-
     var body: some View {
         Rectangle()
             // RoundedRectangle(cornerRadius: 15)
@@ -204,10 +203,36 @@ struct ClockOffset: View {
     }
 }
 
+struct NonStandardInsulin: View {
+    let concentration: Double
+    let pod: Bool
+
+    private var formatter: NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        return formatter
+    }
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 15)
+                .fill(Color(.insulin).opacity(0.2))
+                .frame(width: 33, height: 15)
+                .overlay {
+                    Text("U" + (formatter.string(from: concentration * 100 as NSNumber) ?? ""))
+                        .font(.system(size: 8).weight(.thin))
+                        .foregroundStyle(.primary)
+                }
+        }
+        .offset(x: pod ? -20 : -22, y: pod ? -20 : -20)
+    }
+}
+
 struct TooOldValue: View {
     var body: some View {
         ZStack {
-            Image(systemName: "cicle.fill")
+            Image(systemName: "circle.fill")
                 .resizable()
                 .frame(maxHeight: 20)
                 .symbolRenderingMode(.palette)
