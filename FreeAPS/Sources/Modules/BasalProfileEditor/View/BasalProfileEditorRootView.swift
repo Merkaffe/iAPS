@@ -233,7 +233,7 @@ extension BasalProfileEditor {
                 }
             } message: {
                 Text("\n" + NSLocalizedString(
-                    "Please make sure you've selected the correct insulin concentration setting before saving.\n\nYour insulin should be labeled with the concentration, in units per ml. U100 means 100 units per ml and is the standard concentration.",
+                    "Please verify that you have selected the correct insulin concentration before saving your settings. The insulin vial or pen should indicate the concentration in units per milliliter (e.g., U100 indicates 100 units per milliliter, which is the standard concentration). Accurate selection is critical for proper dosing.",
                     comment: "Insulin alert message"
                 ))
             }
