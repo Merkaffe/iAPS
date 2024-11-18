@@ -23,6 +23,10 @@ enum Icon_: String, CaseIterable, Identifiable {
     case purpleBG = "iAPS_Purple_BG"
     case whiteBG = "iAPS_White_BG"
     case loop = "iAPS_Loop"
+    case artificial_pancreas_dark_purple = "artificial_pancreas_dark_purple"
+    case artificial_pancreas_orange = "artificial_pancreas_orange"
+    case erythrocyte_blue = "erythrocyte_blue"
+    case erythrocyte_guy = "erythrocyte_guy"
     var id: String { rawValue }
 }
 
