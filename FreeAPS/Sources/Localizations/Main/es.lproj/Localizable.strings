@@ -92,7 +92,7 @@
 "Suggested at" = "Sugerido a las";
 
 /* Headline in enacted pop up (at: at what time) */
-"Error at" = "Error en";
+"Status at" = "Status at";
 
 /* Bolus View Meal Summary Header */
 "Meal Summary" = "Resumen de la comida";
@@ -111,6 +111,9 @@
 
 /* For the  Bolus View pop-up */
 "Fatty Meal" = "Comida Grasienta";
+
+/* Bolus option */
+"Hypo Treatment" = "Hypo Treatment";
 
 /* For the  Bolus View pop-up */
 "Full Bolus" = "Bolo Completo";
@@ -473,8 +476,57 @@ Enact a temp Basal or a temp target */
 /* Max setting */
 "Max Bolus" = "Bolo máximo";
 
+/* Insulin alert message */
+"Please verify that you have selected the correct insulin concentration before saving your settings.\n\nThe insulin vial or pen should indicate the concentration in units per milliliter (e.g., U100 indicates 100 units per milliliter, which is the standard concentration).\n\nAccurate selection is critical for proper dosing." = "Please verify that you have selected the correct insulin concentration before saving your settings.\n\nThe insulin vial or pen should indicate the concentration in units per milliliter (e.g., U100 indicates 100 units per milliliter, which is the standard concentration).\n\nAccurate selection is critical for proper dosing.";
+
+/* Insulin Concentration View */
+"Concentration" = "Concentration";
+
+/* Insulin Concentration View */
+"Insulin Concentration" = "Insulin Concentration";
+
+/* Insulin Concentration View */
+"Change Insulin" = "Change Insulin";
+
+/* Insulin Concentration View */
+"Insulin diluted to" = "Insulin diluted to";
+
+/* Insulin Concentration View */
+"standard concentration:" = "standard concentration:";
+
+/* Insulin Concentration View */
+"units per ml" = "units per ml";
+
+/* Insulin Concentration View */
+"Standard concentration (U 100)" = "Standard concentration (U 100)";
+
+/* Insulin Concentration View */
+"Insulin concentration increased to" = "Insulin concentration increased to";
+
+/* Insulin Concentration View */
+"Couldn't save to pump. Try again when pump isn't busy bolusing." = "Couldn't save to pump. Try again when pump isn't busy bolusing.";
+
+/* Insulin Concentration View */
+"Saved" = "Saved";
+
+/* Label inusulin concentration, units per ml */
+"U100" = "U100";
+
+/* Label inusulin concentration, units per ml */
+"U200" = "U200";
+
+/* Label inusulin concentration, units per ml */
+"U50" = "U50";
+
+/* Label inusulin concentration, units per ml */
+"U10" = "U10";
+/* Debug option, allow U50 and U10 (diluted insulin) */
+"Allow diluted insulin concentration settings" = "Allow diluted insulin concentration settings";
 /* Max setting */
 "Max Carbs" = "Carbohidratos máximos";
+
+/* Max carbs description */
+"Maximum amount of carbs (g) you can add each entry" = "Maximum amount of carbs (g) you can add each entry";
 
 /* */
 "Pump Settings" = "Límites de la bomba";
@@ -634,6 +686,9 @@ Enact a temp Basal or a temp target */
 
 /* Treatments list */
 "Treatments" = "Tratamientos";
+
+/* Hypo Treatment Preset */
+"Treatment" = "Treatment";
 
 /* " min" in Treatments list */
 " min" = " min";
@@ -1244,7 +1299,10 @@ Solamente puedes emparejar una app con el sensor vía bluetooth. A continuación
 "Can't enact the new loop cycle recommendation, because a Bolus is in progress. Wait for next loop cycle" = "No se ha ejecutado el cálculo recomendado para el nuevo ciclo porque hay un bolo en progreso. Espere al siguiente ciclo del lazo";
 
 /* Pump Error */
-"Error: Pump is Busy." = "Error: bomba ocupada.";
+"Pump is Busy." = "Pump is Busy.";
+
+/* Alert when bolus is already in progress (tapping the bolus button) */
+"Bolus already in Progress!" = "Bolus already in Progress!";
 
 /* -------------- Developer settings ---------------------- */
 /* Debug options */
@@ -1524,6 +1582,15 @@ Ajustes predeterminados:\n
 
 /* */
 "Meal Presets" = "Atajo de comida";
+
+/* Back button */
+"Back" = "Atrás";
+
+/* Search Saved Food presets */
+"Search" = "Search";
+
+/* Placeholder for name of dish when adding a new food preset */
+"New" = "New";
 
 /* */
 "Empty" = "Vacío";
@@ -1879,6 +1946,15 @@ Ajustes predeterminados:\n
 /* Loop Errors in statPanel */
 "Errors" = "Errores";
 
+/* Loop Statistics pop-up description */
+"Success = Started / Completed (loops)" = "Success = Started / Completed (loops)";
+
+/* Loop Statistics pop-up */
+"Most Frequent Error" = "Most Frequent Error";
+
+/* Loop Statistics pop-up */
+"Non-completed Loops" = "Non-completed Loops";
+
 /* Average loop interval */
 "Interval" = "Intervalo";
 
@@ -1924,6 +2000,33 @@ Ajustes predeterminados:\n
 /* HbA1c for all glucose storage days */
 "all" = "todos";
 
+/* Active Insulin View */
+"Active Insulin" = "Active Insulin";
+
+/* Active Insulin View */
+"Time with negative insulin" = "Time with negative insulin";
+
+/* Active Insulin View */
+"Insulin compared to yesterday" = "Insulin compared to yesterday";
+
+/* Active Insulin View */
+"Insulin compared to average" = "Insulin compared to average";
+
+/* Active Insulin View */
+"Average Insulin 10 days" = "Average Insulin 10 days";
+
+/* Active Insulin View */
+"TDD yesterday" = "TDD yesterday";
+
+/* Active Insulin View */
+"TDD 2 days ago" = "TDD 2 days ago";
+
+/* Active Insulin View */
+"TDD 3 days ago" = "TDD 3 days ago";
+
+/* Active Carbohydrates View */
+"Active Carbohydrates" = "Active Carbohydrates";
+
 /* --------------------------------------------------------  Dexcom G7 --------------------------------------*/
 
 "CGM Configuration" = "Configuración de MCG";
@@ -1941,36 +2044,60 @@ Ajustes predeterminados:\n
 /* Smoothing of CGM readings */
 "Smooth Glucose Value" = "Suavizar valores de glucosa";
 /* ------------------------------------------- Sharing -------------------------------------------------------*/
-/* */
+/* Setting Title */
 
+"Sharing" = "Compartir";
+
+/* Share and Backup page header */
+"Share and Backup" = "Share and Backup";
+
+/* Section 1 title */
+"Upload settings and statistics" = "Upload settings and statistics";
+
+/* On-off toggle */
+"Share and Backup all of your Settings and Statistics" = "Share and Backup all of your Settings and Statistics";
+
+/* Title of dropdown menu */
+"Sex" = "Sex";
+
+/* Sex dropdown menu option */
 "Woman" = "Mujer";
 
-/* */
+/* Sex dropdown menu option */
 "Man" = "Hombre";
 
-/* */
+/* Sex dropdown menu option */
 "Other" = "Otro";
 
-/* */
+/* Sex dropdown menu option */
 "Secret" = "Anónimo";
 
-/* */
+/* Title of birth date field */
 "Birth Date" = "Fecha de nacimiento";
 
-/* */
-"Share all of your Statistics" = "Comparte todas las estadísticas";
+/* Share and Backup info text */
+"\nIf you enable \"Share and Backup\" daily backups of your settings and statistics will be made to online database.\n\nMake sure to copy and save your recovery token below. The recovery token is required to import your settings to another phone when using the onboarding view." = "\nIf you enable \"Share and Backup\" daily backups of your settings and statistics will be made to online database.\n\nMake sure to copy and save your recovery token below. The recovery token is required to import your settings to another phone when using the onboarding view.";
 
-/* */
-"Just iAPS version number" = "Sólo el número de versión iAPS";
-
-/* */
+/* Section title if sharing off */
 "Share Bare Minimum" = "Compartir lo mínimo";
 
-/* */
-"Every bit of information you choose to share is uploaded anonymously. To prevent duplicate uploads, the data is identified with a unique random string saved on your phone." = "Todo registro de información que elija compartir se hace de forma anónima. Para evitar subidas de información duplicadas, los datos se identifican con un identificador único aleatorio guardado en su teléfono.";
+/* Minimum share toggle */
+"Just iAPS version number" = "Sólo el número de versión iAPS";
 
-/* */
+/* Share info text */
+"Every bit of information you choose to share is uploaded anonymously. To prevent duplicate uploads, the data is identified with a unique random string saved on your phone, the recovery token." = "Every bit of information you choose to share is uploaded anonymously. To prevent duplicate uploads, the data is identified with a unique random string saved on your phone, the recovery token.";
+
+/* Token section title */
+"Your recovery token" = "Your recovery token";
+
+/* Token display button */
 "Tap to display" = "Pulsa para mostrar";
+
+/* Token copy button */
+"Long press to copy" = "Long press to copy";
+
+/* Link to statistics button */
+"View Personal Statistics" = "View Personal Statistics";
 
 /* */
 "Your identifier" = "Su identificador";
@@ -2543,6 +2670,21 @@ Un límite Autosens.máx > 1,5 no es recomendable cuando se utiliza la función 
 /* Threshold Table Columns Title */
 "Threshold" = "Limite";
 
+/* Dynamic settings View */
+"Averages" = "Averages";
+
+/* Dynamic settings View */
+"Average ISF" = "Average ISF";
+
+/* Dynamic settings View */
+"Average CR" = "Average CR";
+
+/* Dynamic settings View */
+"Average CSF" = "Average CSF";
+
+/* Dynamic settings View */
+"ISF: Insulin Sensitivity, CR: Carb Ratio,\nCSF: Carb Sensitivity = ISF/CR" = "ISF: Insulin Sensitivity, CR: Carb Ratio,\nCSF: Carb Sensitivity = ISF/CR";
+
 /* Header */
 "Calculator settings" = "Ajustes de la calculadora";
 
@@ -2604,6 +2746,24 @@ Un límite Autosens.máx > 1,5 no es recomendable cuando se utiliza la función 
 
 /* UI/UX option */
 "Display Time Interval Setting Button" = "Botón de intervalo de horas visibles";
+
+/* UI/UX option */
+"Never display the small glucose chart when scrolling" = "Never display the small glucose chart when scrolling";
+
+/* UI/UX option */
+"Disable Hypo Treatments" = "Disable Hypo Treatments";
+
+/* UI/UX option */
+"Display Glucose Delta" = "Display Glucose Delta";
+
+/* UI/UX option */
+"Hide Concentration Badge" = "Hide Concentration Badge";
+
+/* UI/UX option */
+"Use insulin bars" = "Use insulin bars";
+
+/* UI/UX option */
+"Hide the bolus amount strings when amount is under" = "Hide the bolus amount strings when amount is under";
 
 /* Setting title */
 "Bolus Calculator" = "Calculador de bolo";

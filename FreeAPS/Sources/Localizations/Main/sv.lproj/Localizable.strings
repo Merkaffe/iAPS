@@ -92,7 +92,7 @@
 "Suggested at" = "Föreslaget vid";
 
 /* Headline in enacted pop up (at: at what time) */
-"Error at" = "Fel vid";
+"Status at" = "Status kl";
 
 /* Bolus View Meal Summary Header */
 "Meal Summary" = "Måltidssammanfattning";
@@ -111,6 +111,9 @@
 
 /* For the  Bolus View pop-up */
 "Fatty Meal" = "Fet mat";
+
+/* Bolus option */
+"Hypo Treatment" = "Behandling av lågt blodsocker";
 
 /* For the  Bolus View pop-up */
 "Full Bolus" = "Total mängd";
@@ -473,8 +476,57 @@ Enact a temp Basal or a temp target */
 /* Max setting */
 "Max Bolus" = "Max bolus";
 
+/* Insulin alert message */
+"Please verify that you have selected the correct insulin concentration before saving your settings.\n\nThe insulin vial or pen should indicate the concentration in units per milliliter (e.g., U100 indicates 100 units per milliliter, which is the standard concentration).\n\nAccurate selection is critical for proper dosing." = "Noga kontrollera att du valt rätt inställning för koncentration innan du sparar.\n\nDin flaska eller penna med insulin är märkt med insulinkoncentrationen i enheter per milliliter (t.ex U100, som betyder 100 enheter per milliliter, vilket är standardkoncentrationen för insulin).\n\nDitt val av koncentration kommer påverka tillförd mängd insulin.";
+
+/* Insulin Concentration View */
+"Concentration" = "Koncentration";
+
+/* Insulin Concentration View */
+"Insulin Concentration" = "Insulinkoncentration";
+
+/* Insulin Concentration View */
+"Change Insulin" = "Ändra koncentration";
+
+/* Insulin Concentration View */
+"Insulin diluted to" = "Insulin utspädd till";
+
+/* Insulin Concentration View */
+"standard concentration:" = "standardkoncentration:";
+
+/* Insulin Concentration View */
+"units per ml" = "enheter per ml";
+
+/* Insulin Concentration View */
+"Standard concentration (U 100)" = "Standardkoncentration (U100)";
+
+/* Insulin Concentration View */
+"Insulin concentration increased to" = "Insulinkoncentration ökad till";
+
+/* Insulin Concentration View */
+"Couldn't save to pump. Try again when pump isn't busy bolusing." = "Det gick inte att spara till pump. Försök igen när pumpen inte är upptagen med att ge bolus.";
+
+/* Insulin Concentration View */
+"Saved" = "Sparad";
+
+/* Label inusulin concentration, units per ml */
+"U100" = "U100";
+
+/* Label inusulin concentration, units per ml */
+"U200" = "U200";
+
+/* Label inusulin concentration, units per ml */
+"U50" = "U50";
+
+/* Label inusulin concentration, units per ml */
+"U10" = "U10";
+/* Debug option, allow U50 and U10 (diluted insulin) */
+"Allow diluted insulin concentration settings" = "Tillåt utspätt insulin i pumpinställningar";
 /* Max setting */
 "Max Carbs" = "Max antal kolhydrater";
+
+/* Max carbs description */
+"Maximum amount of carbs (g) you can add each entry" = "Maximal antal kolhydrater (g) du kan lägga till varje måltid";
 
 /* */
 "Pump Settings" = "Pumpinställningar";
@@ -634,6 +686,9 @@ Enact a temp Basal or a temp target */
 
 /* Treatments list */
 "Treatments" = "Behandlingar";
+
+/* Hypo Treatment Preset */
+"Treatment" = "Behandling";
 
 /* " min" in Treatments list */
 " min" = " min";
@@ -1255,7 +1310,10 @@ Enact a temp Basal or a temp target */
 "Can't enact the new loop cycle recommendation, because a Bolus is in progress. Wait for next loop cycle" = "Kan inte utföra ny loop-rekommendation just nu, pga en pågående bolus. Vänta till nästa loop";
 
 /* Pump Error */
-"Error: Pump is Busy." = "Fel: pump är upptagen.";
+"Pump is Busy." = "Pump är upptagen.";
+
+/* Alert when bolus is already in progress (tapping the bolus button) */
+"Bolus already in Progress!" = "En bolusdos pågår redan!";
 
 /* -------------- Developer settings ---------------------- */
 /* Debug options */
@@ -1525,6 +1583,15 @@ Enact a temp Basal or a temp target */
 
 /* */
 "Meal Presets" = "Förval";
+
+/* Back button */
+"Back" = "Tillbaka";
+
+/* Search Saved Food presets */
+"Search" = "Sök";
+
+/* Placeholder for name of dish when adding a new food preset */
+"New" = "Ny";
 
 /* */
 "Empty" = "Inget";
@@ -1880,6 +1947,15 @@ Enact a temp Basal or a temp target */
 /* Loop Errors in statPanel */
 "Errors" = "Fel";
 
+/* Loop Statistics pop-up description */
+"Success = Started / Completed (loops)" = "Lyckades = Påbörjade / Avslutade (loopar)";
+
+/* Loop Statistics pop-up */
+"Most Frequent Error" = "Vanligaste fel";
+
+/* Loop Statistics pop-up */
+"Non-completed Loops" = "Ej avslutade loopar";
+
 /* Average loop interval */
 "Interval" = "Intervall";
 
@@ -1925,6 +2001,33 @@ Enact a temp Basal or a temp target */
 /* HbA1c for all glucose storage days */
 "all" = "alla";
 
+/* Active Insulin View */
+"Active Insulin" = "Aktivt insulin";
+
+/* Active Insulin View */
+"Time with negative insulin" = "Tid med negativt insulin";
+
+/* Active Insulin View */
+"Insulin compared to yesterday" = "Insulin jämfört med igår";
+
+/* Active Insulin View */
+"Insulin compared to average" = "Insulin jämfört med genomsnitt";
+
+/* Active Insulin View */
+"Average Insulin 10 days" = "Medelinsulin 10 dagar";
+
+/* Active Insulin View */
+"TDD yesterday" = "TDD igår";
+
+/* Active Insulin View */
+"TDD 2 days ago" = "TDD för 2 dagar sedan";
+
+/* Active Insulin View */
+"TDD 3 days ago" = "TDD för 3 dagar sedan";
+
+/* Active Carbohydrates View */
+"Active Carbohydrates" = "Aktiva kolhydrater";
+
 /* --------------------------------------------------------  Dexcom G7 --------------------------------------*/
 
 "CGM Configuration" = "CGM-inställning";
@@ -1942,36 +2045,60 @@ Enact a temp Basal or a temp target */
 /* Smoothing of CGM readings */
 "Smooth Glucose Value" = "Utjämna blodsocker från sensor";
 /* ------------------------------------------- Sharing -------------------------------------------------------*/
-/* */
+/* Setting Title */
 
+"Sharing" = "Delning";
+
+/* Share and Backup page header */
+"Share and Backup" = "Dela och säkerhetskopiera";
+
+/* Section 1 title */
+"Upload settings and statistics" = "Ladda upp inställningar och statistik";
+
+/* On-off toggle */
+"Share and Backup all of your Settings and Statistics" = "Dela och säkerhetskopiera alla dina inställningar och statistik";
+
+/* Title of dropdown menu */
+"Sex" = "Kön";
+
+/* Sex dropdown menu option */
 "Woman" = "Kvinna";
 
-/* */
+/* Sex dropdown menu option */
 "Man" = "Man";
 
-/* */
+/* Sex dropdown menu option */
 "Other" = "Annan";
 
-/* */
+/* Sex dropdown menu option */
 "Secret" = "Hemligt";
 
-/* */
+/* Title of birth date field */
 "Birth Date" = "Födelsedatum";
 
-/* */
-"Share all of your Statistics" = "Dela all statistik";
+/* Share and Backup info text */
+"\nIf you enable \"Share and Backup\" daily backups of your settings and statistics will be made to online database.\n\nMake sure to copy and save your recovery token below. The recovery token is required to import your settings to another phone when using the onboarding view." = "\nOm du aktiverar \"Dela och säkerhetskopiera\" kommer dagliga säkerhetskopior av dina inställningar och statistik att göras till en moln-databas.\n\nSe till att kopiera och spara din återställningstoken nedan. Den kommer att behövas om du någon gång behöver importera dina inställningar till en annan telefon.";
 
-/* */
-"Just iAPS version number" = "Endast appversion";
-
-/* */
+/* Section title if sharing off */
 "Share Bare Minimum" = "Dela endast ett minimum";
 
-/* */
-"Every bit of information you choose to share is uploaded anonymously. To prevent duplicate uploads, the data is identified with a unique random string saved on your phone." = "All information du väljer att dela laddas upp anonymt. För att förhindra dubbletter av uppladdningar identifieras datan med en unik slumpmässig sträng som sparas på telefonen.";
+/* Minimum share toggle */
+"Just iAPS version number" = "Endast appversion";
 
-/* */
+/* Share info text */
+"Every bit of information you choose to share is uploaded anonymously. To prevent duplicate uploads, the data is identified with a unique random string saved on your phone, the recovery token." = "All information du väljer att dela laddas upp anonymt. För att förhindra dubbletter av uppladdningar identifieras datan med en unik slumpmässig sträng som sparas på din telefon.";
+
+/* Token section title */
+"Your recovery token" = "Din återställningsnyckel";
+
+/* Token display button */
 "Tap to display" = "Tryck för att visa";
+
+/* Token copy button */
+"Long press to copy" = "Tryck länge för att kopiera";
+
+/* Link to statistics button */
+"View Personal Statistics" = "Visa personlig statistik";
 
 /* */
 "Your identifier" = "Din identifierare";
@@ -2341,7 +2468,7 @@ Enact a temp Basal or a temp target */
 "Minimum duration in minutes for new SMB since last SMB or manual bolus" = "Minsta tid i minuter för ny automatisk bolus sedan senaste bolus eller automatisk bolus";
 
 /* Headline "Bolus Increment" */
-"Bolus Increment" = "Minsta bolusmångd";
+"Bolus Increment" = "Minsta bolusmängd";
 
 /* "Bolus Increment" */
 "Smallest enacted SMB amount. Minimum amount for Omnipod pumps is 0.05 U, whereas for Medtronic pumps it differs for various models, from 0.025 U to 0.10 U. Please check the minimum bolus amount which can be delivered by your pump. The default value is 0.1." = "Minsta mängd för Omnipod-poddar är 0,05 enheter, medan det för Medtronic-pumpar skiljer sig åt för olika modeller, från 0.25 IE till 0,10 IE. Kontrollera den minsta bolusmängd som kan ges av din pump för denna inställning. Standardvärdet är 0,1 enheter.";
@@ -2438,6 +2565,21 @@ Enact a temp Basal or a temp target */
 /* Threshold Table Columns Title */
 "Threshold" = "Tröskelvärde";
 
+/* Dynamic settings View */
+"Averages" = "Medelvärden";
+
+/* Dynamic settings View */
+"Average ISF" = "Medelvärde ISF";
+
+/* Dynamic settings View */
+"Average CR" = "Medelvärde CR";
+
+/* Dynamic settings View */
+"Average CSF" = "Medelvärde CSF";
+
+/* Dynamic settings View */
+"ISF: Insulin Sensitivity, CR: Carb Ratio,\nCSF: Carb Sensitivity = ISF/CR" = "ISF: Insulinkänslighet, CR: Insulinkvot,\nCSF: Kolhydratkänslighet = ISF/CR";
+
 /* Header */
 "Calculator settings" = "Boluskalkylatorinställning";
 
@@ -2498,7 +2640,25 @@ Enact a temp Basal or a temp target */
 "Horizontal Scroll View Visible hours" = "Antal synliga timmar i hemfönstret";
 
 /* UI/UX option */
-"Display Time Interval Setting Button" = "Visa knapp för tidsintervell";
+"Display Time Interval Setting Button" = "Visa knapp för tidsintervall";
+
+/* UI/UX option */
+"Never display the small glucose chart when scrolling" = "Dölj det lilla glukosdiagrammet när du scrollar";
+
+/* UI/UX option */
+"Disable Hypo Treatments" = "Visa inte behandling av lågt blodsocker";
+
+/* UI/UX option */
+"Display Glucose Delta" = "Visa exakt glukosförändring";
+
+/* UI/UX option */
+"Hide Concentration Badge" = "Dölj koncentrationsmärke";
+
+/* UI/UX option */
+"Use insulin bars" = "Använd insulinstänger";
+
+/* UI/UX option */
+"Hide the bolus amount strings when amount is under" = "Dölj bolusmängdtext när beloppet är under";
 
 /* Setting title */
 "Bolus Calculator" = "Boluskalkylator";

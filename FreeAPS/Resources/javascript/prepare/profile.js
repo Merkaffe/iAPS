@@ -75,16 +75,14 @@ function generate(pumpsettings_data, bgtargets_data, isf_data, basalprofile_data
                 Math.max(35, Math.min(preferences.insulinPeakTime, 100));
             } else { preferences.insulinPeakTime = 55; }
         }
-        // Migrate missing conversion from original freeaps
-        if (preferences.resistanceLowersTarget) {
-            preferences.resistance_lowers_target = true;
-        }
     }
     
     var tdd_factor = { };
     var set_basal = false;
     var basal_rate = { };
-
+    var old_isf = { };
+    var old_cr = { };
+    
     var inputs = { };
     //add all preferences to the inputs
     for (var pref in preferences) {
@@ -112,6 +110,9 @@ function generate(pumpsettings_data, bgtargets_data, isf_data, basalprofile_data
     inputs.tddFactor = tdd_factor;
     inputs.set_basal = set_basal;
     inputs.basal_rate = basal_rate;
+    inputs.old_isf = old_isf;
+    inputs.old_cr = old_cr;
+    
     
     if (autotune_data) {
         if (autotune_data.basalprofile) { inputs.basals = autotune_data.basalprofile; }
@@ -120,5 +121,41 @@ function generate(pumpsettings_data, bgtargets_data, isf_data, basalprofile_data
             if (autotune_data.carb_ratio) { inputs.carbratio.schedule[0].ratio = autotune_data.carb_ratio; }
         }
     }
-    return freeaps_profile(inputs);
+
+    // merge oref0 defaults with iAPS ones
+    const defaults = Object.assign(
+        {},
+        freeaps_profile.defaults(),
+        {
+            type: 'iAPS', // attribute to override defaults
+            // +++++ iAPS settings
+            // smb_delivery_ratio: included in the current oref0 PR (https://github.com/openaps/oref0/pull/1465/files)
+            smb_delivery_ratio: 0.5,
+            adjustmentFactor: 1,
+            useNewFormula: false,
+            enableDynamicCR: false,
+            sigmoid: false,
+            weightPercentage: 0.65,
+            // threshold_setting: temporary fix to test thomasvargiu/iAPS#original-oref0 branch before build.
+            // We can remove it after merged and after build the new original bundles
+            // because it's included in the current oref0 PR (https://github.com/openaps/oref0/pull/1465/files)
+            // currently (2024-08-09) this settings probably doesn't work in the current iAPS main/dev branch
+            threshold_setting: 60
+        }
+    )
+
+    var logs = { err: '', stdout: '', return_val: 0 };
+    var profile = freeaps_profile(logs, inputs, defaults);
+    if (logs.err.length > 0) {
+        console.error(logs.err);
+    }
+    if (logs.stdout.length > 0) {
+        console.error(logs.stdout);
+    }
+
+    if (typeof profile !== 'object') {
+        return;
+    }
+
+    return profile;
 }

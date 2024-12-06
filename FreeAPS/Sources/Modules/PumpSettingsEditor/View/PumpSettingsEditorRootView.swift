@@ -12,6 +12,10 @@ extension PumpSettingsEditor {
             return formatter
         }
 
+        @FetchRequest(
+            entity: InsulinConcentration.entity(), sortDescriptors: [NSSortDescriptor(key: "date", ascending: true)]
+        ) var concentration: FetchedResults<InsulinConcentration>
+
         var body: some View {
             Form {
                 Section(header: Text("Delivery limits")) {
@@ -23,10 +27,6 @@ extension PumpSettingsEditor {
                         Text("Max Bolus")
                         DecimalTextField("U", value: $state.maxBolus, formatter: formatter)
                     }
-                    HStack {
-                        Text("Max Carbs")
-                        DecimalTextField("g", value: $state.maxCarbs, formatter: formatter)
-                    }
                 }
 
                 Section(header: Text("Duration of Insulin Action")) {
@@ -35,6 +35,11 @@ extension PumpSettingsEditor {
                         DecimalTextField("hours", value: $state.dia, formatter: formatter)
                     }
                 }
+
+                Section {
+                    Text("U " + (formatter.string(from: (concentration.last?.concentration ?? 1) * 100 as NSNumber) ?? ""))
+                        .navigationLink(to: .basalProfileEditor(saveNewConcentration: true), from: self)
+                } header: { Text("Concentration") }
 
                 Section {
                     HStack {

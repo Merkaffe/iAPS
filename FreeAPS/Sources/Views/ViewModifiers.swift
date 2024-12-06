@@ -49,24 +49,33 @@ struct CompactSectionSpacing: ViewModifier {
     }
 }
 
-struct ScrollTargetLayoutModifier: ViewModifier {
+struct CarveOrDrop: ViewModifier {
+    let carve: Bool
     func body(content: Content) -> some View {
-        if #available(iOS 17, *) {
+        if carve {
             return content
-                .scrollTargetLayout()
+                .foregroundStyle(.shadow(.inner(color: .black, radius: 0.01, y: 1)))
         } else {
-            return content }
+            return content
+                .foregroundStyle(.shadow(.drop(color: .black, radius: 0.02, y: 1)))
+        }
     }
 }
 
-struct ScrollPositionModifier: ViewModifier {
-    @Binding var id: Int?
-    func body(content: Content) -> some View {
-        if #available(iOS 17, *) {
-            return content
-                .scrollPosition(id: $id)
+struct InfoPanelBackground: View {
+    let colorScheme: ColorScheme
+    var body: some View {
+        if #available(iOS 17.0, *) {
+            Rectangle()
+                .stroke(.gray, lineWidth: 2)
+                .fill(colorScheme == .light ? .white : .black)
+                .frame(height: 24)
         } else {
-            return content }
+            Rectangle()
+                .strokeBorder(.gray, lineWidth: 2)
+                .background(Rectangle().fill(colorScheme == .light ? .white : .black))
+                .frame(height: 24)
+        }
     }
 }
 
@@ -137,7 +146,6 @@ struct FrostedGlass: View {
 
 struct ColouredRoundedBackground: View {
     @Environment(\.colorScheme) var colorScheme
-
     var body: some View {
         Rectangle()
             // RoundedRectangle(cornerRadius: 15)
@@ -167,7 +175,7 @@ struct LoopEllipse: View {
             .stroke(stroke, lineWidth: colorScheme == .light ? 2 : 1)
             .background(
                 RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.white).opacity(colorScheme == .light ? 0.2 : 0.08)
+                    .fill(colorScheme == .light ? .white : .black)
             )
     }
 }
@@ -186,7 +194,10 @@ struct HeaderBackground: View {
     @Environment(\.colorScheme) var colorScheme
     var body: some View {
         Rectangle()
-            .fill(colorScheme == .light ? .gray.opacity(IAPSconfig.backgroundOpacity) : Color.header2.opacity(1))
+            .fill(
+                colorScheme == .light ? .gray.opacity(IAPSconfig.backgroundOpacity) : Color.header2.opacity(1)
+//                    Color(.systemGray5)
+            )
     }
 }
 
@@ -201,6 +212,48 @@ struct ClockOffset: View {
                 .symbolRenderingMode(.palette)
                 .foregroundStyle(Color(.warning))
                 .offset(x: 10, y: !mdtPump ? -20 : -13)
+        }
+    }
+}
+
+struct NonStandardInsulin: View {
+    let concentration: Double
+    let pod: Bool
+
+    private var formatter: NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        return formatter
+    }
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 15)
+                .fill(.red)
+                .frame(width: 33, height: 15)
+                .overlay {
+                    Text("U" + (formatter.string(from: concentration * 100 as NSNumber) ?? ""))
+                        .font(.system(size: 9))
+                        .foregroundStyle(.white)
+                }
+        }
+        .offset(x: pod ? -15 : -3, y: pod ? -24 : -4.5)
+    }
+}
+
+struct TooOldValue: View {
+    var body: some View {
+        ZStack {
+            Image(systemName: "circle.fill")
+                .resizable()
+                .frame(maxHeight: 20)
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(Color(.warning).opacity(0.5))
+                .offset(x: 5, y: -13)
+                .overlay {
+                    Text("Old").font(.caption)
+                }
         }
     }
 }
@@ -307,6 +360,10 @@ extension View {
         modifier(AddShadow())
     }
 
+    func carvingOrRelief(carve: Bool) -> some View {
+        modifier(CarveOrDrop(carve: carve))
+    }
+
     func addBackground() -> some View {
         ColouredRoundedBackground()
     }
@@ -345,14 +402,6 @@ extension View {
         modifier(CompactSectionSpacing())
     }
 
-    func scrollTargetLayoutiOS17() -> some View {
-        modifier(ScrollTargetLayoutModifier())
-    }
-
-    func scrollPositioniOS17(id: Binding<Int?>) -> some View {
-        modifier(ScrollPositionModifier(id: id))
-    }
-
     func asAny() -> AnyView { .init(self) }
 }
 
@@ -364,4 +413,23 @@ extension UnevenRoundedRectangle {
             bottomTrailingRadius: 50,
             topTrailingRadius: 1.5
         )
+}
+
+extension UIImage {
+    /// Code suggested by Mamad Farrahi, but slightly modified.
+    func fillImageUpToPortion(color: Color, portion: Double) -> Image {
+        let rect = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        draw(in: rect)
+        let context = UIGraphicsGetCurrentContext()!
+        context.setBlendMode(CGBlendMode.sourceIn)
+        context.setFillColor(color.cgColor ?? UIColor(.insulin.opacity(portion <= 3 ? 0.8 : 1)).cgColor)
+        let height: CGFloat = 1 - portion
+        let rectToFill = CGRect(x: 0, y: size.height * portion, width: size.width, height: size.height * height)
+        context.fill(rectToFill)
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return Image(uiImage: newImage!)
+    }
 }
