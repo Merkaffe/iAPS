@@ -1,0 +1,15 @@
+{
+  "originHash" : "44fc785c4f4f830d93122603d6bee05a3291927362faa63f4c35f8a724d341cd",
+  "pins" : [
+    {
+      "identity" : "slidebutton",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/itsmojo/SlideButton",
+      "state" : {
+        "branch" : "main",
+        "revision" : "78ce2a760fe71dbeed8cbfbd0edf0c5b3c87f87c"
+      }
+    }
+  ],
+  "version" : 3
+}
