@@ -43,6 +43,7 @@
 		D889B2392D2B4BFE00C8E64C /* OmniCorePlugin.loopplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OmniCorePlugin.loopplugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8B88D4F2D33A52F001893B6 /* LoopKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LoopKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8B88D512D33A53E001893B6 /* LoopKitUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LoopKitUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D8DF84DD2D5D243B00798277 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		D8F83F882D155ADA0005D165 /* OmniCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OmniCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -124,6 +125,7 @@
 		D8F83F7E2D155ADA0005D165 = {
 			isa = PBXGroup;
 			children = (
+				D8DF84DD2D5D243B00798277 /* README.md */,
 				D8F83F8A2D155ADA0005D165 /* OmniCore */,
 				D889B2492D2B66FF00C8E64C /* OmniCorePlugin */,
 				D8F83FB02D15621C0005D165 /* Frameworks */,
