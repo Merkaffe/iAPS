@@ -85,7 +85,7 @@ public struct PodTypeChooser: View {
         ForEach(supportedPodTypes, id: \.rawValue) { podType in
             HStack {
                 CheckmarkListItem(
-                    title: Text(podType.name),
+                    title: Text(podType.localizedDescription),
                     description: Text(podType.description),
                     isSelected: Binding(
                                 get: { self.podType == podType },

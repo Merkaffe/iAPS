@@ -33,11 +33,13 @@ public enum PodCommState: Equatable {
 // even though for non-Eros pods the RileyLink code will not be used.
 public class OmniPumpManager: RileyLinkPumpManager {
 
-    // Must be declared public static for Pluggable protocol
+    // Must be declared public static for the Pluggable protocol.
+    // This string should match the PumpManagerIdentifier string.
     public static let pluginIdentifier: String = "OmniCore"
 
-    // Must be declared public for DeviceManger protocol
-    public let localizedTitle = LocalizedString("Omni", comment: "Generic title of the Omni pump manager")
+    // Must be declared public for the DeviceManger protocol.
+    // This string is the displayed Insulin Pump name in Loop Settings.
+    public var localizedTitle = LocalizedString("Omnipod", comment: "Generic title for the Omnipod pump manager")
 
     static let podAlarmNotificationIdentifier = "Omni:\(LoopNotificationCategory.pumpFault.rawValue)"
 
@@ -50,6 +52,8 @@ public class OmniPumpManager: RileyLinkPumpManager {
 
         self.podComms.delegate = self
         self.podComms.messageLogger = self
+
+        self.localizedTitle = state.podType.localizedDescription // update the displayed Insulin Pump name in Settings
     }
 
     public required convenience init?(rawState: PumpManager.RawStateValue) {
@@ -358,7 +362,7 @@ extension OmniPumpManager {
             return HKDevice(
                 name: pluginIdentifier,
                 manufacturer: "Insulet",
-                model: state.podType.name,
+                model: state.podType.localizedDescription,
                 hardwareVersion: String(state.podType.rawValue),
                 firmwareVersion: podState.firmwareVersion + " " + podState.iFirmwareVersion,
                 softwareVersion: String(OmniCoreVersionNumber),
@@ -369,7 +373,7 @@ extension OmniPumpManager {
             return HKDevice(
                 name: pluginIdentifier,
                 manufacturer: "Insulet",
-                model: state.podType.name,
+                model: state.podType.localizedDescription,
                 hardwareVersion: nil,
                 firmwareVersion: nil,
                 softwareVersion: String(OmniCoreVersionNumber),
@@ -760,6 +764,7 @@ extension OmniPumpManager {
                 }
                 state.podType = newValue
             }
+            self.localizedTitle = newValue.localizedDescription // update the displayed Insulin Pump name in Settings
             self.podComms.prepForNewPod(myId: state.controllerId, podId: state.podId)
         }
         get {

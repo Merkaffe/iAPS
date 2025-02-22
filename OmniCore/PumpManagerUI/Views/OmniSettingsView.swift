@@ -581,8 +581,8 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
     var switchInsulinDeliveryDeviceActionSheet: ActionSheet {
         ActionSheet(title: FrameworkLocalText("Switch Insulin Delivery Device", comment: "Title for switch insulin delivery device action sheet."),
             // ZZZ need a vargs version of FrameworkLocalText?
-            message: FrameworkLocalText("Please select if you'd like to switch from using \(self.viewModel.podType.name) pods to another pod type or to some other pump type.",
-                                        comment: "Message for switch insulin device action sheet"),
+            message: FrameworkLocalText("Please select if you'd like to switch from using \(self.viewModel.podType.localizedDescription) pods to another pod type or to some other pump type.",
+                comment: "Message for switch insulin device action sheet"),
             buttons: [
                 .destructive(FrameworkLocalText("Switch pod type",
                     comment: "Button text to confirm switching pod type")) {

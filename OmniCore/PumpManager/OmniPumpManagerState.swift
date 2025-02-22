@@ -363,7 +363,7 @@ extension OmniPumpManagerState: CustomDebugStringConvertible {
             "* alertsWithPendingAcknowledgment: \(alertsWithPendingAcknowledgment)",
             "* acknowledgedTimeOffsetAlert: \(acknowledgedTimeOffsetAlert)",
             "* initialConfigurationCompleted: \(initialConfigurationCompleted)",
-            "* podType: \(podType.name)",
+            "* podType: \(podType.localizedDescription)",
             "",
         ].joined(separator: "\n")
         if podType.usesRileyLink {

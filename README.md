@@ -13,7 +13,7 @@ Eventually the OmniKit and OmniBLE pump managers and their associated plugins sh
 
 
 ## Status
-#### February 21, 2025
+#### February 22, 2025
 
 The way to deal with different transports types is currently pretty hacky and will be getting reworked.
 
@@ -22,12 +22,12 @@ There are still pending decisions to be make about what to do with the DeliveryU
 There is nothing implementing Omnipod 5 communications yet which is still trying to be understood.
 Eventually this OmniCore pump manager will be providing the eventual Omnipod 5 support for Loop.
 
-+ Eros:   Working with real pods
-+ DASH:   Working, but only tested with an rPi pod sim thus far
-+ O5:     Temp code using DASH commons that only has been testing with an rPi pod sim (i.e., really a DASH controller to the pod), but it will show new Omnipod 5 UI additions (different text, pod tab color, etc) and using an alternate base pod id in the pod comms. Note that the DIY O5 pod ids will start with 0x15 while DIY DASH pod ids start with 0x17. Eros addresses (pod ids) for both DIY and PDM use always start with 0x1F.
++ Eros:   Looping with Eros pods
++ DASH:   Looping with DASH pods and pod sim
++ O5:     Looping with DASH pods and pod sim (for testing purposes). This is temp code using DASH transport to test having a 3rd pod type showing new Omnipod 5 UI additions (different text, pod tab color, etc) and using an alternate base pod id in the pod comms. For DIY O5 pod ids will start with 0x15 while DIY DASH pod ids start with 0x17. Eros addresses (pod ids) for both DIY and PDM use always start with 0x1F.
 
 The iPhone simulators work for basic pod setup & deactivation cycles for Eros, Dash & Omnipod 5.
-As always with OmniKit and OmniBLE, there is no actual simulated pod comms and thus no fake closed loop use can be tried using iPhone simulators.
+As always was for the Omnipod pump managers with the iPhone simulator, there are no actual simulated pod comms and thus no fake closed loop use can be simulated using iPhone simulators.
 
 The pump settings will show the name of the select pod type.
 Pod Diagnostics -> Pump Manager Details can be used to examine

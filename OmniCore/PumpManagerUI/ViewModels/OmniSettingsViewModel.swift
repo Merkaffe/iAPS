@@ -129,7 +129,7 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     var viewTitle: String {
-        return pumpManager.podType.name // "Omnipod Classic", "Omnipod DASH" or "Omnipod 5"
+        return pumpManager.podType.localizedDescription // "Omnipod Classic", "Omnipod DASH" or "Omnipod 5"
     }
 
     var isClockOffset: Bool {

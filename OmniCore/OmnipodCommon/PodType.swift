@@ -24,7 +24,7 @@ public struct PodType: CustomStringConvertible, Equatable {
 
         case productIdDash = 4 // Omnipod DASH, both TWI BOARD (firmware 4.x.y) or NXP BLE (firmware 3.x.y)
 
-        case productIdOmnipod5 = 5 // Still needs to be verified
+        case productIdOmnipod5 = 5 // Still needs to be verified!!!
 
     }
 
@@ -53,21 +53,25 @@ public struct PodType: CustomStringConvertible, Equatable {
         }
     }
 
-    var name: String {
-        switch self {
-        case erosType:
+    var localizedDescription: String {
+        switch podType {
+        case .productIdUnknown:
+            return LocalizedString("Omnipod", comment: "Title string for an unknown Omnipod")
+        case .productIdEros:
             return LocalizedString("Omnipod Classic", comment: "Title string for Omnipod Classic")
-        case dashType:
+        case .productIdDash:
             return LocalizedString("Omnipod DASH", comment: "Title string for Omnipod DASH")
-        case omnipod5Type:
+        case .productIdOmnipod5:
             return LocalizedString("Omnipod 5", comment: "Title string for Omnipod 5")
         default:
-            return ""
+            return "Unknown"
         }
     }
 
     var briefName: String {
         switch podType {
+        case .productIdUnknown:
+            return ""
         case .productIdEros:
             return "Eros"
         case .productIdDash:
@@ -79,7 +83,7 @@ public struct PodType: CustomStringConvertible, Equatable {
         }
     }
 
-    var localizedDescription: String {
+    var fullName: String {
         if let podType = podType {
             switch podType {
             case .productIdEros, .productIdDash, .productIdOmnipod5:
