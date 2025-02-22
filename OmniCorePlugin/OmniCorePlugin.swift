@@ -22,7 +22,8 @@ class OmniCorePlugin: NSObject, PumpManagerUIPlugin {
         return nil
     }
 
-    override init() { super.init()
-        // log.default("OmniCorePlugin Instantiated")
+    override init() {
+        super.init()
+        log.default("OmniCorePlugin Instantiated")
     }
 }

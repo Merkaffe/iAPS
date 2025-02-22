@@ -9,13 +9,9 @@
 
 import SwiftUI
 
-// ZZZ Need to figure this out!
-// ZZZ - in OmniCore this gets "Extension declares a conformance of imported type 'Date' to import protocol 'Identifiable'; ..." warning, but is needed for ForEach()
-// ZZZ - "...this will not behave correctly if the owners of 'Foundation' introduce this conformance in the future"
 extension Date: Identifiable {
     public var id: Self { self }
 }
-
 
 struct ScheduledExpirationReminderEditView: View {
 

@@ -11,7 +11,7 @@
 import Foundation
 import os.log
 
-// ZZZ BLE specific transport -- probably will need to have 2 different version for Rl and non-RL pods
+// ZZZ BLE specific transport -- probably will need to have 2 different version for RL and non-RL pods
 // or define a MessageTransportState protocol and have 2 implementations?
 
 public struct MessageTransportState: Equatable, RawRepresentable {
@@ -63,6 +63,10 @@ public struct MessageTransportState: Equatable, RawRepresentable {
         ]
     }
 
+    public mutating func incrementEapSeq() -> Int {
+        self.eapSeq += 1
+        return eapSeq
+    }
 }
 
 extension MessageTransportState: CustomDebugStringConvertible {

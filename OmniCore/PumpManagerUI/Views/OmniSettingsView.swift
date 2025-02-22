@@ -278,11 +278,11 @@ struct OmniSettingsView: View  {
                     }) {
                         Image(systemName: "speaker.wave.2.circle")
                             .imageScale(.large)
-                            .foregroundColor(viewModel.podOrRileyLinkConnected ? .accentColor : .secondary)
+                            .foregroundColor((viewModel.podConnected || viewModel.rileylinkConnected) ? .accentColor : .secondary)
                             .padding(.top,5)
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .disabled(!viewModel.podOrRileyLinkConnected || sendingTestBeepsCommand)
+                    .disabled((!viewModel.podConnected && !viewModel.rileylinkConnected) || sendingTestBeepsCommand)
 
                     headerImage
 
@@ -311,47 +311,71 @@ struct OmniSettingsView: View  {
                 }
             }
 
+            let lifeState = self.viewModel.lifeState
             Section(header: SectionHeader(label: LocalizedString("Activity", comment: "Section header for activity section"))) {
-                suspendResumeRow()
-                    .disabled(!self.viewModel.podOk)
-                if self.viewModel.podOk, case .suspended(let suspendDate) = self.viewModel.basalDeliveryState {
-                    HStack {
-                        FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
-                        Spacer()
-                        Text(self.viewModel.timeFormatter.string(from: suspendDate))
-                            .foregroundColor(Color.secondary)
+                // If need to pair a pod, display this as the only action
+                if lifeState.nextPodLifecycleAction == .pairAndPrime {
+                    Section() {
+                        Button(action: {
+                            self.viewModel.navigateTo?(.pairAndPrime)
+                        }) {
+                            Text(lifeState.nextPodLifecycleActionDescription)
+                                .foregroundColor(lifeState.nextPodLifecycleActionColor)
+                        }
+                    }
+                } else {
+                    suspendResumeRow()
+                        .disabled(!self.viewModel.podOk)
+                    if self.viewModel.podOk, case .suspended(let suspendDate) = self.viewModel.basalDeliveryState {
+                        HStack {
+FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
+                            Spacer()
+                            Text(self.viewModel.timeFormatter.string(from: suspendDate))
+                                .foregroundColor(Color.secondary)
+                        }
                     }
                 }
             }
 
-            Section() {
-                if let manualTempRemaining = self.viewModel.manualBasalTimeRemaining, let remainingText = self.viewModel.timeRemainingFormatter.string(from: manualTempRemaining) {
-                    HStack {
-                        if cancelingTempBasal {
-                            ProgressView()
-                                .padding(.trailing)
-                        } else {
-                            Image(systemName: "exclamationmark.circle.fill")
-                                .font(.system(size: 22))
-                                .foregroundColor(guidanceColors.warning)
+            if lifeState.nextPodLifecycleAction == .deactivate {
+                Section() {
+                    if let manualTempRemaining = self.viewModel.manualBasalTimeRemaining, let remainingText = self.viewModel.timeRemainingFormatter.string(from: manualTempRemaining) {
+                        HStack {
+                            if cancelingTempBasal {
+                                ProgressView()
+                                    .padding(.trailing)
+                            } else {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                    .font(.system(size: 22))
+                                    .foregroundColor(guidanceColors.warning)
+                            }
+                            Button(action: {
+                                self.cancelManualBasal()
+                            }) {
+                                FrameworkLocalText("Cancel Manual Basal", comment: "Button title to cancel manual basal")
+                            }
                         }
-                        Button(action: {
-                            self.cancelManualBasal()
-                        }) {
-                            FrameworkLocalText("Cancel Manual Basal", comment: "Button title to cancel manual basal")
+                        HStack {
+                            FrameworkLocalText("Remaining", comment: "Label for remaining time of manual basal")
+                            Spacer()
+                            Text(remainingText)
+                                .foregroundColor(.secondary)
                         }
+                    } else {
+                        manualTempBasalRow
                     }
-                    HStack {
-                        FrameworkLocalText("Remaining", comment: "Label for remaining time of manual basal")
-                        Spacer()
-                        Text(remainingText)
-                            .foregroundColor(.secondary)
+                }
+                .disabled(cancelingTempBasal || !self.viewModel.podOk)
+
+                Section() {
+                    Button(action: {
+                        self.viewModel.navigateTo?(.deactivate)
+                    }) {
+                        Text(lifeState.nextPodLifecycleActionDescription)
+                            .foregroundColor(lifeState.nextPodLifecycleActionColor)
                     }
-                } else {
-                    manualTempBasalRow
                 }
             }
-            .disabled(cancelingTempBasal || !self.viewModel.podOk)
 
             if self.viewModel.podType.usesRileyLink {
                 Section(header: HStack {
@@ -431,15 +455,6 @@ struct OmniSettingsView: View  {
                         Text("—")
                             .foregroundColor(Color.secondary)
                     }
-                }
-            }
-
-            Section() {
-                Button(action: {
-                    self.viewModel.navigateTo?(self.viewModel.lifeState.nextPodLifecycleAction)
-                }) {
-                    Text(self.viewModel.lifeState.nextPodLifecycleActionDescription)
-                        .foregroundColor(self.viewModel.lifeState.nextPodLifecycleActionColor)
                 }
             }
 
@@ -565,8 +580,9 @@ struct OmniSettingsView: View  {
 
     var switchInsulinDeliveryDeviceActionSheet: ActionSheet {
         ActionSheet(title: FrameworkLocalText("Switch Insulin Delivery Device", comment: "Title for switch insulin delivery device action sheet."),
-            // ZZZ may need to use alternate text without the current pod type for I18N?
-            message: FrameworkLocalText("Please select if you'd like to switch from using \(self.viewModel.podType.name) pods to another pod type or to some other pump type.", comment: "Message for switch insulin device action sheet"),
+            // ZZZ need a vargs version of FrameworkLocalText?
+            message: FrameworkLocalText("Please select if you'd like to switch from using \(self.viewModel.podType.name) pods to another pod type or to some other pump type.",
+                                        comment: "Message for switch insulin device action sheet"),
             buttons: [
                 .destructive(FrameworkLocalText("Switch pod type",
                     comment: "Button text to confirm switching pod type")) {

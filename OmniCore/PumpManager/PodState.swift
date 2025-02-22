@@ -124,11 +124,9 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
     // ZZZ maybe will need to define a messageTransportState protocol with an RL or non-RL versions
     public var messageTransportState: MessageTransportState
+    public var erosMessageTransportState: ErosMessageTransportState
 
 
-    // MARK: - Separate initializations functions for DASH and Eros
-
-    // DASH (BLE) init func
     public init(
         address: UInt32,
         firmwareVersion: String,
@@ -140,53 +138,13 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
         // Dash specific variables
         messageTransportState: MessageTransportState? = nil,
-        ltk: Data,
-        bleIdentifier: String,
-
-        setupUnitsDelivered: Double = 0.0,
-        initialDeliveryStatus: DeliveryStatus? = nil)
-    {
-        self.address = address
-        self.firmwareVersion = firmwareVersion
-        self.iFirmwareVersion = iFirmwareVersion
-        self.lotNo = lotNo
-        self.lotSeq = lotSeq
-        self.insulinType = insulinType
-        self.podType = podType
-
-        self.setupUnitsDelivered = setupUnitsDelivered // can be non-zero with simulator
-        self.lastDeliveryStatusReceived = initialDeliveryStatus // can be non-nil when testing
-
-        self.lastInsulinMeasurements = nil
-        self.finalizedDoses = []
-        self.suspendState = .resumed(Date())
-        self.fault = nil
-        self.activeAlertSlots = .none
-        self.primeFinishTime = nil
-        self.setupProgress = .addressAssigned
-        self.configuredAlerts = [.slot7Expired: .waitingForPairingReminder]
-        self.podTime = 0
-
-        // Dash (BLE) specific initializations
-        self.ltk = ltk
-        self.bleIdentifier = bleIdentifier
-
-        self.messageTransportState = messageTransportState ?? MessageTransportState(ck: nil, noncePrefix: nil)
-    }
-
-    // Eros init func
-    public init(
-        address: UInt32,
-        firmwareVersion: String,
-        iFirmwareVersion: String,
-        lotNo: UInt32,
-        lotSeq: UInt32,
-        insulinType: InsulinType,
-        podType: PodType,
+        ltk: Data? = nil,
+        bleIdentifier: String? = nil,
 
         // Eros specific variables
-        // ZZZ messageTransportState: MessageTransportState? = nil
-        
+        packetNumber: Int = 0,
+        messageNumber: Int = 0,
+
         setupUnitsDelivered: Double = 0.0,
         initialDeliveryStatus: DeliveryStatus? = nil)
     {
@@ -211,11 +169,18 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         self.configuredAlerts = [.slot7Expired: .waitingForPairingReminder]
         self.podTime = 0
 
-        // Eros specific initializations
-        self.nonceState = NonceState(lot: lotNo, tid: lotSeq)
+        if podType == erosType {
+            // Eros specific initializations
+            self.nonceState = NonceState(lot: lotNo, tid: lotSeq)
+        } else {
+            // BLE specific initializations
+            self.ltk = ltk
+            self.bleIdentifier = bleIdentifier
+        }
 
-        // ZZZ eros version self.messageTransportState = MessageTransportState(packetNumber: packetNumber, messageNumber: messageNumber)
-        self.messageTransportState = MessageTransportState(ck: nil, noncePrefix: nil) // ZZZ fake BLE MessageTransportState for now
+        // ZZZ need to rework to have a unified messageTransportState
+        self.messageTransportState = messageTransportState ?? MessageTransportState(ck: nil, noncePrefix: nil)
+        self.erosMessageTransportState = ErosMessageTransportState(packetNumber: 0, messageNumber: 0)
     }
 
 
@@ -267,10 +232,12 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     }
 
     public mutating func resyncNonce(syncWord: UInt16, sentNonce: UInt32, messageSequenceNum: Int) {
-        if self.nonceState != nil {
+        if self.podType == erosType {
             let sum = (sentNonce & 0xFFFF) + UInt32(crc16Table[messageSequenceNum]) + (lotNo & 0xFFFF) + (lotSeq & 0xFFFF)
             let seed = UInt16(sum & 0xFFFF) ^ syncWord
             self.nonceState = NonceState(lot: lotNo, tid: lotSeq, seed: seed)
+        } else {
+            print("resyncNonce expectedly called!") // Should never be called for non-Eros pod!
         }
     }
 
@@ -437,12 +404,6 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
     }
 
-    // ZZZ Transport stuff like this needs to be per OmniModel
-    public mutating func incrementEapSeq() -> Int {
-        self.messageTransportState.eapSeq += 1
-        return messageTransportState.eapSeq
-    }
-
     // MARK: - RawRepresentable
     public init?(rawValue: RawValue) {
 
@@ -605,7 +566,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             self.bleIdentifier = bleIdentifier
         }
 
-        // ZZZ messageTransportState needs to be handled per PodType
+        // ZZZ temporary
         if let messageTransportStateRaw = rawValue["messageTransportState"] as? MessageTransportState.RawValue,
             let messageTransportState = MessageTransportState(rawValue: messageTransportStateRaw)
         {
@@ -613,7 +574,14 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         } else {
             self.messageTransportState = MessageTransportState(ck: nil, noncePrefix: nil)
         }
-        // ZZZ messageTransportState needs to be per handled per PodType
+
+        if let erosMessageTransportStateRaw = rawValue["erosMessageTransportState"] as? ErosMessageTransportState.RawValue,
+            let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
+        {
+            self.erosMessageTransportState = erosMessageTransportState
+        } else {
+            self.erosMessageTransportState = ErosMessageTransportState(packetNumber: 0, messageNumber: 0)
+        }
 
         self.lastDeliveryStatusReceived = nil
     }
@@ -633,6 +601,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "insulinType": insulinType.rawValue,
             
             "messageTransportState": messageTransportState.rawValue,
+            "erosMessageTransportState": erosMessageTransportState.rawValue
         ]
 
         rawValue["podType"] = podType.rawValue
@@ -704,7 +673,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
         if podType.usesRileyLink {
             retVal += [
-                "* messageTransportState: \(String(describing: messageTransportState))",
+                "* erosMessageTransportState: \(String(describing: erosMessageTransportState))",
             ].joined(separator: "\n")
         } else {
             retVal += [

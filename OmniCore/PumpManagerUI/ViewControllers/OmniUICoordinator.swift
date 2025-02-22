@@ -209,6 +209,10 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
         case .settings:
             let viewModel = OmniSettingsViewModel(pumpManager: pumpManager)
             viewModel.didFinish = { [weak self] in
+                if self?.pumpManager.podType == unknownOmnipodType {
+                    print("returned from settings with pumpManager podType of unknownOmnipodType, resetting self?.podType from \(String(reflecting: self?.podType.briefName)) to unknownOmnpiPodType")
+                    self?.podType = unknownOmnipodType
+                }
                 self?.stepFinished()
             }
             viewModel.navigateTo = { [weak self] (screen) in
@@ -220,10 +224,9 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 if let self = self {
                     let vc = RileyLinkDeviceTableViewController(
                         device: device,
-                        // ZZZ batteryAlertLevel: self.pumpManager.rileyLinkBatteryAlertLevel,
-                        batteryAlertLevel: nil, // ZZZ
+                        batteryAlertLevel: self.pumpManager.rileyLinkBatteryAlertLevel,
                         batteryAlertLevelChanged: { [weak self] value in
-                            // ZZZ self?.pumpManager.rileyLinkBatteryAlertLevel = value
+                            self?.pumpManager.rileyLinkBatteryAlertLevel = value
                         }
                     )
                     self.show(vc, sender: self)
@@ -242,7 +245,8 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 self?.stepFinished()
             }
             viewModel.didCancelSetup = { [weak self] in
-                self?.setupCanceled()
+                // navigate directly to pod setting on a pair cancel to facilitate easier pod type switching
+                self?.navigateTo(.settings)
             }
             viewModel.didRequestDeactivation = { [weak self] in
                 self?.navigateTo(.deactivate)
@@ -334,53 +338,54 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             return hostedView
 
         case .pendingCommandRecovery:
-            if let pendingCommand = pumpManager.state.podState?.unacknowledgedCommand, pumpManager.state.podState?.needsCommsRecovery == true {
-
-                let model = DeliveryUncertaintyRecoveryViewModel(appName: appName, uncertaintyStartedAt: pendingCommand.commandDate)
-                model.didRecover = { [weak self] in
-                    self?.navigateTo(.uncertaintyRecovered)
-                }
-                model.onDeactivate = { [weak self] in
-                    self?.navigateTo(.deactivate)
-                }
-                model.onDismiss = { [weak self] in
-                    if let self = self {
-                        self.completionDelegate?.completionNotifyingDidComplete(self)
-                    }
-                }
-                pumpManager.addStatusObserver(model, queue: DispatchQueue.main)
-                pumpManager.getPodStatus() { _ in }
-
-
-                if self.podType.usesRileyLink {
-                    let handleRileyLinkSelection = { [weak self] (device: RileyLinkDevice) in
-                        if let self = self {
-                            let vc = RileyLinkDeviceTableViewController(
-                                device: device,
-                                // ZZZ batteryAlertLevel: self.pumpManager.rileyLinkBatteryAlertLevel,
-                                batteryAlertLevel: nil, // ZZZ
-                                batteryAlertLevelChanged: { [weak self] value in
-                                    // ZZZ self?.pumpManager.rileyLinkBatteryAlertLevel = value
-                                }
-                            )
-                            self.show(vc, sender: self)
-                        }
-                    }
-
-                    let dataSource = RileyLinkListDataSource(rileyLinkPumpManager: pumpManager)
-
-                    let view = DeliveryUncertaintyRecoveryView(model: model /* ZZZ , rileyLinkListDataSource: dataSource, handleRileyLinkSelection: handleRileyLinkSelection ZZZ */)
-                    let hostedView = hostingController(rootView: view)
-                    hostedView.navigationItem.title = LocalizedString("Unable To Reach Pod", comment: "Title for pending command recovery screen")
-                    return hostedView
-                } else {
-                    let view = DeliveryUncertaintyRecoveryView(model: model)
-                    let hostedView = hostingController(rootView: view)
-                    hostedView.navigationItem.title = LocalizedString("Unable To Reach Pod", comment: "Title for pending command recovery screen")
-                    return hostedView
-                }
-            } else {
+            // ZZZ not currently being used as it should no longer be needed with all the other built in the Omni PumpManager and PodCommsSession checks.
+            // User can now debug the comms issue in pod settings using things like Pod Diagnostics, play test beeps, and the RL's settings (if applicable).
+            // Consider using a generic alternate DeliveryUncertaintyRecoveryView that documents these options and goes to pod settings when dismissed.
+            guard let podState = pumpManager.state.podState, let pendingCommand = podState.unacknowledgedCommand, podState.needsCommsRecovery == true else {
                 fatalError("Pending command recovery UI attempted without pending command")
+            }
+
+            let model = DeliveryUncertaintyRecoveryViewModel(appName: appName, uncertaintyStartedAt: pendingCommand.commandDate)
+            model.didRecover = { [weak self] in
+                self?.navigateTo(.uncertaintyRecovered)
+            }
+            model.onDeactivate = { [weak self] in
+                self?.navigateTo(.deactivate)
+            }
+            model.onDismiss = { [weak self] in
+                if let self = self {
+                    self.completionDelegate?.completionNotifyingDidComplete(self)
+                }
+            }
+            pumpManager.addStatusObserver(model, queue: DispatchQueue.main)
+            pumpManager.getPodStatus() { _ in }
+
+            if self.podType.usesRileyLink {
+                let handleRileyLinkSelection = { [weak self] (device: RileyLinkDevice) in
+                    if let self = self {
+                        let vc = RileyLinkDeviceTableViewController(
+                            device: device,
+                            batteryAlertLevel: self.pumpManager.rileyLinkBatteryAlertLevel,
+                            batteryAlertLevelChanged: { [weak self] value in
+                                self?.pumpManager.rileyLinkBatteryAlertLevel = value
+                            }
+                        )
+                        self.show(vc, sender: self)
+                    }
+                }
+
+                let dataSource = RileyLinkListDataSource(rileyLinkPumpManager: pumpManager)
+
+                let view = DeliveryUncertaintyRecoveryView(model: model /*, rileyLinkListDataSource: dataSource, handleRileyLinkSelection: handleRileyLinkSelection */)
+                let hostedView = hostingController(rootView: view)
+                hostedView.navigationItem.title = LocalizedString("Unable To Reach Pod", comment: "Title for pending command recovery screen")
+                return hostedView
+            } else {
+                // No RileyLink
+                let view = DeliveryUncertaintyRecoveryView(model: model)
+                let hostedView = hostingController(rootView: view)
+                hostedView.navigationItem.title = LocalizedString("Unable To Reach Pod", comment: "Title for pending command recovery screen")
+                return hostedView
             }
 
         case .uncertaintyRecovered:
@@ -425,8 +430,19 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
 
         if pumpManager == nil, let pumpManagerSettings = pumpManagerSettings {
             let basalSchedule = pumpManagerSettings.basalSchedule
-            let pumpManagerState = OmniPumpManagerState(isOnboarded: false, podState: nil, timeZone: basalSchedule.timeZone, basalSchedule: BasalSchedule(repeatingScheduleValues: basalSchedule.items, zeroBasalRate: 0), insulinType: nil, maximumTempBasalRate: pumpManagerSettings.maxBasalRateUnitsPerHour, podType: self.podType)
-            self.pumpManager = OmniPumpManager(state: pumpManagerState)
+
+            let deviceProvider = RileyLinkBluetoothDeviceProvider(autoConnectIDs: []) // only used for Eros
+
+            let pumpManagerState = OmniPumpManagerState(
+                isOnboarded: false,
+                podState: nil,
+                timeZone: basalSchedule.timeZone,
+                basalSchedule: BasalSchedule(repeatingScheduleValues: basalSchedule.items, zeroBasalRate: 0),
+                insulinType: nil,
+                maximumTempBasalRate: pumpManagerSettings.maxBasalRateUnitsPerHour,
+                podType: self.podType)
+
+            self.pumpManager = OmniPumpManager(state: pumpManagerState, rileyLinkDeviceProvider: deviceProvider)
         } else {
             guard let pumpManager = pumpManager else {
                 fatalError("Unable to create OmniCore PumpManager")
@@ -449,7 +465,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
 
     private func determineInitialStep() -> OmniUIScreen {
         if pumpManager.state.podState?.needsCommsRecovery == true {
-            return .pendingCommandRecovery
+            return .settings // ZZZ previously .pendingCommandRecovery
         } else if pumpManager.podCommState == .activating {
             if pumpManager.podAttachmentConfirmed {
                 return .insertCannula

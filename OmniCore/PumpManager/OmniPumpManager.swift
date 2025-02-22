@@ -29,35 +29,24 @@ public enum PodCommState: Equatable {
     case deactivating
 }
 
+// OmniPumpManager is declered as a derived class RileyLinkPumpManager
+// even though for non-Eros pods the RileyLink code will not be used.
 public class OmniPumpManager: RileyLinkPumpManager {
 
-    // Is starting this name with Omnipod needed for various parsers?
     // Must be declared public static for Pluggable protocol
-    // ZZZ any way to make this changeable based on pod type?
     public static let pluginIdentifier: String = "OmniCore"
 
-    // Argh, Cannot use instance member 'state' within property initializer; property initializers run before 'self' is avaiable
-    // public let localizedTitle = LocalizedString("OmniCore \(state.podType.briefName)", comment: "Generic title of the Omni pump manager")
     // Must be declared public for DeviceManger protocol
-    // ZZZ any way to make this something that can vary based on pod type?
-    public let localizedTitle = LocalizedString("OmniCore", comment: "Generic title of the OmniCore pump manager")
+    public let localizedTitle = LocalizedString("Omni", comment: "Generic title of the Omni pump manager")
 
-    static let podAlarmNotificationIdentifier = "OmniCore:\(LoopNotificationCategory.pumpFault.rawValue)"
+    static let podAlarmNotificationIdentifier = "Omni:\(LoopNotificationCategory.pumpFault.rawValue)"
 
-    public init(state: OmniPumpManagerState, rileyLinkDeviceProvider: RileyLinkDeviceProvider? = nil, dateGenerator: @escaping () -> Date = Date.init) {
+    public init(state: OmniPumpManagerState, rileyLinkDeviceProvider: RileyLinkDeviceProvider, dateGenerator: @escaping () -> Date = Date.init) {
         self.lockedState = Locked(state)
         let podComms = PodComms(podState: state.podState, myId: state.controllerId, podId: state.podId)
         self.lockedPodComms = Locked(podComms)
         self.dateGenerator = dateGenerator
-
-        if rileyLinkDeviceProvider == nil {
-            // Argh, since OmniPumpManager is a subclass of RileyLinkPumpManager,
-            // we need to have this even if we will never use any RileyLink code.
-            // ZZZ new dummy initializer was needed for this required call
-            super.init()
-        } else {
-            super.init(rileyLinkDeviceProvider: rileyLinkDeviceProvider!)
-        }
+        super.init(rileyLinkDeviceProvider: rileyLinkDeviceProvider)
 
         self.podComms.delegate = self
         self.podComms.messageLogger = self
@@ -68,17 +57,19 @@ public class OmniPumpManager: RileyLinkPumpManager {
             return nil
         }
 
+        let deviceProvider: RileyLinkBluetoothDeviceProvider
         if let connectionManagerState = state.rileyLinkConnectionManagerState {
-            // RL case
-            let deviceProvider = RileyLinkBluetoothDeviceProvider(autoConnectIDs: connectionManagerState.autoConnectIDs)
-            self.init(state: state, rileyLinkDeviceProvider: deviceProvider)
-            deviceProvider.delegate = self
+            deviceProvider = RileyLinkBluetoothDeviceProvider(autoConnectIDs: connectionManagerState.autoConnectIDs)
         } else {
-            // non-RL (BLE) case
-            self.init(state: state)
+            deviceProvider = RileyLinkBluetoothDeviceProvider(autoConnectIDs: [])
         }
+
+        self.init(state: state, rileyLinkDeviceProvider: deviceProvider)
+
+        deviceProvider.delegate = self
     }
 
+    // non-RL only
     public var deviceBLEName: String? {
         return self.podComms.manager?.peripheral.name
     }
@@ -205,10 +196,14 @@ public class OmniPumpManager: RileyLinkPumpManager {
     }
 
     public func setMustProvideBLEHeartbeat(_ mustProvideBLEHeartbeat: Bool) {
-        provideHeartbeat = mustProvideBLEHeartbeat
+        if self.state.podType.usesRileyLink {
+            rileyLinkDeviceProvider.timerTickEnabled = self.state.isPumpDataStale || mustProvideBLEHeartbeat
+        } else {
+            provideHeartbeat = mustProvideBLEHeartbeat
+        }
     }
 
-// ZZZ OmniBLE specific func's and var's
+    // OmniBLE specific func's and var's
     private func issueHeartbeatIfNeeded() {
         if self.provideHeartbeat, dateGenerator().timeIntervalSince(lastHeartbeat) > .minutes(2) {
             self.pumpDelegate.notify { (delegate) in
@@ -216,10 +211,6 @@ public class OmniPumpManager: RileyLinkPumpManager {
             }
             self.lastHeartbeat = Date()
         }
-    }
-
-    var isConnected: Bool {
-        podComms.manager?.peripheral.state == .connected
     }
 
     // Not persisted
@@ -251,14 +242,17 @@ public class OmniPumpManager: RileyLinkPumpManager {
             observer.podConnectionStateDidChange(isConnected: isConnected)
         }
     }
-// ZZZ end OmniBLE specific func's and var's
+
+    var isConnected: Bool {
+        return podComms.manager?.peripheral.state == .connected
+    }
+    // end OmniBLE specific func's and var's
 
     private let pumpDelegate = WeakSynchronizedDelegate<PumpManagerDelegate>()
 
     public let log = OSLog(category: "OmniPumpManager")
 
     private var lastLoopRecommendation: Date?
-
 
     // MARK: - RileyLink Updates
 
@@ -458,6 +452,7 @@ extension OmniPumpManager {
         return false
     }
 
+    // Returns a computed pod time based on the pod time in the last response
     private var podTime: TimeInterval {
         get {
             guard let podState = state.podState else {
@@ -752,20 +747,16 @@ extension OmniPumpManager {
 
     public var podType: PodType {
         set {
-            if state.podState != nil {
-                assertionFailure("Attempt to set pod type with podState")
-            }
+            assert(state.podState == nil) // switching pod type only allowed with no pod
             setState { (state) in
-                // Changing pod type, reset the Id's
-                // ZZZ add any addtional code to handle switching pod types here
-                if newValue == dashType || newValue == omnipod5Type {
+                // Changing pod type, reset the Id's as appropriate
+                if newValue == erosType {
+                    state.controllerId = 0
+                    state.podId = 0
+                } else {
                     let topIdByte = newValue.topIdByte
                     state.controllerId = createControllerId(topIdByte: topIdByte)
                     state.podId = state.controllerId + 1
-                } else {
-                    // unknownOmnipodType or erosType
-                    state.controllerId = 0
-                    state.podId = 0
                 }
                 state.podType = newValue
             }
@@ -796,13 +787,6 @@ extension OmniPumpManager {
         }
     }
 
-    private func updateBLEHeartbeatPreference() {
-        dispatchPrecondition(condition: .notOnQueue(delegateQueue))
-    
-        rileyLinkDeviceProvider.timerTickEnabled = self.state.isPumpDataStale || pumpDelegate.call({ (delegate) -> Bool in
-            return delegate?.pumpManagerMustProvideBLEHeartbeat(self) == true
-        })
-    }
 
     // MARK: - Pod comms
 
@@ -817,14 +801,18 @@ extension OmniPumpManager {
 
             if usesRileyLink {
                 // RL case
-                // ZZZ does this need to be tweaked?
-                // self.podComms = PodComms(podState: nil) // ZZZ handled in self.podComms.prepForNewPod()
-                self.podComms.delegate = self // ZZZ why does OmniKit does this here, but not OmniBLE??
-                self.podComms.messageLogger = self // ZZZ why does OmniKit does this here, but not OmniBLE??
 
-                // ZZZ handled when podComms.prepForNewPod() sets podState to nil and the PodCommsDelegate
+                // Shouldn't be needed now with self.podComms.prepForNewPod()
+                // self.podCOmms = PodComms(podState: nil)
+                // self.podComms.delegate = self
+                // self.podComms.messageLogger = self
+
+                // This is now handled when podComms.prepForNewPod() sets podState to nil and the PodCommsDelegate
                 // is called for a nil PodComms PodState which will then invoke updatePodStateFromPodComms(nil)
                 // state.updatePodStateFromPodComms(nil)
+
+                state.controllerId = 0
+                state.podId = 0
             } else {
                 // non-RL case
                 if state.controllerId == CONTROLLER_ID {
@@ -866,6 +854,7 @@ extension OmniPumpManager {
         }
     }
 
+
     // MARK: Testing
 
     #if targetEnvironment(simulator)
@@ -894,6 +883,7 @@ extension OmniPumpManager {
         })
     }
     #endif
+
 
     // MARK: - Pairing
 
@@ -1018,8 +1008,8 @@ extension OmniPumpManager {
                     address: self.state.pairingAttemptAddress!,
                     using: rileyLinkSelector,
                     timeZone: .currentFixed,
-                    insulinType: insulinType,
-                    messageLogger: self)
+                    messageLogger: self,
+                    insulinType: insulinType)
                 { (result) in
 
                     if case .success = result {
@@ -1179,7 +1169,7 @@ extension OmniPumpManager {
     public func resumingPodSetup() {
         let sleepTime:UInt32 = 2
 
-        if !isConnected {
+        if state.podType.usesRileyLink == false && !isConnected {
             self.log.debug("### Pod setup resume pod not connected, sleeping %d seconds", sleepTime)
             sleep(sleepTime)
         }
@@ -1221,9 +1211,10 @@ extension OmniPumpManager {
         }
     }
 
+
     // MARK: - Pump Commands
 
-    public func getPodStatus(completion: ((_ result: PumpManagerResult<StatusResponse>) -> Void)? = nil) {
+    func getPodStatus(completion: ((_ result: PumpManagerResult<StatusResponse>) -> Void)? = nil) {
         guard state.hasActivePod else {
             completion?(.failure(PumpManagerError.configuration(OmniPumpManagerError.noPodPaired)))
             return
@@ -1251,7 +1242,7 @@ extension OmniPumpManager {
         }
     }
 
-    public func getDetailedStatus() async throws -> DetailedStatus {
+    func getDetailedStatus() async throws -> DetailedStatus {
 
         // use hasSetupPod here instead of hasActivePod as DetailedStatus can be read with a faulted Pod
         guard self.hasSetupPod else {
@@ -1281,7 +1272,7 @@ extension OmniPumpManager {
         }
     }
 
-    public func acknowledgePodAlerts(_ alertsToAcknowledge: AlertSet, completion: @escaping (_ alerts: AlertSet?) -> Void) {
+    func acknowledgePodAlerts(_ alertsToAcknowledge: AlertSet, completion: @escaping (_ alerts: AlertSet?) -> Void) {
         guard self.hasActivePod else {
             completion(nil)
             return
@@ -1308,7 +1299,7 @@ extension OmniPumpManager {
         }
     }
 
-    public func setTime(completion: @escaping (OmniPumpManagerError?) -> Void) {
+    func setTime(completion: @escaping (OmniPumpManagerError?) -> Void) {
 
         let timeZone = TimeZone.currentFixed
         guard let podState = state.podState, podState.fault == nil else {
@@ -1354,7 +1345,7 @@ extension OmniPumpManager {
         }
     }
 
-    public func setBasalSchedule(_ schedule: BasalSchedule, completion: @escaping (Error?) -> Void) {
+    func setBasalSchedule(_ schedule: BasalSchedule, completion: @escaping (Error?) -> Void) {
         let shouldContinue = setStateWithResult({ (state) -> PumpManagerResult<Bool> in
             guard state.hasActivePod else {
                 // If there's no active pod yet, save the basal schedule anyway
@@ -1456,7 +1447,7 @@ extension OmniPumpManager {
         #endif
     }
 
-    public func playTestBeeps() async throws {
+    func playTestBeeps() async throws {
         guard self.hasActivePod else {
             throw OmniPumpManagerError.noPodPaired
         }
@@ -1491,7 +1482,7 @@ extension OmniPumpManager {
         }
     }
 
-    public func readPulseLog() async throws -> String {
+    func readPulseLog() async throws -> String {
         // use hasSetupPod to be able to read pulse log from a faulted Pod
         guard self.hasSetupPod else {
             throw OmniPumpManagerError.noPodPaired
@@ -1529,7 +1520,7 @@ extension OmniPumpManager {
         }
     }
 
-    public func readPulseLogPlus() async throws -> String {
+    func readPulseLogPlus() async throws -> String {
         // use hasSetupPod here instead of hasActivePod as PodInfo can be read with a faulted Pod
         guard self.hasSetupPod else {
             throw OmniPumpManagerError.noPodPaired
@@ -1564,7 +1555,7 @@ extension OmniPumpManager {
         }
     }
 
-    public func readActivationTime() async throws -> String {
+    func readActivationTime() async throws -> String {
         // use hasSetupPod here instead of hasActivePod as PodInfo can be read with a faulted Pod
         guard self.hasSetupPod else {
             throw OmniPumpManagerError.noPodPaired
@@ -1594,7 +1585,7 @@ extension OmniPumpManager {
         }
     }
 
-    public func readTriggeredAlerts() async throws -> String {
+    func readTriggeredAlerts() async throws -> String {
         // use hasSetupPod here instead of hasActivePod as PodInfo can be read with a faulted Pod
         guard self.hasSetupPod else {
             throw OmniPumpManagerError.noPodPaired
@@ -1624,7 +1615,7 @@ extension OmniPumpManager {
         }
     }
 
-    public func setConfirmationBeeps(newPreference: BeepPreference, completion: @escaping (OmniPumpManagerError?) -> Void) {
+    func setConfirmationBeeps(newPreference: BeepPreference, completion: @escaping (OmniPumpManagerError?) -> Void) {
 
         // If there isn't an active pod or the pod is currently silenced,
         // just need to update the internal state without any pod commands.
@@ -1673,7 +1664,7 @@ extension OmniPumpManager {
 
     // Reconfigures all active alerts in pod to be silent or not as well as sets/clears the
     // self.silencePod state variable which silences all confirmation beeping when enabled.
-    public func setSilencePod(silencePod: Bool, completion: @escaping (OmniPumpManagerError?) -> Void) {
+    func setSilencePod(silencePod: Bool, completion: @escaping (OmniPumpManagerError?) -> Void) {
 
         let name = String(format: "%@ Pod", silencePod ? "Silence" : "Unsilence")
         // allow Silence Pod changes without an active Pod
@@ -1747,7 +1738,9 @@ extension OmniPumpManager {
     }
 }
 
+
 // MARK: - PumpManager
+
 extension OmniPumpManager: PumpManager {
 
     public static var onboardingMaximumBasalScheduleEntryCount: Int {
@@ -1775,10 +1768,10 @@ extension OmniPumpManager: PumpManager {
     }
 
     public static var onboardingSupportedBasalRates: [Double] {
-        // While non-Eros pods supports a zero basal rate while Eros pods do not.
-        // But since this var is declared static, we cannot return a value
+        // Non-Eros pods supports a zero basal rate while Eros pods do not.
+        // Sigh - since this var is declared static, we cannot return a value
         // that changes based on whether or not this is an Eros instance and
-        // so we have to return a set of values that work for all Omnipod types.
+        // so we have to return a set of values that works for all Omnipod types.
         return (1...600).map { Double($0) / Double(Pod.pulsesPerUnit) }
     }
 
@@ -1801,7 +1794,7 @@ extension OmniPumpManager: PumpManager {
         // We do support rounding a 0 U/hr rate to 0
         return supportedBasalRates.last(where: { $0 <= unitsPerHour }) ?? 0
     }
-    
+
     public func estimatedDuration(toBolus units: Double) -> TimeInterval {
         TimeInterval(units / Pod.bolusDeliveryRate)
     }
@@ -1871,6 +1864,7 @@ extension OmniPumpManager: PumpManager {
         }
     }
 
+
     // MARK: Methods
 
     public func completeOnboard() {
@@ -1917,7 +1911,7 @@ extension OmniPumpManager: PumpManager {
                 completion(error)
                 return
             }
-    
+
             // Use a beepBlock for the confirmation beep to avoid getting 3 beeps using cancel command beeps!
             let beepBlock = self.beepMessageBlock(beepType: .beeeeeep)
             let result = session.suspendDelivery(suspendReminder: suspendReminder, silent: self.silencePod, beepBlock: beepBlock)
@@ -1969,7 +1963,7 @@ extension OmniPumpManager: PumpManager {
                 completion(error)
                 return 
             }
-    
+
             do {
                 let scheduleOffset = self.state.timeZone.scheduleOffset(forDate: Date())
                 let beep = self.silencePod ? false : self.beepPreference.shouldBeepForManualCommand
@@ -1999,7 +1993,7 @@ extension OmniPumpManager: PumpManager {
     public func removeStatusObserver(_ observer: PumpManagerStatusObserver) {
         statusObservers.removeElement(observer)
     }
-    
+
     public func ensureCurrentPumpData(completion: ((Date?) -> Void)?) {
         let shouldFetchStatus = setStateWithResult { (state) -> Bool? in
             guard state.hasActivePod else {
@@ -2022,7 +2016,7 @@ extension OmniPumpManager: PumpManager {
             getPodStatus() { (response) in
                 completion?(self.lastSync)
                 if self.state.podType.usesRileyLink {
-                    // non-Eros does this in podCommsDidEstablishSession()
+                    // non-Eros pods handles this in podCommsDidEstablishSession()
                     self.silenceAcknowledgedAlerts()
                 }
             }
@@ -2041,6 +2035,7 @@ extension OmniPumpManager: PumpManager {
             }
         }
     }
+
 
     // MARK: - Programming Delivery
 
@@ -2185,6 +2180,7 @@ extension OmniPumpManager: PumpManager {
         }
     }
 
+    // Legacy version called via the PumpManager interface that wasn't updated to include an automatic variable as enactBolus() was
     public func enactTempBasal(unitsPerHour: Double, for duration: TimeInterval, completion: @escaping (PumpManagerError?) -> Void) {
         enactTempBasal(unitsPerHour: unitsPerHour, for: duration, automatic: true, completion: completion)
     }
@@ -2362,6 +2358,7 @@ extension OmniPumpManager: PumpManager {
             }
         }
     }
+
 
     // MARK: - Alerts
 
@@ -2626,6 +2623,7 @@ extension OmniPumpManager: PumpManager {
         }
     }
 
+
     // MARK: - Reporting Doses
 
     // This cannot be called from within the lockedState lock!
@@ -2762,6 +2760,7 @@ extension OmniPumpManager: AlertSoundVendor {
 
 
 // MARK: - AlertResponder implementation
+
 extension OmniPumpManager {
     public func acknowledgeAlert(alertIdentifier: Alert.AlertIdentifier, completion: @escaping (Error?) -> Void) {
         guard self.hasActivePod else {

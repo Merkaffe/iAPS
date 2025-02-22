@@ -167,7 +167,7 @@ class PairPodViewModel: ObservableObject, Identifiable {
         }
         return false
 */
-        // ZZZ always disable back button in OmniCore to avoid potential pod type change problems?
+        // ZZZ For now always disable the back button in OmniCore to avoid potential pod type change problems
         return true
     }
 

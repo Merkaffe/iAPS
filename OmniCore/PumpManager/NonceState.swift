@@ -2,7 +2,7 @@
 //  NonceState.swift
 //  OmniCore
 //
-//  Based on OmniKit/PumpManager/PodState.swift
+//  Taken from on OmniKit/PumpManager/PodState.swift
 //  Created by Joe Moran on 1/9/25.
 //  Copyright © 2025 LoopKit Authors. All rights reserved.
 //

@@ -2,13 +2,14 @@
 //  DeliveryUncertaintyRecoveryView.swift
 //  OmniCore
 //
-//  From OmniBLE/PumpManageUI/Views/DeliveryUncertaintyRecoveryView.swift
+//  From Omni{BLE,Kit}/PumpManageUI/Views/DeliveryUncertaintyRecoveryView.swift
 //  Created by Pete Schwamb on 8/17/20.
 //  Copyright © 2020 LoopKit Authors. All rights reserved.
 //
 
 import SwiftUI
 import LoopKitUI
+import RileyLinkBLEKit
 
 
 struct DeliveryUncertaintyRecoveryView: View {

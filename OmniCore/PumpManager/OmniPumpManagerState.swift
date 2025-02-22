@@ -19,7 +19,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     private(set) public var podState: PodState?
 
-    // State should only be modifiable by PodComms ZZZ make this true for Eros as well?
+    // State should only be modifiable by PodComms
     mutating func updatePodStateFromPodComms(_ podState: PodState?) {
         self.podState = podState
     }
@@ -74,7 +74,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
     public var podType: PodType
 
     // Eros only state
-    public var rileyLinkConnectionManagerState: RileyLinkConnectionState? = nil
+    public var rileyLinkConnectionManagerState: RileyLinkConnectionState?
     public var pairingAttemptAddress: UInt32? = nil
     public var rileyLinkBatteryAlertLevel: Int? = nil
     public var lastRileyLinkBatteryAlertDate: Date = .distantPast
@@ -112,8 +112,8 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         maximumTempBasalRate: Double,
         podType: PodType,
         rileyLinkConnectionManagerState: RileyLinkConnectionState? = nil, // Eros
-        controllerId: UInt32? = nil, // Dash
-        podId: UInt32? = nil) // Dash
+        controllerId: UInt32? = nil, // BLE
+        podId: UInt32? = nil) // BLE
     {
         self.isOnboarded = isOnboarded
         self.podState = podState
@@ -133,14 +133,16 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
         self.podType = podType
 
-        self.rileyLinkConnectionManagerState = nil
-        if podType == erosType || podType == unknownOmnipodType {
+        if podType.usesRileyLink {
+            self.rileyLinkConnectionManagerState = rileyLinkConnectionManagerState
             self.controllerId = 0
             self.podId = 0
         } else if controllerId != nil && podId != nil {
+            self.rileyLinkConnectionManagerState = nil
             self.controllerId = controllerId!
             self.podId = podId!
         } else {
+            self.rileyLinkConnectionManagerState = nil
             let myId = createControllerId(topIdByte: podType.topIdByte)
             self.controllerId = myId
             self.podId = myId + 1
@@ -196,16 +198,18 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         let maximumTempBasalRate = rawValue["maximumTempBasalRate"] as? Double ?? 0
 
         // Omnipod model specific values
-        var rileyLinkConnectionManagerState: RileyLinkConnectionState? = nil
-        var controllerId: UInt32? = nil
-        var podId: UInt32? = nil
+        let rileyLinkConnectionManagerState: RileyLinkConnectionState?
+        let controllerId, podId: UInt32?
         if podType.usesRileyLink {
             if let rileyLinkConnectionManagerStateRaw = rawValue["rileyLinkConnectionManagerState"] as? RileyLinkConnectionState.RawValue {
                 rileyLinkConnectionManagerState = RileyLinkConnectionState(rawValue: rileyLinkConnectionManagerStateRaw)
             } else {
                 rileyLinkConnectionManagerState = RileyLinkConnectionState(autoConnectIDs: [])
             }
+            controllerId = nil
+            podId = nil
         } else {
+            rileyLinkConnectionManagerState = nil
             controllerId = rawValue["controllerId"] as? UInt32? ?? nil
             podId = rawValue["podId"] as? UInt32? ?? nil
         }

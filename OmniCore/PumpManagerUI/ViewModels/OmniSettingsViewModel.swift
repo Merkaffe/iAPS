@@ -11,6 +11,7 @@ import SwiftUI
 import LoopKit
 import LoopKitUI
 import HealthKit
+import Combine
 
 
 enum OmniSettingsViewAlert {
@@ -34,7 +35,7 @@ struct OmniSettingsNotice {
 class OmniSettingsViewModel: ObservableObject {
 
     @Published var lifeState: PodLifeState
-    
+
     @Published var activatedAt: Date?
 
     @Published var expiresAt: Date?
@@ -43,7 +44,9 @@ class OmniSettingsViewModel: ObservableObject {
 
     @Published var silencePodPreference: SilencePodPreference
 
-    @Published var podOrRileyLinkConnected: Bool
+    @Published var podConnected: Bool
+
+    @Published var rileylinkConnected: Bool
 
     var activatedAtString: String {
         if let activatedAt = activatedAt {
@@ -52,7 +55,7 @@ class OmniSettingsViewModel: ObservableObject {
             return "—"
         }
     }
-    
+
     var expiresAtString: String {
         if let expiresAt = expiresAt {
             return dateFormatter.string(from: expiresAt)
@@ -82,10 +85,10 @@ class OmniSettingsViewModel: ObservableObject {
             self.pumpManager.defaultExpirationReminderOffset = .hours(Double(expirationReminderDefault))
         }
     }
-    
+
     // Units to alert at
     @Published var lowReservoirAlertValue: Int
-    
+
     @Published var basalDeliveryState: PumpManagerStatus.BasalDeliveryState?
 
     @Published var basalDeliveryRate: Double?
@@ -105,9 +108,9 @@ class OmniSettingsViewModel: ObservableObject {
             }
         }
     }
-    
+
     @Published var reservoirLevel: ReservoirLevel?
-    
+
     @Published var reservoirLevelHighlightState: ReservoirLevelHighlightState?
     
     @Published var synchronizingTime: Bool = false
@@ -120,7 +123,7 @@ class OmniSettingsViewModel: ObservableObject {
 
     @Published var previousPodDetails: PodDetails?
 
-    
+
     var timeZone: TimeZone {
         return pumpManager.status.timeZone
     }
@@ -128,7 +131,7 @@ class OmniSettingsViewModel: ObservableObject {
     var viewTitle: String {
         return pumpManager.podType.name // "Omnipod Classic", "Omnipod DASH" or "Omnipod 5"
     }
-    
+
     var isClockOffset: Bool {
         return pumpManager.isClockOffset
     }
@@ -152,7 +155,7 @@ class OmniSettingsViewModel: ObservableObject {
             return nil
         }
     }
-    
+
     var notice: OmniSettingsNotice? {
         if pumpManager.isClockOffset {
             return OmniSettingsNotice(
@@ -171,7 +174,7 @@ class OmniSettingsViewModel: ObservableObject {
             return false
         }
     }
-    
+
     let dateFormatter: DateFormatter = {
         let dateFormatter = DateFormatter()
         dateFormatter.timeStyle = .short
@@ -179,14 +182,14 @@ class OmniSettingsViewModel: ObservableObject {
         dateFormatter.doesRelativeDateFormatting = true
         return dateFormatter
     }()
-    
+
     let timeFormatter: DateFormatter = {
         let dateFormatter = DateFormatter()
         dateFormatter.timeStyle = .short
         dateFormatter.dateStyle = .none
         return dateFormatter
     }()
-    
+
     let timeRemainingFormatter: DateComponentsFormatter = {
         let dateComponentsFormatter = DateComponentsFormatter()
         dateComponentsFormatter.allowedUnits = [.hour, .minute]
@@ -194,7 +197,7 @@ class OmniSettingsViewModel: ObservableObject {
         dateComponentsFormatter.zeroFormattingBehavior = .dropAll
         return dateComponentsFormatter
     }()
-    
+
     let basalRateFormatter: NumberFormatter = {
         let numberFormatter = NumberFormatter()
         numberFormatter.numberStyle = .decimal
@@ -212,15 +215,17 @@ class OmniSettingsViewModel: ObservableObject {
         }
         return nil
     }
-    
+
     let reservoirVolumeFormatter = QuantityFormatter(for: .internationalUnit())
-    
+
     var didFinish: (() -> Void)?
-    
+
     var navigateTo: ((OmniUIScreen) -> Void)?
-    
+
     private let pumpManager: OmniPumpManager
-    
+
+    private lazy var cancellables = Set<AnyCancellable>()
+
     init(pumpManager: OmniPumpManager) {
         self.pumpManager = pumpManager
         
@@ -237,17 +242,36 @@ class OmniSettingsViewModel: ObservableObject {
         podCommState = self.pumpManager.podCommState
         beepPreference = self.pumpManager.beepPreference
         silencePodPreference = self.pumpManager.silencePod ? .enabled : .disabled
-        podOrRileyLinkConnected = self.pumpManager.isConnected // ZZZ || self.pumpManager.rileyLinkIsConnected
+        podConnected = self.pumpManager.isConnected
         insulinType = self.pumpManager.insulinType
         podDetails = self.pumpManager.podDetails
         previousPodDetails = self.pumpManager.previousPodDetails
+        rileylinkConnected = false
+
         pumpManager.addPodStateObserver(self, queue: DispatchQueue.main)
         pumpManager.addStatusObserver(self, queue: DispatchQueue.main)
-        
+
+        // Register for device notifications (RL specific)
+        NotificationCenter.default.publisher(for: .DeviceConnectionStateDidChange)
+            .sink { [weak self] _ in
+                self?.updateConnectionStatus()
+            }
+            .store(in: &cancellables)
+
         // Trigger refresh
         pumpManager.getPodStatus() { _ in }
+        updateConnectionStatus()
     }
-    
+
+    // RL specific
+    func updateConnectionStatus() {
+        pumpManager.rileyLinkDeviceProvider.getDevices { (devices) in
+            DispatchQueue.main.async { [weak self] in
+                self?.rileylinkConnected = devices.firstConnected != nil
+            }
+        }
+    }
+
     func changeTimeZoneTapped() {
         synchronizingTime = true
         pumpManager.setTime { (error) in
@@ -490,7 +514,7 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     var podType: PodType {
-        return pumpManager.state.podType
+        return pumpManager.podType
     }
 
 }
@@ -513,7 +537,7 @@ extension OmniSettingsViewModel: PodStateObserver {
     }
  
     func podConnectionStateDidChange(isConnected: Bool) {
-        self.podOrRileyLinkConnected = isConnected
+        self.podConnected = isConnected
     }
  }
  
