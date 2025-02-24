@@ -25,7 +25,7 @@ ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "120"
 
 APP_IDENTIFIER = ENV.fetch('APP_IDENTIFIER') { "ru.artpancreas.#{TEAMID}.FreeAPS" }
 
-if #{APP_IDENTIFIER} != "ru.artpancreas.#{TEAMID}.FreeAPS"
+if #{APP_IDENTIFIER} != "com.jon.#{TEAMID}.aps"
   File.write('../ConfigOverride.xcconfig', "BUNDLE_IDENTIFIER = #{APP_IDENTIFIER}", mode: 'a')
 end
 
