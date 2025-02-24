@@ -11,9 +11,10 @@ The "Omnipod" (OmniKit) and "Omnipod DASH" (OmniBLE) pump managers displayed by 
 still the original unmodified pump managers which maintain their own separate pump manager state.
 Eventually the OmniKit and OmniBLE pump managers and their associated plugins should be totally replaced by OmniCore.
 
+The names used this repo and its plugin module identifier are still subject to change.
 
 ## Status
-#### February 22, 2025
+#### February 23, 2025
 
 The way to deal with different transports types is currently pretty hacky and will be getting reworked.
 
@@ -33,7 +34,7 @@ The pump settings will show the name of the select pod type.
 Pod Diagnostics -> Pump Manager Details can be used to examine
 the new state attributes of the new unified pump manager & pod state.
 
-## To Install
+## To Add to a fresh Loop Workspace
 Temporary install instructions.
 ```quote
 $ git clone --branch=dev --recurse-submodules https://github.com/LoopKit/LoopWorkspace.git
@@ -57,3 +58,11 @@ Tap (Close)
 Sign and build and give it a try!
 Be sure to select "All Omnipod Types" when doing an "Add Pump" to try out the OmniCore PumpManager
 ```
+
+## To Add to Tri
+Unfortunately Trio has some special case code for dealing with the OmniKit and OmniBLE Pump Managers.
+Additionally Trio isn't currently set up to handle plugin pump managers gracefally in the general case.
+So a number of Trio changes are needed to add the OmniCore Pump Manager to the Trio app.
+Marion Barker has already done this and can provide more information and a version of Trio
+with all the needed mods to add the current version of the OmniCore Pump Manager to Trio.
+

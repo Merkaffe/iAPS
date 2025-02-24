@@ -317,7 +317,11 @@ struct OmniSettingsView: View  {
                 if lifeState.nextPodLifecycleAction == .pairAndPrime {
                     Section() {
                         Button(action: {
-                            self.viewModel.navigateTo?(.pairAndPrime)
+                            if self.viewModel.podType == unknownOmnipodType {
+                                self.viewModel.navigateTo?(.selectPodType)
+                            } else {
+                                self.viewModel.navigateTo?(.pairAndPrime)
+                            }
                         }) {
                             Text(lifeState.nextPodLifecycleActionDescription)
                                 .foregroundColor(lifeState.nextPodLifecycleActionColor)

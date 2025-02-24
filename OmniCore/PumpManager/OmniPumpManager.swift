@@ -35,7 +35,7 @@ public class OmniPumpManager: RileyLinkPumpManager {
 
     // Must be declared public static for the Pluggable protocol.
     // This string should match the PumpManagerIdentifier string.
-    public static let pluginIdentifier: String = "OmniCore"
+    public static let pluginIdentifier: String = "Omni"
 
     // Must be declared public for the DeviceManger protocol.
     // This string is the displayed Insulin Pump name in Loop Settings.
@@ -1774,9 +1774,12 @@ extension OmniPumpManager: PumpManager {
 
     public static var onboardingSupportedBasalRates: [Double] {
         // Non-Eros pods supports a zero basal rate while Eros pods do not.
-        // Sigh - since this var is declared static, we cannot return a value
-        // that changes based on whether or not this is an Eros instance and
-        // so we have to return a set of values that works for all Omnipod types.
+        // Since this var is must be declared as static, we cannot return a
+        // value that changes based on whether or not this is an Eros instance.
+        // But since any onboarding basal setup performed before picking an
+        // insulin pump, the pump independent onboarding must disallow zero
+        // basal rates and thus this var is not too relevant anyways as it was
+        // supposedly something that added to help handle Loop 2.x to 3.x migration.
         return (1...600).map { Double($0) / Double(Pod.pulsesPerUnit) }
     }
 

@@ -58,8 +58,9 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
     let address: UInt32
 
-    var activatedAt: Date?
-    var expiresAt: Date? // set based on timeActive and can change with Pod clock drift and/or system time change
+    // activatedAt and expiresAt need to still be public with current Trio implemenation
+    public var activatedAt: Date?
+    public var expiresAt: Date? // set based on timeActive and can change with Pod clock drift and/or system time change
     var activeTime: TimeInterval? // Useful after pod deactivated or faulted.
 
     var podTime: TimeInterval // pod time from the last response, always whole minute values
@@ -74,12 +75,12 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     var podType: PodType
 
     var activeAlertSlots: AlertSet
-    var lastInsulinMeasurements: PodInsulinMeasurements?
+    public var lastInsulinMeasurements: PodInsulinMeasurements?  // needs be public with current Trio implementation
 
     var unacknowledgedCommand: PendingCommand?
 
     var unfinalizedBolus: UnfinalizedDose?
-    var unfinalizedTempBasal: UnfinalizedDose?
+    public var unfinalizedTempBasal: UnfinalizedDose? // needs be public with current Trio implementation
     var unfinalizedSuspend: UnfinalizedDose?
     var unfinalizedResume: UnfinalizedDose?
 
