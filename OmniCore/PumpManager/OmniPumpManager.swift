@@ -29,7 +29,62 @@ public enum PodCommState: Equatable {
     case deactivating
 }
 
-// OmniPumpManager is declered as a derived class RileyLinkPumpManager
+public enum OmniPumpManagerError: Error {
+    case noPodPaired
+    case podAlreadyPaired
+    case insulinTypeNotConfigured
+    case notReadyForCannulaInsertion
+    case invalidSetting
+    case podTypeNotConfigured
+    case communication(Error)
+    case state(Error)
+}
+
+extension OmniPumpManagerError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .noPodPaired:
+            return LocalizedString("No pod paired", comment: "Error message shown when no pod is paired")
+        case .podAlreadyPaired:
+            return LocalizedString("Pod already paired", comment: "Error message shown when user cannot pair because pod is already paired")
+        case .insulinTypeNotConfigured:
+            return LocalizedString("Insulin type not configured", comment: "Error description for insulin type not configured")
+        case .notReadyForCannulaInsertion:
+            return LocalizedString("Pod is not in a state ready for cannula insertion.", comment: "Error message when cannula insertion fails because the pod is in an unexpected state")
+        case .invalidSetting:
+            return LocalizedString("Invalid Setting", comment: "Error description for invalid setting")
+        case .podTypeNotConfigured:
+            return LocalizedString("Pod type not configured.", comment: "Error message when pod type is not configured")
+        case .communication(let error):
+            if let error = error as? LocalizedError {
+                return error.errorDescription
+            } else {
+                return String(describing: error)
+            }
+        case .state(let error):
+            if let error = error as? LocalizedError {
+                return error.errorDescription
+            } else {
+                return String(describing: error)
+            }
+        }
+    }
+
+    public var failureReason: String? {
+        return nil
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .noPodPaired:
+            return LocalizedString("Please pair a new pod", comment: "Recovery suggestion shown when no pod is paired")
+        default:
+            return nil
+        }
+    }
+}
+
+// OmniPumpManager is declared as a derived class RileyLinkPumpManager
 // even though for non-Eros pods the RileyLink code will not be used.
 public class OmniPumpManager: RileyLinkPumpManager {
 
@@ -189,10 +244,10 @@ public class OmniPumpManager: RileyLinkPumpManager {
 
     private func logDeviceCommunication(_ message: String, type: DeviceLogEntryType = .send) {
         let podAddress: String
-        if self.state.podState == nil {
-            podAddress = "noPod   "
+        if let address = state.podState?.address {
+            podAddress = String(format: "%08X", address)
         } else {
-            podAddress = String(format: "%08X", self.state.podId)
+            podAddress = "noPod   "
         }
 
         // Not dispatching here; if delegate queue is blocked, timestamps will be delayed
