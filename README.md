@@ -1,15 +1,15 @@
-# OmniCore
+# OmnipodKit
 
 A prototype unified pump manager to (eventually) handle all Omnipod pod types!
 Note that this is an early & incomplete prototyping work -- use at your own risk!
 
-When doing an "Add Pump", select "All Omnipod Types" to select the new OmniCore pump manager.
+When doing an "Add Pump", select "All Omnipod Types" to select the new OmnipodKit pump manager.
 The actual Omnipod pod type will be selected during the pump manager initialization sequence.
 When there is no pod, you can switch to use a different pod type OR another different pump manager
 by scrolling to the bottom of the pump settings view and tapping on "Switch to another pod or pump type".
 The "Omnipod" (OmniKit) and "Omnipod DASH" (OmniBLE) pump managers displayed by "Add Pump" are
 still the original unmodified pump managers which maintain their own separate pump manager state.
-Eventually the OmniKit and OmniBLE pump managers and their associated plugins should be totally replaced by OmniCore.
+Eventually the OmniKit and OmniBLE pump managers and their associated plugins should be totally replaced by OmnipodKit.
 
 The names used this repo and its plugin module identifier are still subject to change.
 
@@ -21,7 +21,7 @@ The way to deal with different transports types is currently pretty hacky and wi
 There are still pending decisions to be make about what to do with the DeliveryUncertaintyRecoveryView.
 
 There is nothing implementing Omnipod 5 communications yet which is still trying to be understood.
-Eventually this OmniCore pump manager will be providing the eventual Omnipod 5 support for Loop.
+Eventually this OmnipodKit pump manager will be providing the eventual Omnipod 5 support for Loop.
 
 + Eros:   Looping with Eros pods
 + DASH:   Looping with DASH pods and pod sim
@@ -39,30 +39,30 @@ Temporary install instructions.
 ```quote
 $ git clone --branch=dev --recurse-submodules https://github.com/LoopKit/LoopWorkspace.git
 $ cd LoopWorkspace
-$ git clone https://github.com/loopandlearn/OmniCore.git
+$ git clone https://github.com/loopandlearn/OmnipodKit.git
 $ xed .
 
 In Xcode, select File->'Add Files to "LoopWorkspace"...'
-Scroll down to select and double click to open the "OmniCore" directory
-Select the "OmniCore.xcodeproj" file and tap the blue (Add) button
+Scroll down to select and double click to open the "OmnipodKit" directory
+Select the "OmnipodKit.xcodeproj" file and tap the blue (Add) button
 Leave the Action as "Reference files in place"
 Tap the blue (Finish) button
 
 In Xcode, select Product->Scheme->Edit Scheme...
 Make sure that the Build tab on the top of the left panel is selected
 Click on the "+" in the bottom left corner above the blue (Duplicate Scheme) button
-Scroll down to select "OmniCorePlugin" icon (under OmniCore) and tap the blue (Add) button
-Drag "OmniCorePlugin OmniCore" from the bottom of the list up until immediately before "OmniKitPlugin OmniKit"
+Scroll down to select "OmnipodKitPlugin" icon (under OmnipodKit) and tap the blue (Add) button
+Drag "OmnipodKitPlugin OmnipodKit" from the bottom of the list up until immediately before "OmniKitPlugin OmniKit"
 Tap (Close)
 
 Sign and build and give it a try!
-Be sure to select "All Omnipod Types" when doing an "Add Pump" to try out the OmniCore PumpManager
+Be sure to select "All Omnipod Types" when doing an "Add Pump" to try out the OmnipodKit PumpManager
 ```
 
 ## To Add to Tri
 Unfortunately Trio has some special case code for dealing with the OmniKit and OmniBLE Pump Managers.
 Additionally Trio isn't currently set up to handle plugin pump managers gracefally in the general case.
-So a number of Trio changes are needed to add the OmniCore Pump Manager to the Trio app.
+So a number of Trio changes are needed to add the OmnipodKit Pump Manager to the Trio app.
 Marion Barker has already done this and can provide more information and a version of Trio
-with all the needed mods to add the current version of the OmniCore Pump Manager to Trio.
+with all the needed mods to add the current version of the OmnipodKit Pump Manager to Trio.
 
