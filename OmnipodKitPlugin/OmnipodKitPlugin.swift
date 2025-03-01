@@ -12,7 +12,7 @@ import OmnipodKit
 import os.log
 
 class OmnipodKitPlugin: NSObject, PumpManagerUIPlugin {
-    private let log = OSLog(__subsystem: "OmnipodKitPlugin", category: "com.loopkit.omnicore")
+    private let log = OSLog(__subsystem: "OmnipodKitPlugin", category: "com.loopkit.omnipodkit")
 
     public var pumpManagerType: PumpManagerUI.Type? {
         return OmniPumpManager.self
