@@ -41,8 +41,6 @@ Pod Diagnostics -> Pump Manager Details can be used to examine the new state att
 
 ### Todo
 
-Add a parser target to OmnipodKit.
-
 Add a full suite of unit tests to OmnipodKit.
 
 Need to fix Xcode settings to avoid module "not compiled with library evolution support" warnings.

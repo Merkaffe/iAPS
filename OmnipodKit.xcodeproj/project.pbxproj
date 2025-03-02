@@ -37,12 +37,22 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D8D0EB682D744A24000B0AF4 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		D889B2392D2B4BFE00C8E64C /* OmnipodKitPlugin.loopplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OmnipodKitPlugin.loopplugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8B88D4F2D33A52F001893B6 /* LoopKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LoopKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8B88D512D33A53E001893B6 /* LoopKitUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LoopKitUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D8D0EB6A2D744A24000B0AF4 /* OmniParser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = OmniParser; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8DF84DD2D5D243B00798277 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		D8F83F882D155ADA0005D165 /* OmnipodKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OmnipodKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -67,6 +77,52 @@
 			);
 			target = D8F83F872D155ADA0005D165 /* OmnipodKit */;
 		};
+		D8D0EB722D744FE4000B0AF4 /* Exceptions for "OmnipodKit" folder in "OmniParser" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Common/Data.swift,
+				Common/Double.swift,
+				Common/LocalizedString.swift,
+				Common/TimeInterval.swift,
+				OmnipodCommon/AlertSlot.swift,
+				OmnipodCommon/BasalDeliveryTable.swift,
+				OmnipodCommon/BasalSchedule.swift,
+				OmnipodCommon/BeepType.swift,
+				OmnipodCommon/BolusDeliveryTable.swift,
+				OmnipodCommon/CRC16.swift,
+				OmnipodCommon/FaultEventCode.swift,
+				OmnipodCommon/InsulinTableEntry.swift,
+				OmnipodCommon/Message.swift,
+				OmnipodCommon/MessageBlocks/AcknowledgeAlertCommand.swift,
+				OmnipodCommon/MessageBlocks/AssignAddressCommand.swift,
+				OmnipodCommon/MessageBlocks/BasalScheduleExtraCommand.swift,
+				OmnipodCommon/MessageBlocks/BeepConfigCommand.swift,
+				OmnipodCommon/MessageBlocks/BolusExtraCommand.swift,
+				OmnipodCommon/MessageBlocks/CancelDeliveryCommand.swift,
+				OmnipodCommon/MessageBlocks/ConfigureAlertsCommand.swift,
+				OmnipodCommon/MessageBlocks/DeactivatePodCommand.swift,
+				OmnipodCommon/MessageBlocks/DetailedStatus.swift,
+				OmnipodCommon/MessageBlocks/ErrorResponse.swift,
+				OmnipodCommon/MessageBlocks/FaultConfigCommand.swift,
+				OmnipodCommon/MessageBlocks/GetStatusCommand.swift,
+				OmnipodCommon/MessageBlocks/MessageBlock.swift,
+				OmnipodCommon/MessageBlocks/PodInfo.swift,
+				OmnipodCommon/MessageBlocks/PodInfoActivationTime.swift,
+				OmnipodCommon/MessageBlocks/PodInfoPulseLog.swift,
+				OmnipodCommon/MessageBlocks/PodInfoPulseLogPlus.swift,
+				OmnipodCommon/MessageBlocks/PodInfoResponse.swift,
+				OmnipodCommon/MessageBlocks/PodInfoTriggeredAlerts.swift,
+				OmnipodCommon/MessageBlocks/SetInsulinScheduleCommand.swift,
+				OmnipodCommon/MessageBlocks/SetupPodCommand.swift,
+				OmnipodCommon/MessageBlocks/StatusResponse.swift,
+				OmnipodCommon/MessageBlocks/TempBasalExtraCommand.swift,
+				OmnipodCommon/MessageBlocks/VersionResponse.swift,
+				OmnipodCommon/Pod.swift,
+				OmnipodCommon/PodProgressStatus.swift,
+				OmnipodCommon/PodType.swift,
+			);
+			target = D8D0EB692D744A24000B0AF4 /* OmniParser */;
+		};
 		D8F83F8D2D155ADA0005D165 /* Exceptions for "OmnipodKit" folder in "OmnipodKit" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -89,10 +145,16 @@
 			path = OmnipodKitPlugin;
 			sourceTree = "<group>";
 		};
+		D8D0EB6B2D744A24000B0AF4 /* OmniParser */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = OmniParser;
+			sourceTree = "<group>";
+		};
 		D8F83F8A2D155ADA0005D165 /* OmnipodKit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				D8F83F8D2D155ADA0005D165 /* Exceptions for "OmnipodKit" folder in "OmnipodKit" target */,
+				D8D0EB722D744FE4000B0AF4 /* Exceptions for "OmnipodKit" folder in "OmniParser" target */,
 			);
 			path = OmnipodKit;
 			sourceTree = "<group>";
@@ -105,6 +167,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				D82D262A2D44515000B8B25E /* OmnipodKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D8D0EB672D744A24000B0AF4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,6 +197,7 @@
 				D8DF84DD2D5D243B00798277 /* README.md */,
 				D8F83F8A2D155ADA0005D165 /* OmnipodKit */,
 				D889B2492D2B66FF00C8E64C /* OmnipodKitPlugin */,
+				D8D0EB6B2D744A24000B0AF4 /* OmniParser */,
 				D8F83FB02D15621C0005D165 /* Frameworks */,
 				D8F83F892D155ADA0005D165 /* Products */,
 			);
@@ -138,6 +208,7 @@
 			children = (
 				D8F83F882D155ADA0005D165 /* OmnipodKit.framework */,
 				D889B2392D2B4BFE00C8E64C /* OmnipodKitPlugin.loopplugin */,
+				D8D0EB6A2D744A24000B0AF4 /* OmniParser */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -196,6 +267,28 @@
 			productReference = D889B2392D2B4BFE00C8E64C /* OmnipodKitPlugin.loopplugin */;
 			productType = "com.apple.product-type.framework";
 		};
+		D8D0EB692D744A24000B0AF4 /* OmniParser */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D8D0EB702D744A24000B0AF4 /* Build configuration list for PBXNativeTarget "OmniParser" */;
+			buildPhases = (
+				D8D0EB662D744A24000B0AF4 /* Sources */,
+				D8D0EB672D744A24000B0AF4 /* Frameworks */,
+				D8D0EB682D744A24000B0AF4 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D8D0EB6B2D744A24000B0AF4 /* OmniParser */,
+			);
+			name = OmniParser;
+			packageProductDependencies = (
+			);
+			productName = OmniParser;
+			productReference = D8D0EB6A2D744A24000B0AF4 /* OmniParser */;
+			productType = "com.apple.product-type.tool";
+		};
 		D8F83F872D155ADA0005D165 /* OmnipodKit */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = D8F83F8E2D155ADA0005D165 /* Build configuration list for PBXNativeTarget "OmnipodKit" */;
@@ -229,9 +322,13 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1610;
 				TargetAttributes = {
 					D889B2382D2B4BFE00C8E64C = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					D8D0EB692D744A24000B0AF4 = {
 						CreatedOnToolsVersion = 16.2;
 					};
 					D8F83F872D155ADA0005D165 = {
@@ -259,6 +356,7 @@
 			targets = (
 				D8F83F872D155ADA0005D165 /* OmnipodKit */,
 				D889B2382D2B4BFE00C8E64C /* OmnipodKitPlugin */,
+				D8D0EB692D744A24000B0AF4 /* OmniParser */,
 			);
 		};
 /* End PBXProject section */
@@ -282,6 +380,13 @@
 
 /* Begin PBXSourcesBuildPhase section */
 		D889B2352D2B4BFE00C8E64C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D8D0EB662D744A24000B0AF4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -387,6 +492,36 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				WRAPPER_EXTENSION = loopplugin;
+			};
+			name = Release;
+		};
+		D8D0EB6E2D744A24000B0AF4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		D8D0EB6F2D744A24000B0AF4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
@@ -625,6 +760,15 @@
 			buildConfigurations = (
 				D889B23F2D2B4BFE00C8E64C /* Debug */,
 				D889B2402D2B4BFE00C8E64C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D8D0EB702D744A24000B0AF4 /* Build configuration list for PBXNativeTarget "OmniParser" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D8D0EB6E2D744A24000B0AF4 /* Debug */,
+				D8D0EB6F2D744A24000B0AF4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
