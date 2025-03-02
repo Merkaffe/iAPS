@@ -2,8 +2,8 @@
 //  OmnipodKitPlugin.swift
 //  OmnipodKit
 //
-//  Created by Joe Moran on 01/05/25.
-//  Copyright © 2024 LoopKit Authors. All rights reserved.
+//  Created by Joseph Moran on 01/05/25.
+//  Copyright © 2025 LoopKit Authors. All rights reserved.
 //
 
 import Foundation

@@ -167,7 +167,7 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
             podDeactivator.deactivatePod { (error) in
                 DispatchQueue.main.async {
                     if let error = error {
-                        self.state = .resultError(DeactivationError.OmniBLEPumpManagerError(error))
+                        self.state = .resultError(DeactivationError.OmniPumpManagerError(error))
                     } else {
                         self.discardPod(navigateOnCompletion: false)
                     }
@@ -190,18 +190,18 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
 }
 
 enum DeactivationError : LocalizedError {
-    case OmniBLEPumpManagerError(OmniPumpManagerError)
+    case OmniPumpManagerError(OmniPumpManagerError)
     
     var recoverySuggestion: String? {
         switch self {
-        case .OmniBLEPumpManagerError:
+        case .OmniPumpManagerError:
             return LocalizedString("There was a problem communicating with the pod. If this problem persists, tap Discard Pod. You can then activate a new Pod.", comment: "Format string for recovery suggestion during deactivate pod.")
         }
     }
     
     var errorDescription: String? {
         switch self {
-        case .OmniBLEPumpManagerError(let error):
+        case .OmniPumpManagerError(let error):
             return error.errorDescription
         }
     }

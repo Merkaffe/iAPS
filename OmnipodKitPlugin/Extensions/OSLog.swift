@@ -1,8 +1,10 @@
 //
 //  OSLog.swift
-//  OmniBLEPlugin
+//  OmnipodKitPlugin
 //
-//  Copyright © 2017 LoopKit Authors. All rights reserved.
+//  From OmniBLE/OmniBLEPlugin/Extensions/OSLog.swift
+//  Created by Joseph Moran on 1/5/25.
+//  Copyright © 2025 LoopKit Authors. All rights reserved.
 //
 
 import os.log
@@ -10,7 +12,7 @@ import os.log
 
 extension OSLog {
     convenience init(category: String) {
-        self.init(subsystem: "com.loopkit.omnipodkit", category: category)
+        self.init(subsystem: "com.loopkit.OmnipodKit", category: category)
     }
 
     func debug(_ message: StaticString, _ args: CVarArg...) {
