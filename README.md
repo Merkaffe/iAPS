@@ -1,7 +1,7 @@
 # OmnipodKit
 
 A prototype unified pump manager to (eventually) handle all Omnipod pod types!
-Note that this is an early & incomplete prototyping work -- use at your own risk!
+Note that this is early & evolving prototyping work -- use at your own risk!
 
 When doing an "Add Pump", select "All Omnipod Types" to select the new OmnipodKit pump manager.
 The actual Omnipod pod type will be selected during the pump manager initialization sequence.
@@ -14,11 +14,8 @@ Eventually the OmniKit and OmniBLE pump managers and their associated plugins sh
 The names used this repo and its plugin module identifier are still subject to change.
 
 ## Status
-#### February 23, 2025
+#### March 1, 2025
 
-The way to deal with different transports types is currently pretty hacky and will be getting reworked.
-
-There are still pending decisions to be make about what to do with the DeliveryUncertaintyRecoveryView.
 
 There is nothing implementing Omnipod 5 communications yet which is still trying to be understood.
 Eventually this OmnipodKit pump manager will be providing the eventual Omnipod 5 support for Loop.
@@ -34,7 +31,22 @@ The pump settings will show the name of the select pod type.
 Pod Diagnostics -> Pump Manager Details can be used to examine
 the new state attributes of the new unified pump manager & pod state.
 
-## To Add to a fresh Loop Workspace
+### Todo
+Add a parser target to OmnipodKit.
+
+Add a full suite of unit tests to OmnipodKit.
+
+Need to fix Xcode settings to avoid module "not compiled with library evolution support" warnings.
+
+The current method to deal with different transport types is a hack and will be getting reworked.
+
+There are still pending decisions about what to do with DeliveryUncertaintyRecoveryView.
+
+Figure out if it might be possible to do mid pod Omni{BLE,Kit} -> OmnipodKit
+Pump Manager conversions which will require special case code to be added within
+the DIY apps themselves and the implications of trying to supporting this behavior.
+
+## To Add to a Fresh Loop Workspace
 Temporary install instructions.
 ```quote
 $ git clone --branch=dev --recurse-submodules https://github.com/LoopKit/LoopWorkspace.git
@@ -59,10 +71,9 @@ Sign and build and give it a try!
 Be sure to select "All Omnipod Types" when doing an "Add Pump" to try out the OmnipodKit PumpManager
 ```
 
-## To Add to Tri
-Unfortunately Trio has some special case code for dealing with the OmniKit and OmniBLE Pump Managers.
-Additionally Trio isn't currently set up to handle plugin pump managers gracefally in the general case.
-So a number of Trio changes are needed to add the OmnipodKit Pump Manager to the Trio app.
-Marion Barker has already done this and can provide more information and a version of Trio
-with all the needed mods to add the current version of the OmnipodKit Pump Manager to Trio.
-
+## To Add to Trio
+Unfortunately Trio isn't currently set up to handle pump managers as a plugin and
+requires a number special case source code changes to support each pump manager type.
+Thus a number of Trio source code changes are needed to add OmnipodKit to the Trio app.
+Marion Barker has prototyped the work for this and can provide more information and
+a version of Trio with the changes needed to add the OmnipodKit Pump Manager to Trio.
