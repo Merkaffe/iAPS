@@ -1,6 +1,6 @@
 # OmnipodKit
 
-A prototype unified pump manager to (eventually) handle all Omnipod pod types!
+A prototype universal Pump Manager to (eventually) handle all Omnipod pod types.
 Note that this is early & evolving prototyping work -- use at your own risk!
 
 When doing an "Add Pump", select "All Omnipod Types" to select the new OmnipodKit pump manager.
@@ -14,34 +14,28 @@ by scrolling to the bottom of the pump settings view and tapping on "Switch to a
 The "Omnipod" (OmniKit) and "Omnipod DASH" (OmniBLE) pump managers displayed by "Add Pump" are
 still the original unmodified pump managers which maintain their own separate pump manager state. In other words, when you have a pod added using "Omnipod DASH", you must switch to other pump after deactivating and then add the new pump manager by selecting "All Omnipod Types".
 
-Eventually the OmniKit and OmniBLE pump managers and their associated plugins will be totally replaced by OmnipodKit.
+Eventually the OmniKit and OmniBLE pump managers and their associated plugins should be totally replaced by OmnipodKit.
 
 
 ## Status
 
-### 01 March 2025
+### March 02, 2025
 
-The long-term goal is this OmnipodKit pump manager will be providing the eventual Omnipod 5 support for Loop and Trio. In the meantime, replacing OmniKit and OmniBLE with this single repository will make code maintenance much easier in the future.
+A short-term goal of this effort is to replace both the OmniKit and OmniBLE Pump Managers with a single universal Pump Manager which can handle all
+Omnipod pod types to simplify future DIY Omnipod code maintenance and to improve the user experience when switching between different Omnipod pod types.
+The longer-term goal is that this Omnipod Pump Manager will be easily extended to provide Omnipod 5 support as a third pod type option for both Loop and Trio.
+At this time, there is nothing implementing Omnipod 5 communications which is still trying to be understood by the DIY community.
 
-There is nothing implementing Omnipod 5 communications yet which is still trying to be understood.
++ Eros:   Working with basic pod setup & deactivation with iPhone simulators and looping with Eros pods
++ DASH:   Working with basic pod setup & deactivation with iPhone simulators and looping with DASH pods & the rPi pod sim.
+    Additionally this has been used for live human use by the author.
++ O5:     Working with basic pod setup & deactivation with iPhone simulators and looping with DASH pods & rthe Pi pod sim (for demo purposes).
+   This is temp code using the DASH transport to test having a third pod type showing new Omnipod 5 UI additions (different text, pod tab color, etc) and using an alternate base pod id in the pod comms.
+   For DIY use, the Omnipod 5 pod ids will start with 0x15 while the DIY DASH pod ids start with 0x17 and Eros addresses (pod ids) for both DIY and PDM use always start with 0x1F.
 
-+ Eros:   Looping with Eros pods
-+ DASH:   Looping with DASH pods, rPi DASH simulator and pod sim
-+ O5:     Looping with DASH pods, rPi DASH simulator and pod sim (for testing purposes). This is temp code using DASH transport to test having a 3rd pod type showing new Omnipod 5 UI additions (different text, pod tab color, etc) and using an alternate base pod id in the pod comms. For DIY O5 pod ids will start with 0x15 while DIY DASH pod ids start with 0x17. Eros addresses (pod ids) for both DIY and PDM use always start with 0x1F.
-
-The iPhone simulators work for basic pod setup & deactivation cycles for Eros, Dash & Omnipod 5.
-
-As always was for the Omnipod pump managers with the iPhone simulator, there are no actual simulated pod comms and thus no fake closed loop use can be simulated using iPhone simulators.
-
-The rPi DASH simulator, found at https://github.com/LoopKit/pod can be used with this repository.
-
-The pump settings will show the name of the selected pod type.
-
-Pod Diagnostics -> Pump Manager Details can be used to examine the new state attributes of the new unified pump manager & pod state.
+The pump settings show the name of the selected pod type. Pod Diagnostics -> Pump Manager Details can be used to examine the attributes of the new unified Pump Manager & pod state.
 
 ### Todo
-
-Add a full suite of unit tests to OmnipodKit.
 
 Need to fix Xcode settings to avoid module "not compiled with library evolution support" warnings.
 
@@ -95,5 +89,3 @@ It is expected that the Trio-dev repository will become public before the Omnipo
 ```
 git apply ~/Downloads/add_omnipodkit_to_Trio-dev.patch
 ```
-
-
