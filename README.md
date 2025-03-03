@@ -37,8 +37,6 @@ The pump settings show the name of the selected pod type. Pod Diagnostics -> Pum
 
 ### Todo
 
-Need to fix Xcode settings to avoid module "not compiled with library evolution support" warnings.
-
 The current method to deal with different transport types is a hack and will be getting reworked.
 
 There are still pending decisions about what to do with DeliveryUncertaintyRecoveryView.
