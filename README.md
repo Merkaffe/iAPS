@@ -19,7 +19,7 @@ Eventually the OmniKit and OmniBLE pump managers and their associated plugins sh
 
 ## Status
 
-### March 02, 2025
+### March 03, 2025
 
 A short-term goal of this effort is to replace both the OmniKit and OmniBLE Pump Managers with a single universal Pump Manager which can handle all
 Omnipod pod types to simplify future DIY Omnipod code maintenance and to improve the user experience when switching between different Omnipod pod types.
@@ -63,7 +63,7 @@ Select the "OmnipodKit.xcodeproj" file and tap the blue (Add) button
 Leave the Action as "Reference files in place"
 Tap the blue (Finish) button
 
-In Xcode, select Product->Scheme->Edit Scheme...
+In Xcode with the LoopWorkspace selected, select Product->Scheme->Edit Scheme...
 Make sure that the Build tab on the top of the left panel is selected
 Click on the "+" in the bottom left corner above the blue (Duplicate Scheme) button
 Scroll down to select "OmnipodKitPlugin" icon (under OmnipodKit) and tap the blue (Add) button
@@ -73,6 +73,8 @@ Tap (Close)
 Sign and build and give it a try!
 Be sure to select "All Omnipod Types" when doing an "Add Pump" to try out the OmnipodKit PumpManager
 ```
+
+To add the OmniTests to the LoopWorkspace tests, verify that the LoopWorkspace is selected, click on the diamond with the check near the top of the lefthand panel to display the Test Navigator panel, long press on OmniTests under the "Other Tests" section near the end of the panel, and then select "Add to LoopWorkspace".
 
 ## To Add to Trio-dev
 
