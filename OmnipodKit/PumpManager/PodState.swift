@@ -61,6 +61,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     // activatedAt and expiresAt need to still be public with current Trio implemenation
     public var activatedAt: Date?
     public var expiresAt: Date? // set based on timeActive and can change with Pod clock drift and/or system time change
+
     var activeTime: TimeInterval? // Useful after pod deactivated or faulted.
 
     var podTime: TimeInterval // pod time from the last response, always whole minute values
@@ -75,60 +76,65 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     var podType: PodType
 
     var activeAlertSlots: AlertSet
-    public var lastInsulinMeasurements: PodInsulinMeasurements?  // needs be public with current Trio implementation
+
+    // lastInsulinMeasurements needs be declared public with current Trio implementation
+    public var lastInsulinMeasurements: PodInsulinMeasurements?
 
     var unacknowledgedCommand: PendingCommand?
 
     var unfinalizedBolus: UnfinalizedDose?
-    public var unfinalizedTempBasal: UnfinalizedDose? // needs be public with current Trio implementation
+    var unfinalizedTempBasal: UnfinalizedDose? // needs be public with current Trio implementation
     var unfinalizedSuspend: UnfinalizedDose?
     var unfinalizedResume: UnfinalizedDose?
 
     var finalizedDoses: [UnfinalizedDose]
 
-    public var dosesToStore: [UnfinalizedDose] {
+    var dosesToStore: [UnfinalizedDose] {
         return  finalizedDoses + [unfinalizedTempBasal, unfinalizedSuspend, unfinalizedBolus].compactMap {$0}
     }
 
-    public var suspendState: SuspendState
+    var suspendState: SuspendState
 
-    public var isSuspended: Bool {
+    var isSuspended: Bool {
         if case .suspended = suspendState {
             return true
         }
         return false
     }
 
-    public var fault: DetailedStatus?
+    var fault: DetailedStatus?
 
-    public var primeFinishTime: Date?
-    public var setupProgress: SetupProgress
-    public var configuredAlerts: [AlertSlot: PodAlert]
-    public var insulinType: InsulinType
+    var primeFinishTime: Date?
+    var setupProgress: SetupProgress
+    var configuredAlerts: [AlertSlot: PodAlert]
+    var insulinType: InsulinType
 
     // Allow a grace period while the unacknowledged command is first being sent.
-    public var needsCommsRecovery: Bool {
+    var needsCommsRecovery: Bool {
         if let unacknowledgedCommand = unacknowledgedCommand, !unacknowledgedCommand.isInFlight {
             return true
         }
         return false
     }
 
+    // QQQ This declaration breaks Equatable for PodState which is needed
+    // QQQ Is it possible to rewrite a custom static equatable func for any
+    // MessageTransportState some where that checks the values of the either
+    // bleMessageTransportState
+    var messageTransportState: any MessageTransportState
+
     // Dash specific variables
-    public var ltk: Data? = nil
-    public var bleIdentifier: String? = nil
+    var ltk: Data? = nil
+    var bleIdentifier: String? = nil
 
     // Eros specific variables
     var nonceState: NonceState? = nil
 
     var lastDeliveryStatusReceived: DeliveryStatus? // this variable is not persistent across app restarts
 
-    // ZZZ maybe will need to define a messageTransportState protocol with an RL or non-RL versions
-    public var messageTransportState: MessageTransportState
-    public var erosMessageTransportState: ErosMessageTransportState
 
 
-    public init(
+    init(
         address: UInt32,
         firmwareVersion: String,
         iFirmwareVersion: String,
@@ -138,7 +144,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         podType: PodType,
 
         // Dash specific variables
-        messageTransportState: MessageTransportState? = nil,
+        messageTransportState: (any MessageTransportState)? = nil,
         ltk: Data? = nil,
         bleIdentifier: String? = nil,
 
@@ -179,9 +185,13 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             self.bleIdentifier = bleIdentifier
         }
 
-        // ZZZ need to rework to have a unified messageTransportState
-        self.messageTransportState = messageTransportState ?? MessageTransportState(ck: nil, noncePrefix: nil)
-        self.erosMessageTransportState = ErosMessageTransportState(packetNumber: 0, messageNumber: 0)
+        if let messageTransportState = messageTransportState {
+            self.messageTransportState = messageTransportState
+        } else if podType == erosType {
+            self.messageTransportState = ErosMessageTransportState()
+        } else {
+            self.messageTransportState = BleMessageTransportState()
+        }
     }
 
 
@@ -567,24 +577,19 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             self.bleIdentifier = bleIdentifier
         }
 
-        // ZZZ temporary
-        if let messageTransportStateRaw = rawValue["messageTransportState"] as? MessageTransportState.RawValue,
-            let messageTransportState = MessageTransportState(rawValue: messageTransportStateRaw)
+        if let bleMessageTransportStateRaw = rawValue["messageTransportState"] as? BleMessageTransportState.RawValue,
+            let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
         {
-            self.messageTransportState = messageTransportState
-        } else {
-            self.messageTransportState = MessageTransportState(ck: nil, noncePrefix: nil)
-        }
-
-        if let erosMessageTransportStateRaw = rawValue["erosMessageTransportState"] as? ErosMessageTransportState.RawValue,
+            self.messageTransportState = bleMessageTransportState
+        } else if let erosMessageTransportStateRaw = rawValue["messageTransportState"] as? ErosMessageTransportState.RawValue,
             let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
         {
-            self.erosMessageTransportState = erosMessageTransportState
+            self.messageTransportState = erosMessageTransportState
+        } else if podType == erosType {
+            self.messageTransportState = ErosMessageTransportState()
         } else {
-            self.erosMessageTransportState = ErosMessageTransportState(packetNumber: 0, messageNumber: 0)
+            self.messageTransportState = BleMessageTransportState()
         }
-
-        self.lastDeliveryStatusReceived = nil
     }
 
     public var rawValue: RawValue {
@@ -602,7 +607,6 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "insulinType": insulinType.rawValue,
             
             "messageTransportState": messageTransportState.rawValue,
-            "erosMessageTransportState": erosMessageTransportState.rawValue
         ]
 
         rawValue["podType"] = podType.rawValue
@@ -669,20 +673,15 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "* primeFinishTime: \(optionalString(primeFinishTime))",
             "* configuredAlerts: \(configuredAlertsString(configuredAlerts: configuredAlerts))",
             "* insulinType: \(optionalString(insulinType))",
+            "* messageTransportState: \(String(describing: messageTransportState))",
             "",
         ].joined(separator: "\n")
 
-        if podType.usesRileyLink {
+        if !podType.usesRileyLink {
             retVal += [
-                "* erosMessageTransportState: \(String(describing: erosMessageTransportState))",
-            ].joined(separator: "\n")
-        } else {
-            retVal += [
+                "",
                 "* bleIdentifier: \(optionalString(bleIdentifier))",
                 "* ltk: \(ltk == nil ? "nil" : ltk!.hexadecimalString)",
-
-                "* messageTransportState: \(String(describing: messageTransportState))",
-
             ].joined(separator: "\n")
         }
 

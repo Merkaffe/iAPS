@@ -1,5 +1,5 @@
 //
-//  MessageTransport.swift
+//  BleMessageTransport.swift
 //  OmnipodKit
 //
 //  From OmniBLE/OmniBLE/PumpManager/MessageTransport.swift
@@ -11,19 +11,20 @@
 import Foundation
 import os.log
 
-// ZZZ BLE specific transport -- probably will need to have 2 different version for RL and non-RL pods
-// or define a MessageTransportState protocol and have 2 implementations?
+struct BleMessageTransportState: MessageTransportState {
+    typealias RawValue = [String: Any]
 
-public struct MessageTransportState: Equatable, RawRepresentable {
-    public typealias RawValue = [String: Any]
+    var ck: Data?
+    var noncePrefix: Data?
+    var eapSeq: Int // per session sequence #
+    var msgSeq: Int // 8-bit Dash MessagePacket sequence # (with ck)
+    var nonceSeq: Int // nonce sequence # (with noncePrefix)
+    var messageNumber: Int // 4-bit Omnipod Message # (for Omnipod command/responses Messages)
 
-    public var ck: Data?
-    public var noncePrefix: Data?
-    public var eapSeq: Int // per session sequence #
-    public var msgSeq: Int // 8-bit Dash MessagePacket sequence # (with ck)
-    public var nonceSeq: Int // nonce sequence # (with noncePrefix)
-    public var messageNumber: Int // 4-bit Omnipod Message # (for Omnipod command/responses Messages)
-    
+    init() {
+        self.init(ck: nil, noncePrefix: nil)
+    }
+
     init(ck: Data?, noncePrefix: Data?, eapSeq: Int = 1, msgSeq: Int = 0, nonceSeq: Int = 0, messageNumber: Int = 0) {
         self.ck = ck
         self.noncePrefix = noncePrefix
@@ -34,7 +35,7 @@ public struct MessageTransportState: Equatable, RawRepresentable {
     }
 
     // RawRepresentable
-    public init?(rawValue: RawValue) {
+    init?(rawValue: RawValue) {
         guard
             let ckString = rawValue["ck"] as? String,
             let noncePrefixString = rawValue["noncePrefix"] as? String,
@@ -52,7 +53,7 @@ public struct MessageTransportState: Equatable, RawRepresentable {
         self.messageNumber = messageNumber
     }
 
-    public var rawValue: RawValue {
+    var rawValue: RawValue {
         return [
             "ck": ck?.hexadecimalString ?? "",
             "noncePrefix": noncePrefix?.hexadecimalString ?? "",
@@ -63,14 +64,14 @@ public struct MessageTransportState: Equatable, RawRepresentable {
         ]
     }
 
-    public mutating func incrementEapSeq() -> Int {
+    mutating func incrementEapSeq() -> Int {
         self.eapSeq += 1
         return eapSeq
     }
 }
 
-extension MessageTransportState: CustomDebugStringConvertible {
-    public var debugDescription: String {
+extension BleMessageTransportState: CustomDebugStringConvertible {
+    var debugDescription: String {
         return [
             "## MessageTransportState",
             "eapSeq: \(eapSeq)",
@@ -81,22 +82,7 @@ extension MessageTransportState: CustomDebugStringConvertible {
     }
 }
 
-protocol MessageTransportDelegate: AnyObject {
-    func messageTransport(_ messageTransport: MessageTransport, didUpdate state: MessageTransportState)
-}
-
-protocol MessageTransport {
-    var delegate: MessageTransportDelegate? { get set }
-
-    var messageNumber: Int { get }
-
-    func sendMessage(_ message: Message) throws -> Message
-
-    /// Asserts that the caller is currently on the session's queue
-    func assertOnSessionQueue()
-}
-
-class PodMessageTransport: MessageTransport {
+class BlePodMessageTransport: MessageTransport {
     private let COMMAND_PREFIX = "S0.0="
     private let COMMAND_SUFFIX = ",G0.0"
     private let RESPONSE_PREFIX = "0.0="
@@ -108,7 +94,7 @@ class PodMessageTransport: MessageTransport {
 
     private let log = OSLog(category: "PodMessageTransport")
 
-    private(set) var state: MessageTransportState {
+    private(set) var state: BleMessageTransportState {
         didSet {
             self.delegate?.messageTransport(self, didUpdate: state)
         }
@@ -174,7 +160,7 @@ class PodMessageTransport: MessageTransport {
     weak var messageLogger: MessageLogger?
     weak var delegate: MessageTransportDelegate?
 
-    init(manager: PeripheralManager, myId: UInt32, podId: UInt32, state: MessageTransportState) {
+    init(manager: PeripheralManager, myId: UInt32, podId: UInt32, state: BleMessageTransportState) {
         self.manager = manager
         self.myId = myId
         self.podId = podId
@@ -260,7 +246,7 @@ class PodMessageTransport: MessageTransport {
         return try enDecrypt.encrypt(msg, nonceSeq)
     }
 
-    func readAndAckResponse() throws -> Message {
+    private func readAndAckResponse() throws -> Message {
         guard let enDecrypt = self.enDecrypt else { throw PodCommsError.podNotConnected }
 
         let readResponse = try manager.readMessagePacket()
@@ -327,10 +313,10 @@ class PodMessageTransport: MessageTransport {
     }
 }
 
-extension PodMessageTransport: CustomDebugStringConvertible {
+extension BlePodMessageTransport: CustomDebugStringConvertible {
     public var debugDescription: String {
         return [
-            "## PodMessageTransport",
+            "## BlePodMessageTransport",
             "eapSeq: \(eapSeq)",
             "msgSeq: \(msgSeq)",
             "nonceSeq: \(nonceSeq)",

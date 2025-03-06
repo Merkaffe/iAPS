@@ -7,7 +7,6 @@
 //  Copyright © 2024 LoopKit Authors. All rights reserved.
 //
 
-
 import HealthKit
 import LoopKit
 import RileyLinkKit
@@ -315,7 +314,18 @@ public class OmniPumpManager: RileyLinkPumpManager {
 
     // MARK: - RileyLink Updates
 
-    override public var rileyLinkConnectionManagerState: RileyLinkConnectionState? {
+    var rileyLinkBatteryAlertLevel: Int? {
+        get {
+            return state.rileyLinkBatteryAlertLevel
+        }
+        set {
+            setState { state in
+                state.rileyLinkBatteryAlertLevel = newValue
+            }
+        }
+    }
+
+    public override var rileyLinkConnectionManagerState: RileyLinkConnectionState? {
         get {
             return state.rileyLinkConnectionManagerState
         }
@@ -326,20 +336,9 @@ public class OmniPumpManager: RileyLinkPumpManager {
         }
     }
 
-    override public func deviceTimerDidTick(_ device: RileyLinkDevice) {
+    public override func deviceTimerDidTick(_ device: RileyLinkDevice) {
         pumpDelegate.notify { (delegate) in
             delegate?.pumpManagerBLEHeartbeatDidFire(self)
-        }
-    }
-
-    public var rileyLinkBatteryAlertLevel: Int? {
-        get {
-            return state.rileyLinkBatteryAlertLevel
-        }
-        set {
-            setState { state in
-                state.rileyLinkBatteryAlertLevel = newValue
-            }
         }
     }
 
@@ -365,7 +364,7 @@ public class OmniPumpManager: RileyLinkPumpManager {
 
     // MARK: - CustomDebugStringConvertible
 
-    override public var debugDescription: String {
+    public override var debugDescription: String {
         var retVal: String = "## OmniPumpManager\n"
         if state.podType.usesRileyLink {
             retVal += super.debugDescription
@@ -2092,9 +2091,11 @@ extension OmniPumpManager: PumpManager {
 
     // Eros only
     private func checkRileyLinkBattery() {
-        rileyLinkDeviceProvider.getDevices { devices in
-            for device in devices {
-                device.updateBatteryLevel()
+        if state.podType.usesRileyLink {
+            rileyLinkDeviceProvider.getDevices { devices in
+                for device in devices {
+                    device.updateBatteryLevel()
+                }
             }
         }
     }
