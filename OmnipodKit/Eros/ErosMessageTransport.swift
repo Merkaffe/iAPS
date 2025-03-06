@@ -54,7 +54,7 @@ class ErosPodMessageTransport: MessageTransport {
     
     private let log = OSLog(category: "PodMessageTransport")
     
-    private var state: ErosMessageTransportState {
+    private(set) var state: ErosMessageTransportState {
         didSet {
             self.delegate?.messageTransport(self, didUpdate: state)
         }

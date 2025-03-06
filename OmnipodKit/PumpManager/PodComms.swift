@@ -633,8 +633,7 @@ class PodComms: CustomDebugStringConvertible {
                     lotSeq: config.tid,
                     insulinType: insulinType,
                     podType: erosType,
-                    packetNumber: transport.packetNumber,
-                    messageNumber: transport.messageNumber
+                    messageTransportState: transport.state
                 )
                 // podState setupProgress state should be addressAssigned
             }

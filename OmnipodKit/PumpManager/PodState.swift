@@ -52,6 +52,7 @@ public enum SetupProgress: Int {
 // mutating funcs should be moved to something like this:
 // extension Locked where T == PodState {
 // }
+// QQQ "any MessageTransportState" var breaks Equatable protocol which is needed!
 public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertible {
 
     public typealias RawValue = [String: Any]
@@ -117,10 +118,10 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         return false
     }
 
-    // QQQ This declaration breaks Equatable for PodState which is needed
-    // QQQ Is it possible to rewrite a custom static equatable func for any
-    // MessageTransportState some where that checks the values of the either
-    // bleMessageTransportState
+    // QQQ This declaration breaks Equatable for PodState which is needed!
+    // QQQ Is it possible to write a custom static equatable func for any
+    // MessageTransportState that checks the types and then the values of
+    // the either bleMessageTransportState or ersMessageTransportState?
     var messageTransportState: any MessageTransportState
 
     // Dash specific variables
@@ -133,7 +134,6 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     var lastDeliveryStatusReceived: DeliveryStatus? // this variable is not persistent across app restarts
 
 
-
     init(
         address: UInt32,
         firmwareVersion: String,
@@ -143,14 +143,12 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         insulinType: InsulinType,
         podType: PodType,
 
-        // Dash specific variables
+        // BLE or Eros specific message transport state
         messageTransportState: (any MessageTransportState)? = nil,
+
+        // BLE specific variables
         ltk: Data? = nil,
         bleIdentifier: String? = nil,
-
-        // Eros specific variables
-        packetNumber: Int = 0,
-        messageNumber: Int = 0,
 
         setupUnitsDelivered: Double = 0.0,
         initialDeliveryStatus: DeliveryStatus? = nil)
@@ -187,10 +185,14 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
         if let messageTransportState = messageTransportState {
             self.messageTransportState = messageTransportState
-        } else if podType == erosType {
-            self.messageTransportState = ErosMessageTransportState()
         } else {
-            self.messageTransportState = BleMessageTransportState()
+            // No initial messageTransportState given, so create one
+            // of the correct type using its default initial values.
+            if podType == erosType {
+                self.messageTransportState = ErosMessageTransportState()
+            } else {
+                self.messageTransportState = BleMessageTransportState()
+            }
         }
     }
 
