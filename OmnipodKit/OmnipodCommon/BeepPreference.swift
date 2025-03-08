@@ -10,7 +10,7 @@
 import Foundation
 import SwiftUI
 
-public enum BeepPreference: Int, CaseIterable {
+enum BeepPreference: Int, CaseIterable {
     case silent
     case manualCommands
     case extended

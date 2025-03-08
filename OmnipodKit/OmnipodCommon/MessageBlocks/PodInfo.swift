@@ -9,14 +9,14 @@
 
 import Foundation
 
-public protocol PodInfo {
+protocol PodInfo {
     init(encodedData: Data) throws
     var podInfoType: PodInfoResponseSubType { get }
     var data: Data { get }
     
 }
 
-public enum PodInfoResponseSubType: UInt8, Equatable {
+enum PodInfoResponseSubType: UInt8, Equatable {
     case normal                      = 0x00 // Returns the normal status response returned by most commands
     case triggeredAlerts             = 0x01 // Returns values for any unacknowledged triggered alerts
     case detailedStatus              = 0x02 // Returns detailed pod status, returned for most calls after a pod fault
@@ -26,7 +26,7 @@ public enum PodInfoResponseSubType: UInt8, Equatable {
     case pulseLogRecent              = 0x50 // Returns the last 50 pulse log entries
     case pulseLogPrevious            = 0x51 // Like 0x50, but returns up to the previous 50 entries before the last 50
     
-    public var podInfoType: PodInfo.Type {
+    var podInfoType: PodInfo.Type {
         switch self {
         case .normal, .noSeqStatus:         // noSeqStatus won't increment the message seq # from the last response
             return StatusResponse.self as! PodInfo.Type

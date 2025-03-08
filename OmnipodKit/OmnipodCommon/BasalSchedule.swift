@@ -9,16 +9,16 @@
 
 import Foundation
 
-public struct BasalScheduleEntry: RawRepresentable, Equatable {
+struct BasalScheduleEntry: RawRepresentable, Equatable {
     
-    public typealias RawValue = [String: Any]
+    typealias RawValue = [String: Any]
 
     let rate: Double
     let startTime: TimeInterval
     
-    public init(rate: Double, startTime: TimeInterval, zeroBasalRate: Double) {
+    init(rate: Double, startTime: TimeInterval, podType: PodType) {
         var rrate = roundToSupportedBasalRate(rate: rate)
-        if rrate == 0 && zeroBasalRate == 0 {
+        if rrate == 0 && podType.zeroBasalRate == 0 {
             // Got a zero scheduled basal rate for an Eros pod, use the min allowed
             rrate = Pod.pulseSize
         }
@@ -26,12 +26,8 @@ public struct BasalScheduleEntry: RawRepresentable, Equatable {
         self.startTime = startTime
     }
 
-    public init(rate: Double, startTime: TimeInterval, podType: PodType) {
-        self.init(rate: rate, startTime: startTime, zeroBasalRate: podType.zeroBasalRate)
-    }
-
     // MARK: - RawRepresentable
-    public init?(rawValue: RawValue) {
+    init?(rawValue: RawValue) {
         
         guard
             let rate = rawValue["rate"] as? Double,
@@ -44,7 +40,7 @@ public struct BasalScheduleEntry: RawRepresentable, Equatable {
         self.startTime = startTime
     }
     
-    public var rawValue: RawValue {
+    var rawValue: RawValue {
         let rawValue: RawValue = [
             "rate": rate,
             "startTime": startTime
@@ -55,19 +51,19 @@ public struct BasalScheduleEntry: RawRepresentable, Equatable {
 }
 
 // A basal schedule starts at midnight and should contain 24 hours worth of entries
-public struct BasalSchedule: RawRepresentable, Equatable {
+struct BasalSchedule: RawRepresentable, Equatable {
     
-    public typealias RawValue = [String: Any]
+    typealias RawValue = [String: Any]
 
     let entries: [BasalScheduleEntry]
     
-    public func rateAt(offset: TimeInterval) -> Double {
+    func rateAt(offset: TimeInterval) -> Double {
         let (_, entry, _) = lookup(offset: offset)
         return entry.rate
     }
     
     // Only valid for fixed offset timezones
-    public func currentRate(using calendar: Calendar, at date: Date = Date()) -> Double {
+    func currentRate(using calendar: Calendar, at date: Date = Date()) -> Double {
         let midnight = calendar.startOfDay(for: date)
         return rateAt(offset: date.timeIntervalSince(midnight))
     }
@@ -88,11 +84,11 @@ public struct BasalSchedule: RawRepresentable, Equatable {
         fatalError("Schedule incomplete")
     }
     
-    public init(entries: [BasalScheduleEntry]) {
+    init(entries: [BasalScheduleEntry]) {
         self.entries = entries
     }
     
-    public func durations() -> [(rate: Double, duration: TimeInterval, startTime: TimeInterval)] {
+    func durations() -> [(rate: Double, duration: TimeInterval, startTime: TimeInterval)] {
         var last: TimeInterval = .hours(24)
         let durations = entries.reversed().map { (entry) -> (rate: Double, duration: TimeInterval, startTime: TimeInterval) in
             let duration = (rate: entry.rate, duration: last - entry.startTime, startTime: entry.startTime)
@@ -103,7 +99,7 @@ public struct BasalSchedule: RawRepresentable, Equatable {
     }
     
     // MARK: - RawRepresentable
-    public init?(rawValue: RawValue) {
+    init?(rawValue: RawValue) {
         
         guard
             let entries = rawValue["entries"] as? [BasalScheduleEntry.RawValue]
@@ -114,7 +110,7 @@ public struct BasalSchedule: RawRepresentable, Equatable {
         self.entries = entries.compactMap { BasalScheduleEntry(rawValue: $0) }
     }
     
-    public var rawValue: RawValue {
+    var rawValue: RawValue {
         let rawValue: RawValue = [
             "entries": entries.map { $0.rawValue }
         ]
@@ -123,7 +119,7 @@ public struct BasalSchedule: RawRepresentable, Equatable {
     }
 }
 
-public extension Sequence where Element == BasalScheduleEntry {
+extension Sequence where Element == BasalScheduleEntry {
     func adjacentEqualRatesMerged() -> [BasalScheduleEntry] {
         var output = [BasalScheduleEntry]()
         let _ = self.reduce(nil) { (lastRate, entry) -> TimeInterval? in

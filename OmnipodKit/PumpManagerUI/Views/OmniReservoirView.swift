@@ -11,9 +11,9 @@ import UIKit
 import LoopKitUI
 
 
-public final class OmniReservoirView: LevelHUDView, NibLoadable {
-    
-    override public var orderPriority: HUDViewOrderPriority {
+final class OmniReservoirView: LevelHUDView, NibLoadable {
+
+    override var orderPriority: HUDViewOrderPriority {
         return 11
     }
 
@@ -28,11 +28,11 @@ public final class OmniReservoirView: LevelHUDView, NibLoadable {
         }
     }
 
-    public class func instantiate() -> OmniReservoirView {
+    class func instantiate() -> OmniReservoirView {
         return nib().instantiate(withOwner: nil, options: nil)[0] as! OmniReservoirView
     }
 
-    override public func awakeFromNib() {
+    override func awakeFromNib() {
         super.awakeFromNib()
 
         volumeLabel.isHidden = true
@@ -42,7 +42,7 @@ public final class OmniReservoirView: LevelHUDView, NibLoadable {
     private var lastUpdateDate: Date?
     private var reservoirLevelHighlightState = ReservoirLevelHighlightState.normal
 
-    override public func tintColorDidChange() {
+    override func tintColorDidChange() {
         super.tintColorDidChange()
         
         alertLabel?.backgroundColor = tintColor
@@ -50,7 +50,7 @@ public final class OmniReservoirView: LevelHUDView, NibLoadable {
         levelMaskView.tintColor = tintColor
     }
 
-    override public func updateColor() {
+    override func updateColor() {
         switch reservoirLevelHighlightState {
         case .normal:
             tintColor = stateColors?.normal
@@ -119,7 +119,7 @@ public final class OmniReservoirView: LevelHUDView, NibLoadable {
         })
     }
     
-    public func update(level: ReservoirLevel?, at date: Date, reservoirLevelHighlightState: ReservoirLevelHighlightState) {
+    func update(level: ReservoirLevel?, at date: Date, reservoirLevelHighlightState: ReservoirLevelHighlightState) {
         self.reservoirLevel = level
         self.lastUpdateDate = date
         self.reservoirLevelHighlightState = reservoirLevelHighlightState

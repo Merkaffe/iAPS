@@ -70,18 +70,18 @@ struct PodTypeSelction_Previews: PreviewProvider {
     }
 }
 
-public struct PodTypeChooser: View {
+struct PodTypeChooser: View {
 
     @Binding private var podType: PodType?
 
     let supportedPodTypes: [PodType]
 
-    public init(podType: Binding<PodType?>, supportedPodTypes: [PodType]) {
+    init(podType: Binding<PodType?>, supportedPodTypes: [PodType]) {
         self.supportedPodTypes = supportedPodTypes
         self._podType = podType
     }
 
-    public var body: some View {
+    var body: some View {
         ForEach(supportedPodTypes, id: \.rawValue) { podType in
             HStack {
                 CheckmarkListItem(

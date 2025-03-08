@@ -16,39 +16,38 @@ let maxTimeBetweenPulses = TimeInterval(hours: 5)
 let nearZeroBasalRateFlag: UInt32 = 0x80000000
 
 
-public struct BasalDeliveryTable {
+struct BasalDeliveryTable {
     static let segmentDuration: TimeInterval = .minutes(30)
 
     let entries: [InsulinTableEntry]
-    
-    public init(entries: [InsulinTableEntry]) {
+
+    init(entries: [InsulinTableEntry]) {
         self.entries = entries
     }
-    
-    
-    public init(schedule: BasalSchedule) {
-        
+
+    init(schedule: BasalSchedule) {
+
         struct TempSegment {
             let pulses: Int
         }
-        
+
         let numSegments = 48
         let maxSegmentsPerEntry = 16
-        
+
         var halfPulseRemainder = false
-        
+
         let expandedSegments = stride(from: 0, to: numSegments, by: 1).map { (index) -> TempSegment in
             let rate = schedule.rateAt(offset: Double(index) * .minutes(30))
             let pulsesPerHour = Int(round(rate / Pod.pulseSize))
             let pulsesPerSegment = pulsesPerHour >> 1
             let halfPulse = pulsesPerHour & 0b1 != 0
-            
+
             let segment = TempSegment(pulses: pulsesPerSegment + ((halfPulseRemainder && halfPulse) ? 1 : 0))
             halfPulseRemainder = halfPulseRemainder != halfPulse
 
             return segment
         }
-        
+
         var tableEntries = [InsulinTableEntry]()
 
         let addEntry = { (segments: [TempSegment], alternateSegmentPulse: Bool) in
@@ -61,52 +60,52 @@ public struct BasalDeliveryTable {
 
         var altSegmentPulse = false
         var segmentsToMerge = [TempSegment]()
-        
+
         for segment in expandedSegments {
             guard let firstSegment = segmentsToMerge.first else {
                 segmentsToMerge.append(segment)
                 continue
             }
-            
+
             let delta = segment.pulses - firstSegment.pulses
-            
+
             if segmentsToMerge.count == 1 {
                 altSegmentPulse = delta == 1
             }
-            
+
             let expectedDelta: Int
-            
+
             if !altSegmentPulse {
                 expectedDelta = 0
             } else {
                 expectedDelta = segmentsToMerge.count % 2
             }
-            
+
             if expectedDelta != delta || segmentsToMerge.count == maxSegmentsPerEntry {
                 addEntry(segmentsToMerge, altSegmentPulse)
                 segmentsToMerge.removeAll()
             }
-            
+
             segmentsToMerge.append(segment)
         }
         addEntry(segmentsToMerge, altSegmentPulse)
 
         self.entries = tableEntries
     }
-    
-    public init(tempBasalRate: Double, duration: TimeInterval) {
+
+    init(tempBasalRate: Double, duration: TimeInterval) {
         self.entries = BasalDeliveryTable.rateToTableEntries(rate: tempBasalRate, duration: duration)
     }
-    
+
     private static func rateToTableEntries(rate: Double, duration: TimeInterval) -> [InsulinTableEntry] {
         var tableEntries = [InsulinTableEntry]()
-        
+
         let pulsesPerHour = Int(round(rate / Pod.pulseSize))
         let pulsesPerSegment = pulsesPerHour >> 1
         let alternateSegmentPulse = pulsesPerHour & 0b1 != 0
-        
+
         var remaining = Int(round(duration / BasalDeliveryTable.segmentDuration))
-        
+
         while remaining > 0 {
             let segments = min(remaining, 16)
             let tableEntry = InsulinTableEntry(segments: segments, pulses: Int(pulsesPerSegment), alternateSegmentPulse: segments > 1 ? alternateSegmentPulse : false)
@@ -115,14 +114,14 @@ public struct BasalDeliveryTable {
         }
         return tableEntries
     }
-    
-    public func numSegments() -> Int {
+
+    func numSegments() -> Int {
         return entries.reduce(0) { $0 + $1.segments }
     }
 }
 
 extension BasalDeliveryTable: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "BasalDeliveryTable(\(entries))"
     }
 }
@@ -138,24 +137,24 @@ func roundToSupportedBasalRate(rate: Double) -> Double {
 
 // Return rounded basal rate for pulse timing purposes.
 // For non-Eros, returns nearZeroBasalRate (0.01) for a zero basal rate.
-func roundToSupportedBasalTimingRate(rate: Double, zeroBasalRate: Double) -> Double {
+func roundToSupportedBasalTimingRate(rate: Double, podType: PodType) -> Double {
     var rrate = roundToSupportedBasalRate(rate: rate)
     if rrate == 0.0 {
-        rrate = zeroBasalRate // will be an adjusted value for non-Eros cases
+        rrate = podType.zeroBasalRate // will be an adjusted value for non-Eros cases
     }
     return rrate
 }
 
-public struct RateEntry {
+struct RateEntry {
     let totalPulses: Double
     let delayBetweenPulses: TimeInterval
-    
-    public init(totalPulses: Double, delayBetweenPulses: TimeInterval) {
+
+    init(totalPulses: Double, delayBetweenPulses: TimeInterval) {
         self.totalPulses = totalPulses
         self.delayBetweenPulses = delayBetweenPulses
     }
-    
-    public var rate: Double {
+
+    var rate: Double {
         if totalPulses == 0 {
             // Eros zero TB is the only case not using pulses
             return 0
@@ -165,8 +164,8 @@ public struct RateEntry {
             return round(((.hours(1) / delayBetweenPulses) / Pod.pulsesPerUnit) * 100) / 100.0
         }
     }
-    
-    public var duration: TimeInterval {
+
+    var duration: TimeInterval {
         if totalPulses == 0 {
             // Eros zero TB case uses fixed 30 minute rate entries
             return TimeInterval(minutes: 30)
@@ -176,8 +175,8 @@ public struct RateEntry {
             return round(delayBetweenPulses * totalPulses)
         }
     }
-    
-    public var data: Data {
+
+    var data: Data {
         var delayBetweenPulsesInHundredthsOfMillisecondsWithFlag = UInt32(delayBetweenPulses.hundredthsOfMilliseconds)
 
         // non-Eros near zero basal rates use the nearZeroBasalRateFlag
@@ -190,18 +189,18 @@ public struct RateEntry {
         data.appendBigEndian(delayBetweenPulsesInHundredthsOfMillisecondsWithFlag)
         return data
     }
-    
-    public static func makeEntries(rate: Double, duration: TimeInterval, zeroBasalRate: Double) -> [RateEntry] {
+
+    static func makeEntries(rate: Double, duration: TimeInterval, podType: PodType) -> [RateEntry] {
         let maxPulsesPerEntry: Double = 0xffff / 10 // max # of 1/10th pulses encoded in a 2-byte value
         var entries = [RateEntry]()
-        let rrate = roundToSupportedBasalTimingRate(rate: rate, zeroBasalRate: zeroBasalRate)
+        let rrate = roundToSupportedBasalTimingRate(rate: rate, podType: podType)
         let numHalfHours = max(Int(round(duration.minutes / 30)), 1) // shortest basal duration is 30m
-        
+
         var remainingSegments = numHalfHours
-        
+
         let pulsesPerSegment = round(rrate / Pod.pulseSize) / 2
         let maxSegmentsPerEntry = pulsesPerSegment > 0 ? Int(maxPulsesPerEntry / pulsesPerSegment) : 1
-        
+
         var remainingPulses = rrate * Double(numHalfHours) / 2 / Pod.pulseSize
 
         while (remainingSegments > 0) {
@@ -226,14 +225,10 @@ public struct RateEntry {
         }
         return entries
     }
-
-    public static func makeEntries(rate: Double, duration: TimeInterval, podType: PodType) -> [RateEntry] {
-        return makeEntries(rate: rate, duration: duration, zeroBasalRate: podType.zeroBasalRate)
-    }
 }
 
 extension RateEntry: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "RateEntry(rate:\(rate), duration:\(duration.timeIntervalStr))"
     }
 }

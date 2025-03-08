@@ -14,15 +14,15 @@ import os.log
 // ZZZ BLE specific transport -- probably will need to have 2 different version for RL and non-RL pods
 // or define a MessageTransportState protocol and have 2 implementations?
 
-public struct MessageTransportState: Equatable, RawRepresentable {
-    public typealias RawValue = [String: Any]
+struct MessageTransportState: Equatable, RawRepresentable {
+    typealias RawValue = [String: Any]
 
-    public var ck: Data?
-    public var noncePrefix: Data?
-    public var eapSeq: Int // per session sequence #
-    public var msgSeq: Int // 8-bit Dash MessagePacket sequence # (with ck)
-    public var nonceSeq: Int // nonce sequence # (with noncePrefix)
-    public var messageNumber: Int // 4-bit Omnipod Message # (for Omnipod command/responses Messages)
+    var ck: Data?
+    var noncePrefix: Data?
+    var eapSeq: Int // per session sequence #
+    var msgSeq: Int // 8-bit Dash MessagePacket sequence # (with ck)
+    var nonceSeq: Int // nonce sequence # (with noncePrefix)
+    var messageNumber: Int // 4-bit Omnipod Message # (for Omnipod command/responses Messages)
     
     init(ck: Data?, noncePrefix: Data?, eapSeq: Int = 1, msgSeq: Int = 0, nonceSeq: Int = 0, messageNumber: Int = 0) {
         self.ck = ck
@@ -34,7 +34,7 @@ public struct MessageTransportState: Equatable, RawRepresentable {
     }
 
     // RawRepresentable
-    public init?(rawValue: RawValue) {
+    init?(rawValue: RawValue) {
         guard
             let ckString = rawValue["ck"] as? String,
             let noncePrefixString = rawValue["noncePrefix"] as? String,
@@ -52,7 +52,7 @@ public struct MessageTransportState: Equatable, RawRepresentable {
         self.messageNumber = messageNumber
     }
 
-    public var rawValue: RawValue {
+    var rawValue: RawValue {
         return [
             "ck": ck?.hexadecimalString ?? "",
             "noncePrefix": noncePrefix?.hexadecimalString ?? "",
@@ -63,14 +63,14 @@ public struct MessageTransportState: Equatable, RawRepresentable {
         ]
     }
 
-    public mutating func incrementEapSeq() -> Int {
+    mutating func incrementEapSeq() -> Int {
         self.eapSeq += 1
         return eapSeq
     }
 }
 
 extension MessageTransportState: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return [
             "## MessageTransportState",
             "eapSeq: \(eapSeq)",
@@ -328,7 +328,7 @@ class PodMessageTransport: MessageTransport {
 }
 
 extension PodMessageTransport: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return [
             "## PodMessageTransport",
             "eapSeq: \(eapSeq)",

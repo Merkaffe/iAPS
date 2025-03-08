@@ -10,7 +10,7 @@
 import Foundation
 import LoopKit
 
-public enum SetupProgress: Int {
+enum SetupProgress: Int {
     case addressAssigned = 0
     case podPaired
     case startingPrime
@@ -23,27 +23,27 @@ public enum SetupProgress: Int {
     case activationTimeout
     case podIncompatible
 
-    public var isPaired: Bool {
+    var isPaired: Bool {
         return self.rawValue >= SetupProgress.podPaired.rawValue
     }
 
-    public var primingNeverAttempted: Bool {
+    var primingNeverAttempted: Bool {
         return self.rawValue < SetupProgress.startingPrime.rawValue
     }
     
-    public var primingNeeded: Bool {
+    var primingNeeded: Bool {
         return self.rawValue < SetupProgress.priming.rawValue
     }
     
-    public var needsInitialBasalSchedule: Bool {
+    var needsInitialBasalSchedule: Bool {
         return self.rawValue < SetupProgress.initialBasalScheduleSet.rawValue
     }
 
-    public var needsCannulaInsertion: Bool {
+    var needsCannulaInsertion: Bool {
         return self.rawValue < SetupProgress.completed.rawValue
     }
 
-    public var cannulaInsertionSuccessfullyStarted: Bool {
+    var cannulaInsertionSuccessfullyStarted: Bool {
         return self.rawValue > SetupProgress.startingInsertCannula.rawValue
     }
 }
@@ -52,15 +52,17 @@ public enum SetupProgress: Int {
 // mutating funcs should be moved to something like this:
 // extension Locked where T == PodState {
 // }
+// XXX still needs be declared public with the current Trio implementation
 public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertible {
 
     public typealias RawValue = [String: Any]
 
     let address: UInt32
 
-    // activatedAt and expiresAt need to still be public with current Trio implemenation
-    public var activatedAt: Date?
+    // XXX these variables still needs be declared public with the current Trio implementation
     public var expiresAt: Date? // set based on timeActive and can change with Pod clock drift and/or system time change
+    public var activatedAt: Date?
+
     var activeTime: TimeInterval? // Useful after pod deactivated or faulted.
 
     var podTime: TimeInterval // pod time from the last response, always whole minute values
@@ -75,39 +77,42 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     var podType: PodType
 
     var activeAlertSlots: AlertSet
-    public var lastInsulinMeasurements: PodInsulinMeasurements?  // needs be public with current Trio implementation
+
+    // XXX still needs be declared public with the current Trio implementation
+    public var lastInsulinMeasurements: PodInsulinMeasurements?
 
     var unacknowledgedCommand: PendingCommand?
 
     var unfinalizedBolus: UnfinalizedDose?
-    public var unfinalizedTempBasal: UnfinalizedDose? // needs be public with current Trio implementation
+    // XXX still needs be declared public with the current Trio implementation
+    public var unfinalizedTempBasal: UnfinalizedDose?
     var unfinalizedSuspend: UnfinalizedDose?
     var unfinalizedResume: UnfinalizedDose?
 
     var finalizedDoses: [UnfinalizedDose]
 
-    public var dosesToStore: [UnfinalizedDose] {
+    var dosesToStore: [UnfinalizedDose] {
         return  finalizedDoses + [unfinalizedTempBasal, unfinalizedSuspend, unfinalizedBolus].compactMap {$0}
     }
 
-    public var suspendState: SuspendState
+    var suspendState: SuspendState
 
-    public var isSuspended: Bool {
+    var isSuspended: Bool {
         if case .suspended = suspendState {
             return true
         }
         return false
     }
 
-    public var fault: DetailedStatus?
+    var fault: DetailedStatus?
 
-    public var primeFinishTime: Date?
-    public var setupProgress: SetupProgress
-    public var configuredAlerts: [AlertSlot: PodAlert]
-    public var insulinType: InsulinType
+    var primeFinishTime: Date?
+    var setupProgress: SetupProgress
+    var configuredAlerts: [AlertSlot: PodAlert]
+    var insulinType: InsulinType
 
     // Allow a grace period while the unacknowledged command is first being sent.
-    public var needsCommsRecovery: Bool {
+    var needsCommsRecovery: Bool {
         if let unacknowledgedCommand = unacknowledgedCommand, !unacknowledgedCommand.isInFlight {
             return true
         }
@@ -115,8 +120,8 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     }
 
     // Dash specific variables
-    public var ltk: Data? = nil
-    public var bleIdentifier: String? = nil
+    var ltk: Data? = nil
+    var bleIdentifier: String? = nil
 
     // Eros specific variables
     var nonceState: NonceState? = nil
@@ -124,11 +129,11 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     var lastDeliveryStatusReceived: DeliveryStatus? // this variable is not persistent across app restarts
 
     // ZZZ maybe will need to define a messageTransportState protocol with an RL or non-RL versions
-    public var messageTransportState: MessageTransportState
-    public var erosMessageTransportState: ErosMessageTransportState
+    var messageTransportState: MessageTransportState
+    var erosMessageTransportState: ErosMessageTransportState
 
 
-    public init(
+    init(
         address: UInt32,
         firmwareVersion: String,
         iFirmwareVersion: String,
@@ -187,33 +192,33 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
     // MARK: - PodState computed var's
 
-    public var unfinishedSetup: Bool {
+    var unfinishedSetup: Bool {
         return setupProgress != .completed
     }
 
-    public var readyForCannulaInsertion: Bool {
+    var readyForCannulaInsertion: Bool {
         guard let primeFinishTime = self.primeFinishTime else {
             return false
         }
         return !setupProgress.primingNeeded && primeFinishTime.timeIntervalSinceNow < 0
     }
 
-    public var isActive: Bool {
+    var isActive: Bool {
         return setupProgress == .completed && fault == nil
     }
 
     // variation on isActive that doesn't care if Pod is faulted
-    public var isSetupComplete: Bool {
+    var isSetupComplete: Bool {
         return setupProgress == .completed
     }
 
-    public var isFaulted: Bool {
+    var isFaulted: Bool {
         return fault != nil || setupProgress == .activationTimeout || setupProgress == .podIncompatible
     }
 
     // MARK: - 32-bit message nonce var's and func's
 
-    public var currentNonce: UInt32 {
+    var currentNonce: UInt32 {
         if self.nonceState != nil {
             // Eros pod, return the current 32-bit nonce
             return self.nonceState!.currentNonce
@@ -223,7 +228,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         return fixedNonceValue
     }
 
-    public mutating func advanceToNextNonce() {
+    mutating func advanceToNextNonce() {
         if self.nonceState != nil {
             // Eros pod, advance to the next 32-bit message nonce
             self.nonceState!.advanceToNextNonce()
@@ -232,7 +237,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         // For non-Eros pods this 32-bit message nonce is fixed and is never advanced
     }
 
-    public mutating func resyncNonce(syncWord: UInt16, sentNonce: UInt32, messageSequenceNum: Int) {
+    mutating func resyncNonce(syncWord: UInt16, sentNonce: UInt32, messageSequenceNum: Int) {
         if self.podType == erosType {
             let sum = (sentNonce & 0xFFFF) + UInt32(crc16Table[messageSequenceNum]) + (lotNo & 0xFFFF) + (lotSeq & 0xFFFF)
             let seed = UInt16(sum & 0xFFFF) ^ syncWord
@@ -275,7 +280,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         return now
     }
 
-    public mutating func updateFromStatusResponse(_ response: StatusResponse, at date: Date = Date()) {
+    mutating func updateFromStatusResponse(_ response: StatusResponse, at date: Date = Date()) {
         let now = updatePodTimes(timeActive: response.timeActive)
         updateDeliveryStatus(deliveryStatus: response.deliveryStatus, podProgressStatus: response.podProgressStatus, bolusNotDelivered: response.bolusNotDelivered, at: date)
 
@@ -293,11 +298,11 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         activeAlertSlots = response.alerts
     }
 
-    public mutating func registerConfiguredAlert(slot: AlertSlot, alert: PodAlert) {
+    mutating func registerConfiguredAlert(slot: AlertSlot, alert: PodAlert) {
         configuredAlerts[slot] = alert
     }
 
-    public mutating func finalizeAllDoses() {
+    mutating func finalizeAllDoses() {
         if let bolus = unfinalizedBolus {
             finalizedDoses.append(bolus)
             unfinalizedBolus = nil
@@ -696,8 +701,8 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     }
 }
 
-public enum SuspendState: Equatable, RawRepresentable {
-    public typealias RawValue = [String: Any]
+enum SuspendState: Equatable, RawRepresentable {
+    typealias RawValue = [String: Any]
 
     private enum SuspendStateType: Int {
         case suspend, resume
@@ -715,7 +720,7 @@ public enum SuspendState: Equatable, RawRepresentable {
         }
     }
 
-    public init?(rawValue: RawValue) {
+    init?(rawValue: RawValue) {
         guard let suspendStateType = rawValue["case"] as? SuspendStateType.RawValue,
             let date = rawValue["date"] as? Date else {
                 return nil
@@ -730,7 +735,7 @@ public enum SuspendState: Equatable, RawRepresentable {
         }
     }
 
-    public var rawValue: RawValue {
+    var rawValue: RawValue {
         switch self {
         case .suspended(let date):
             return [

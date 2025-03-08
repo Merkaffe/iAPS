@@ -12,12 +12,12 @@ import Foundation
 import LoopKit
 import os.log
 
-public enum BluetoothManagerError: Error {
+enum BluetoothManagerError: Error {
     case bluetoothNotAvailable(CBManagerState)
 }
 
 extension BluetoothManagerError: LocalizedError {
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .bluetoothNotAvailable(let state):
             switch state {
@@ -37,7 +37,7 @@ extension BluetoothManagerError: LocalizedError {
         }
     }
         
-    public var recoverySuggestion: String? {
+    var recoverySuggestion: String? {
         switch self {
         case .bluetoothNotAvailable(let state):
             switch state {
@@ -249,7 +249,7 @@ class BluetoothManager: NSObject {
 
     // MARK: - Accessors
     
-    public func getConnectedDevices() -> [Omni] {
+    func getConnectedDevices() -> [Omni] {
         var connected: [Omni] = []
         managerQueue.sync {
             connected = self.devices.filter { $0.manager.peripheral.state == .connected }

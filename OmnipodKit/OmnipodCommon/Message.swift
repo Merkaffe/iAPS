@@ -9,7 +9,7 @@
 
 import Foundation
 
-public enum MessageError: Error {
+enum MessageError: Error {
     case notEnoughData
     case invalidCrc
     case invalidSequence
@@ -20,7 +20,7 @@ public enum MessageError: Error {
 }
 
 extension MessageError: LocalizedError {
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .notEnoughData:
             return LocalizedString("Not enough data", comment: "Description for MessageError notEnoughData")

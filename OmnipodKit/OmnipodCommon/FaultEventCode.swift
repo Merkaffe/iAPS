@@ -10,10 +10,10 @@
 import Foundation
 
 
-public struct FaultEventCode: CustomStringConvertible, Equatable {
-    public let rawValue: UInt8
+struct FaultEventCode: CustomStringConvertible, Equatable {
+    let rawValue: UInt8
 
-    public enum FaultEventType: UInt8 {
+    enum FaultEventType: UInt8 {
         case noFaults                             = 0x00
         case failedFlashErase                     = 0x01
         case failedFlashStore                     = 0x02
@@ -176,7 +176,7 @@ public struct FaultEventCode: CustomStringConvertible, Equatable {
         case valuesDoNotMatch                     = 0xFF
     }
 
-    public var faultType: FaultEventType? {
+    var faultType: FaultEventType? {
         return FaultEventType(rawValue: rawValue)
     }
 
@@ -184,7 +184,7 @@ public struct FaultEventCode: CustomStringConvertible, Equatable {
         self.rawValue = rawValue
     }
 
-    public var faultDescription: String {
+    var faultDescription: String {
         switch faultType {
         case .noFaults:
             return "No fault"
@@ -488,11 +488,11 @@ public struct FaultEventCode: CustomStringConvertible, Equatable {
         }
     }
 
-    public var description: String {
+    var description: String {
         return String(format: "Fault Event Code 0x%02x: %@", rawValue, faultDescription)
     }
 
-    public var localizedDescription: String {
+    var localizedDescription: String {
         if let faultType = faultType {
             switch faultType {
             case .noFaults:
@@ -512,7 +512,7 @@ public struct FaultEventCode: CustomStringConvertible, Equatable {
     }
 
     // Convenience alert notification strings
-    public var notificationTitle: String {
+    var notificationTitle: String {
         switch self.faultType {
         case .reservoirEmpty:
             return LocalizedString("Empty Reservoir", comment: "The title for Empty Reservoir alarm notification")
@@ -525,7 +525,7 @@ public struct FaultEventCode: CustomStringConvertible, Equatable {
         }
     }
 
-    public var notificationBody: String {
+    var notificationBody: String {
         return LocalizedString("Insulin delivery stopped. Change Pod now.", comment: "The default notification body for AlarmCodes")
     }
 }

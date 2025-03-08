@@ -14,9 +14,9 @@ import LoopKitUI
 struct ExpirationReminderSetupView: View {
     @State var expirationReminderDefault: Int = 2
     
-    public var valueChanged: ((_ value: Int) -> Void)?
-    public var continueButtonTapped: (() -> Void)?
-    public var cancelButtonTapped: (() -> Void)?
+    var valueChanged: ((_ value: Int) -> Void)?
+    var continueButtonTapped: (() -> Void)?
+    var cancelButtonTapped: (() -> Void)?
 
     var body: some View {
         GuidePage(content: {

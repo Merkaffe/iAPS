@@ -11,6 +11,7 @@ import Foundation
 import HealthKit
 import LoopKit
 
+// XXX still needs be declared public with the current Trio implementation
 public enum PumpManagerAlert: Hashable {
     case podExpireImminent(triggeringSlot: AlertSlot?)
     case userPodExpiration(triggeringSlot: AlertSlot?, scheduledExpirationReminderOffset: TimeInterval)
@@ -22,11 +23,11 @@ public enum PumpManagerAlert: Hashable {
     case unexpectedAlert(triggeringSlot: AlertSlot?)
     case timeOffsetChangeDetected
 
-    public var isRepeating: Bool {
+    var isRepeating: Bool {
         return repeatInterval != nil
     }
 
-    public var repeatInterval: TimeInterval? {
+    var repeatInterval: TimeInterval? {
         switch self {
         case .suspendEnded:
             return .minutes(15)
@@ -88,7 +89,7 @@ public enum PumpManagerAlert: Hashable {
         }
     }
 
-    public var triggeringSlot: AlertSlot? {
+    var triggeringSlot: AlertSlot? {
         switch self {
         case .userPodExpiration(let slot, _):
             return slot
@@ -131,15 +132,15 @@ public enum PumpManagerAlert: Hashable {
         return LocalizedString("Ok", comment: "Action button default text for PodAlerts")
     }
 
-    public var foregroundContent: Alert.Content {
+    var foregroundContent: Alert.Content {
         return Alert.Content(title: contentTitle, body: contentBody, acknowledgeActionButtonLabel: actionButtonLabel)
     }
 
-    public var backgroundContent: Alert.Content {
+    var backgroundContent: Alert.Content {
         return Alert.Content(title: backgroundContentTitle, body: backgroundContentBody, acknowledgeActionButtonLabel: actionButtonLabel)
     }
 
-    public var alertIdentifier: String {
+    var alertIdentifier: String {
         switch self {
         case .userPodExpiration:
             return "userPodExpiration"
@@ -162,7 +163,7 @@ public enum PumpManagerAlert: Hashable {
         }
     }
 
-    public var repeatingAlertIdentifier: String {
+    var repeatingAlertIdentifier: String {
         return alertIdentifier + "-repeating"
     }
 }

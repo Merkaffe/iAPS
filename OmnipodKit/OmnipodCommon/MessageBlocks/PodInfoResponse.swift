@@ -9,14 +9,14 @@
 
 import Foundation
 
-public struct PodInfoResponse : MessageBlock {
+struct PodInfoResponse : MessageBlock {
 
-    public let blockType              : MessageBlockType = .podInfoResponse
-    public let podInfoResponseSubType : PodInfoResponseSubType
-    public let podInfo                : PodInfo
-    public let data                   : Data
+    let blockType              : MessageBlockType = .podInfoResponse
+    let podInfoResponseSubType : PodInfoResponseSubType
+    let podInfo                : PodInfo
+    let data                   : Data
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         guard let subType = PodInfoResponseSubType(rawValue: encodedData[2]) else {
             throw MessageError.unknownValue(value: encodedData[2], typeDescription: "PodInfoResponseSubType")
         }
@@ -28,7 +28,7 @@ public struct PodInfoResponse : MessageBlock {
 }
 
 extension PodInfoResponse: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "PodInfoResponse(\(blockType), \(podInfoResponseSubType), \(podInfo)"
     }
 }

@@ -9,8 +9,8 @@
 
 import Foundation
 
-public struct CancelDeliveryCommand: NonceResyncableMessageBlock {
-    public let blockType: MessageBlockType = .cancelDelivery
+struct CancelDeliveryCommand: NonceResyncableMessageBlock {
+    let blockType: MessageBlockType = .cancelDelivery
     // OFF 1  2 3 4 5  6
     // 1F 05 NNNNNNNN AX
 
@@ -26,18 +26,18 @@ public struct CancelDeliveryCommand: NonceResyncableMessageBlock {
     // Cancel basal & temp basal for a suspend, followed by a configure alerts command (0x19) for alerts 5 & 6
     // 1f 05 50f02312 03 19 10 50f02312 580f 000f 0604 6800 001e 0302
 
-    public struct DeliveryType: OptionSet, Equatable {
-        public let rawValue: UInt8
+    struct DeliveryType: OptionSet, Equatable {
+        let rawValue: UInt8
 
-        public static let none          = DeliveryType()
-        public static let basal         = DeliveryType(rawValue: 1 << 0)
-        public static let tempBasal     = DeliveryType(rawValue: 1 << 1)
-        public static let bolus         = DeliveryType(rawValue: 1 << 2)
+        static let none          = DeliveryType()
+        static let basal         = DeliveryType(rawValue: 1 << 0)
+        static let tempBasal     = DeliveryType(rawValue: 1 << 1)
+        static let bolus         = DeliveryType(rawValue: 1 << 2)
 
-        public static let allButBasal: DeliveryType = [.tempBasal, .bolus]
-        public static let all: DeliveryType = [.none, .basal, .tempBasal, .bolus]
+        static let allButBasal: DeliveryType = [.tempBasal, .bolus]
+        static let all: DeliveryType = [.none, .basal, .tempBasal, .bolus]
 
-        public init(rawValue: UInt8) {
+        init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
 
@@ -59,13 +59,13 @@ public struct CancelDeliveryCommand: NonceResyncableMessageBlock {
         }
     }
 
-    public let deliveryType: DeliveryType
+    let deliveryType: DeliveryType
 
-    public let beepType: BeepType
+    let beepType: BeepType
 
-    public var nonce: UInt32
+    var nonce: UInt32
 
-    public var data: Data {
+    var data: Data {
         var data = Data([
             blockType.rawValue,
             5,
@@ -75,7 +75,7 @@ public struct CancelDeliveryCommand: NonceResyncableMessageBlock {
         return data
     }
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         if encodedData.count < 7 {
             throw MessageBlockError.notEnoughData
         }
@@ -84,7 +84,7 @@ public struct CancelDeliveryCommand: NonceResyncableMessageBlock {
         self.beepType = BeepType(rawValue: encodedData[6] >> 4)!
     }
 
-    public init(nonce: UInt32, deliveryType: DeliveryType, beepType: BeepType) {
+    init(nonce: UInt32, deliveryType: DeliveryType, beepType: BeepType) {
         self.nonce = nonce
         self.deliveryType = deliveryType
         self.beepType = beepType
@@ -92,7 +92,7 @@ public struct CancelDeliveryCommand: NonceResyncableMessageBlock {
 }
 
 extension CancelDeliveryCommand: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "CancelDeliveryCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), deliveryType:\(deliveryType.debugDescription), beepType:\(beepType))"
     }
 }

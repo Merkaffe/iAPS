@@ -10,31 +10,31 @@ import Foundation
 
 // DetailedStatus is the PodInfo subtype 2 returned for a type 2 GetStatus command and
 // is also returned on a pod fault for any command normally returning a StatusResponse
-public struct DetailedStatus: PodInfo, Equatable {
+struct DetailedStatus: PodInfo, Equatable {
     // CMD 1  2  3  4  5 6  7  8 9 10 1112 1314 1516 17 18 19 20 21 2223
     // DATA   0  1  2  3 4  5  6 7  8  910 1112 1314 15 16 17 18 19 2021
     // 02 16 02 0J 0K LLLL MM NNNN PP QQQQ RRRR SSSS TT UU VV WW XX YYYY
 
-    public let podInfoType: PodInfoResponseSubType = .detailedStatus
-    public let podProgressStatus: PodProgressStatus
-    public let deliveryStatus: DeliveryStatus
-    public let bolusNotDelivered: Double
-    public let lastProgrammingMessageSeqNum: UInt8 // updated by pod for 03, 08, $11, $19, $1A, $1C, $1E & $1F command messages
-    public let totalInsulinDelivered: Double
-    public let faultEventCode: FaultEventCode
-    public let faultEventTimeSinceActivation: TimeInterval?
-    public let reservoirLevel: Double
-    public let timeActive: TimeInterval
-    public let unacknowledgedAlerts: AlertSet
-    public let faultAccessingTables: Bool
-    public let errorEventInfo: ErrorEventInfo?
-    public let receiverLowGain: UInt8
-    public let radioRSSI: UInt8
-    public let previousPodProgressStatus: PodProgressStatus?
-    public let possibleFaultCallingAddress: UInt16?
-    public let data: Data
+    let podInfoType: PodInfoResponseSubType = .detailedStatus
+    let podProgressStatus: PodProgressStatus
+    let deliveryStatus: DeliveryStatus
+    let bolusNotDelivered: Double
+    let lastProgrammingMessageSeqNum: UInt8 // updated by pod for 03, 08, $11, $19, $1A, $1C, $1E & $1F command messages
+    let totalInsulinDelivered: Double
+    let faultEventCode: FaultEventCode
+    let faultEventTimeSinceActivation: TimeInterval?
+    let reservoirLevel: Double
+    let timeActive: TimeInterval
+    let unacknowledgedAlerts: AlertSet
+    let faultAccessingTables: Bool
+    let errorEventInfo: ErrorEventInfo?
+    let receiverLowGain: UInt8
+    let radioRSSI: UInt8
+    let previousPodProgressStatus: PodProgressStatus?
+    let possibleFaultCallingAddress: UInt16?
+    let data: Data
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         guard encodedData.count >= 22 else {
             throw MessageBlockError.notEnoughData
         }
@@ -102,13 +102,13 @@ public struct DetailedStatus: PodInfo, Equatable {
         self.data = Data(encodedData)
     }
 
-    public var isFaulted: Bool {
+    var isFaulted: Bool {
         return faultEventCode.faultType != .noFaults || podProgressStatus == .activationTimeExceeded
     }
 
     // Returns an appropropriate DASH PDM style Ref string for DetailedStatus. DASH Ref codes are all of
     // the form Ref: TT-VVVHH-IIIRR-FFF computed as {14|15|16|17|19}-{VV}{SSSS/60}-{NNNN/20}{RRRR/20}-PP.
-    public var dashPdmRef: String? {
+    var dashPdmRef: String? {
         let TT: UInt8 // 14 (0x18 empty), 15 (0x29 auto-off), 16 (0x1C >80 hr), 17 (0x14 occlusion) or 19 (other)
         let VVV: UInt8 = data[17] // raw DetailedStatus VV byte
         let HH: UInt8 = UInt8(timeActive.hours) // # of pod hours
@@ -156,7 +156,7 @@ public struct DetailedStatus: PodInfo, Equatable {
 
     // Returns an appropropriate Eros PDM style Ref string for the Detailed Status.
     // For most types, Ref: TT-VVVHH-IIIRR-FFF computed as {19|17}-{VV}{SSSS/60}-{NNNN/20}{RRRR/20}-PP
-    public var erosPdmRef: String? {
+    var erosPdmRef: String? {
         let TT, VVV, HH, III, RR, FFF: UInt8
     
         switch faultEventCode.faultType {
@@ -189,7 +189,7 @@ public struct DetailedStatus: PodInfo, Equatable {
     }
 
     // Returns an appropropriate PDM style Ref string for DetailedStatus.
-    public var pdmRef: String? {
+    var pdmRef: String? {
         // Use the WW byte to select either an Eros or Dash style PDM Ref string
         if data[18] != 0 {
             return erosPdmRef
@@ -199,8 +199,8 @@ public struct DetailedStatus: PodInfo, Equatable {
 }
 
 extension DetailedStatus: CustomDebugStringConvertible {
-    public typealias RawValue = Data
-    public var debugDescription: String {
+    typealias RawValue = Data
+    var debugDescription: String {
         var result = [
             "## DetailedStatus",
             "* rawHex: \(data.hexadecimalString)",
@@ -237,7 +237,7 @@ extension DetailedStatus: CustomDebugStringConvertible {
 }
 
 extension DetailedStatus: RawRepresentable {
-    public init?(rawValue: Data) {
+    init?(rawValue: Data) {
         do {
             try self.init(encodedData: rawValue)
         } catch {
@@ -245,7 +245,7 @@ extension DetailedStatus: RawRepresentable {
         }
     }
 
-    public var rawValue: Data {
+    var rawValue: Data {
         return data
     }
 }
@@ -256,18 +256,18 @@ extension DetailedStatus: RawRepresentable {
 //    c: immediate bolus in progress during error
 // dddd: Pod Progress at time of first logged fault event
 //
-public struct ErrorEventInfo: CustomStringConvertible, Equatable {
-    public let rawValue: UInt8
-    public let insulinStateTableCorruption: Bool // 'a' bit
-    public let occlusionType: Int // 'bb' 2-bit occlusion type
-    public let immediateBolusInProgress: Bool // 'c' bit
-    public let podProgressStatus: PodProgressStatus // 'dddd' bits
+struct ErrorEventInfo: CustomStringConvertible, Equatable {
+    let rawValue: UInt8
+    let insulinStateTableCorruption: Bool // 'a' bit
+    let occlusionType: Int // 'bb' 2-bit occlusion type
+    let immediateBolusInProgress: Bool // 'c' bit
+    let podProgressStatus: PodProgressStatus // 'dddd' bits
 
-    public var errorEventInfo: ErrorEventInfo? {
+    var errorEventInfo: ErrorEventInfo? {
         return ErrorEventInfo(rawValue: rawValue)
     }
 
-    public var description: String {
+    var description: String {
         let hexString = String(format: "%02X", rawValue)
         return [
             "rawValue: 0x\(hexString)",

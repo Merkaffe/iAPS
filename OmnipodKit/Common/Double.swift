@@ -9,7 +9,7 @@
 import Foundation
 
 extension Double {
-    public var twoDecimals: String {
+    var twoDecimals: String {
         return String(format: "%.2f", self)
     }
 }

@@ -11,11 +11,11 @@ import os.log
 
 import RileyLinkBLEKit
 
-public struct ErosMessageTransportState: Equatable, RawRepresentable {
-    public typealias RawValue = [String: Any]
+struct ErosMessageTransportState: Equatable, RawRepresentable {
+    typealias RawValue = [String: Any]
 
-    public var packetNumber: Int
-    public var messageNumber: Int
+    var packetNumber: Int
+    var messageNumber: Int
     
     init(packetNumber: Int, messageNumber: Int) {
         self.packetNumber = packetNumber
@@ -23,7 +23,7 @@ public struct ErosMessageTransportState: Equatable, RawRepresentable {
     }
     
     // RawRepresentable
-    public init?(rawValue: RawValue) {
+    init?(rawValue: RawValue) {
         guard
             let packetNumber = rawValue["packetNumber"] as? Int,
             let messageNumber = rawValue["messageNumber"] as? Int
@@ -34,7 +34,7 @@ public struct ErosMessageTransportState: Equatable, RawRepresentable {
         self.messageNumber = messageNumber
     }
     
-    public var rawValue: RawValue {
+    var rawValue: RawValue {
         return [
             "packetNumber": packetNumber,
             "messageNumber": messageNumber

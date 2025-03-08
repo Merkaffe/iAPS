@@ -9,13 +9,13 @@
 
 import Foundation
 
-public struct ConfigureAlertsCommand: NonceResyncableMessageBlock {
-    public let blockType: MessageBlockType = .configureAlerts
+struct ConfigureAlertsCommand: NonceResyncableMessageBlock {
+    let blockType: MessageBlockType = .configureAlerts
 
-    public var nonce: UInt32
+    var nonce: UInt32
     let configurations: [AlertConfiguration]
 
-    public var data: Data {
+    var data: Data {
         var data = Data([
             blockType.rawValue,
             UInt8(4 + configurations.count * AlertConfiguration.length),
@@ -29,7 +29,7 @@ public struct ConfigureAlertsCommand: NonceResyncableMessageBlock {
         return data
     }
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         if encodedData.count < 10 {
             throw MessageBlockError.notEnoughData
         }
@@ -48,7 +48,7 @@ public struct ConfigureAlertsCommand: NonceResyncableMessageBlock {
         self.configurations = configs
     }
 
-    public init(nonce: UInt32, configurations: [AlertConfiguration]) {
+    init(nonce: UInt32, configurations: [AlertConfiguration]) {
         self.nonce = nonce
         self.configurations = configurations
     }
@@ -138,7 +138,7 @@ extension AlertConfiguration {
 }
 
 extension ConfigureAlertsCommand: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "ConfigureAlertsCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), configurations:\(configurations))"
     }
 }

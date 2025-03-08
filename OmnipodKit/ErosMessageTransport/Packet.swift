@@ -7,14 +7,14 @@
 //
 import Foundation
 
-public enum PacketError: Error {
+enum PacketError: Error {
     case insufficientData
     case crcMismatch
     case unknownPacketType(rawType: UInt8)
 }
 
 
-public enum PacketType: UInt8 {
+enum PacketType: UInt8 {
     case pod = 0b111
     case pdm = 0b101
     case con = 0b100
@@ -30,7 +30,7 @@ public enum PacketType: UInt8 {
     }
 }
 
-public struct Packet {
+struct Packet {
 
     let address: UInt32
     let packetType: PacketType
@@ -85,7 +85,7 @@ public struct Packet {
 }
 
 extension Packet: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         let sequenceNumStr = String(format: "%02d", sequenceNum)
         return "Packet(\(Data(bigEndian: address).hexadecimalString) packetType:\(packetType) seq:\(sequenceNumStr) data:\(data.hexadecimalString))"
     }

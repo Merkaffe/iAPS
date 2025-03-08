@@ -52,7 +52,7 @@ class PodComms: CustomDebugStringConvertible {
 
     weak var messageLogger: MessageLogger?
 
-    public let log = OSLog(category: "PodComms")
+    let log = OSLog(category: "PodComms")
 
     private var podStateLock = NSLock()
 

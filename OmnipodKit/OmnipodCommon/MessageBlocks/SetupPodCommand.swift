@@ -9,9 +9,9 @@
 
 import Foundation
 
-public struct SetupPodCommand : MessageBlock {
+struct SetupPodCommand : MessageBlock {
 
-    public let blockType: MessageBlockType = .setupPod
+    let blockType: MessageBlockType = .setupPod
 
     let address: UInt32
     let lot: UInt32
@@ -19,20 +19,20 @@ public struct SetupPodCommand : MessageBlock {
     let dateComponents: DateComponents
     let packetTimeoutLimit: UInt8
 
-    public static func dateComponents(date: Date, timeZone: TimeZone) -> DateComponents {
+    static func dateComponents(date: Date, timeZone: TimeZone) -> DateComponents {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = timeZone
         return cal.dateComponents([.day, .month, .year, .hour, .minute], from: date)
     }
 
-    public static func date(from components: DateComponents, timeZone: TimeZone) -> Date? {
+    static func date(from components: DateComponents, timeZone: TimeZone) -> Date? {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = timeZone
         return cal.date(from: components)
     }
 
     // 03 13 1f08ced2 14 04 09 0b 11 0b 08 0000a640 00097c27 83e4
-    public var data: Data {
+    var data: Data {
         var data = Data([
             blockType.rawValue,
             19,
@@ -60,7 +60,7 @@ public struct SetupPodCommand : MessageBlock {
         return data
     }
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         if encodedData.count < 21 {
             throw MessageBlockError.notEnoughData
         }
@@ -77,7 +77,7 @@ public struct SetupPodCommand : MessageBlock {
         self.tid = encodedData[17...].toBigEndian(UInt32.self)
     }
 
-    public init(address: UInt32, dateComponents: DateComponents, lot: UInt32, tid: UInt32, packetTimeoutLimit: UInt8 = 4) {
+    init(address: UInt32, dateComponents: DateComponents, lot: UInt32, tid: UInt32, packetTimeoutLimit: UInt8 = 4) {
         self.address = address
         self.dateComponents = dateComponents
         self.lot = lot
@@ -87,7 +87,7 @@ public struct SetupPodCommand : MessageBlock {
 }
 
 extension SetupPodCommand: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "SetupPodCommand(address:\(Data(bigEndian: address).hexadecimalString), dateComponents:\(dateComponents), lot:\(lot), tid:\(tid), packetTimeoutLimit:\(packetTimeoutLimit))"
     }
 }

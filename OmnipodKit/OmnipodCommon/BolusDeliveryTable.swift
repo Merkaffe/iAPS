@@ -11,17 +11,17 @@ import Foundation
 
 // Implements the bolus insulin delivery table for 0x1A command (https://github.com/openaps/openomni/wiki/Command-1A-Table-2)
 
-public struct BolusDeliveryTable {
+struct BolusDeliveryTable {
     static let segMinutes = 30
     static let maxDurationHours = 8
 
     let entries: [InsulinTableEntry]
 
-    public init(entries: [InsulinTableEntry]) {
+    init(entries: [InsulinTableEntry]) {
         self.entries = entries
     }
 
-    public init(units: Double, extendedUnits: Double = 0.0, extendedDuration: TimeInterval = 0) {
+    init(units: Double, extendedUnits: Double = 0.0, extendedDuration: TimeInterval = 0) {
         let immediatePulses = Int(round(units / Pod.pulseSize))
         let extendedPulses = Int(round(extendedUnits / Pod.pulseSize))
         let duration: TimeInterval
@@ -37,7 +37,7 @@ public struct BolusDeliveryTable {
         self.entries = generateBolusTable(immediatePulses: immediatePulses, extendedPulses: extendedPulses, extendedDuration: duration)
     }
 
-    public func numSegments() -> Int {
+    func numSegments() -> Int {
         return entries.reduce(0) { $0 + $1.segments }
     }
 }

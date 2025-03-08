@@ -11,7 +11,7 @@ import Foundation
 
 fileprivate let errorResponseCode_badNonce: UInt8 = 0x14 // only returned on Eros
 
-public enum ErrorResponseType {
+enum ErrorResponseType {
     case badNonce(nonceResyncKey: UInt16) // only returned on Eros
     case nonretryableError(code: UInt8, faultEventCode: FaultEventCode, podProgress: PodProgressStatus)
 }
@@ -19,12 +19,12 @@ public enum ErrorResponseType {
 // 06 14 WWWW, WWWW is the encoded nonce resync key
 // 06 EE FF0P, EE != 0x14, FF = fault code (if any), 0P = pod progress status (1..15)
 
-public struct ErrorResponse: MessageBlock {
-    public let blockType: MessageBlockType = .errorResponse
-    public let errorResponseType: ErrorResponseType
-    public let data: Data
+struct ErrorResponse: MessageBlock {
+    let blockType: MessageBlockType = .errorResponse
+    let errorResponseType: ErrorResponseType
+    let data: Data
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         let errorCode = encodedData[2]
         switch (errorCode) {
         case errorResponseCode_badNonce:

@@ -18,7 +18,7 @@ class MockMessageTransport: MessageTransport {
     var messageNumber: Int
 
     var responseMessageBlocks = [MessageBlock]()
-    public var sentMessages = [Message]()
+    var sentMessages = [Message]()
 
     var address: UInt32
 

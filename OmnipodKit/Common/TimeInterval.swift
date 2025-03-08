@@ -79,7 +79,7 @@ extension TimeInterval {
         return hours / 24.0
     }
 
-    public var timeIntervalStr: String {
+    var timeIntervalStr: String {
         var str: String = ""
         let ihours = UInt(self / 3600)
         let iminutes = UInt(self / 60) % 60

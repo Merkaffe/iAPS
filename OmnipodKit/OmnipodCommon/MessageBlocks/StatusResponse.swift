@@ -9,22 +9,21 @@
 
 import Foundation
 
-public struct StatusResponse : MessageBlock {
-    public let blockType: MessageBlockType = .statusResponse
-    public let length: UInt8 = 10
-    public let deliveryStatus: DeliveryStatus
-    public let podProgressStatus: PodProgressStatus
-    public let timeActive: TimeInterval
-    public let reservoirLevel: Double
-    public let insulinDelivered: Double
-    public let bolusNotDelivered: Double
-    public let lastProgrammingMessageSeqNum: UInt8 // updated by pod for 03, 08, $11, $19, $1A, $1C, $1E & $1F command messages
-    public let alerts: AlertSet
+struct StatusResponse : MessageBlock {
+    let blockType: MessageBlockType = .statusResponse
+    let length: UInt8 = 10
+    let deliveryStatus: DeliveryStatus
+    let podProgressStatus: PodProgressStatus
+    let timeActive: TimeInterval
+    let reservoirLevel: Double
+    let insulinDelivered: Double
+    let bolusNotDelivered: Double
+    let lastProgrammingMessageSeqNum: UInt8 // updated by pod for 03, 08, $11, $19, $1A, $1C, $1E & $1F command messages
+    let alerts: AlertSet
 
+    let data: Data
 
-    public let data: Data
-
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         if encodedData.count < length {
             throw MessageBlockError.notEnoughData
         }
@@ -58,7 +57,7 @@ public struct StatusResponse : MessageBlock {
         self.reservoirLevel = Double((Int(encodedData[8] & 0x3) << 8) + Int(encodedData[9])) / Pod.pulsesPerUnit
     }
 
-    public init(
+    init(
         deliveryStatus: DeliveryStatus,
         podProgressStatus: PodProgressStatus,
         timeActive: TimeInterval,
@@ -80,7 +79,7 @@ public struct StatusResponse : MessageBlock {
     }
 
     // convenience function to create a StatusResponse for a DetailedStatus
-    public init(detailedStatus: DetailedStatus) {
+    init(detailedStatus: DetailedStatus) {
         self.deliveryStatus = detailedStatus.deliveryStatus
         self.podProgressStatus = detailedStatus.podProgressStatus
         self.timeActive = detailedStatus.timeActive
@@ -94,7 +93,7 @@ public struct StatusResponse : MessageBlock {
 }
 
 extension StatusResponse: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "StatusResponse(deliveryStatus:\(deliveryStatus.description), progressStatus:\(podProgressStatus), timeActive:\(timeActive.timeIntervalStr), reservoirLevel:\(reservoirLevel == Pod.reservoirLevelAboveThresholdMagicNumber ? "50+" : reservoirLevel.twoDecimals), insulinDelivered:\(insulinDelivered.twoDecimals), bolusNotDelivered:\(bolusNotDelivered.twoDecimals), lastProgrammingMessageSeqNum:\(lastProgrammingMessageSeqNum), alerts:\(alerts))"
     }
 }

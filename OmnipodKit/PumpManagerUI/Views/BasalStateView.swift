@@ -11,27 +11,27 @@ import UIKit
 import SwiftUI
 
 
-public struct BasalStateSwiftUIView: UIViewRepresentable {
+struct BasalStateSwiftUIView: UIViewRepresentable {
 
     var netBasalPercent: Double
     
-    public init(netBasalPercent: Double) {
+    init(netBasalPercent: Double) {
         self.netBasalPercent = netBasalPercent
     }
     
-    public func makeUIView(context: UIViewRepresentableContext<BasalStateSwiftUIView>) -> BasalStateView {
+    func makeUIView(context: UIViewRepresentableContext<BasalStateSwiftUIView>) -> BasalStateView {
         let view = BasalStateView()
         view.netBasalPercent = netBasalPercent
         return view
     }
 
-    public func updateUIView(_ uiView: BasalStateView, context: UIViewRepresentableContext<BasalStateSwiftUIView>) {
+    func updateUIView(_ uiView: BasalStateView, context: UIViewRepresentableContext<BasalStateSwiftUIView>) {
         uiView.netBasalPercent = netBasalPercent
     }
 }
 
 
-public final class BasalStateView: UIView {
+final class BasalStateView: UIView {
     
     var netBasalPercent: Double = 0 {
         didSet {
@@ -39,7 +39,7 @@ public final class BasalStateView: UIView {
         }
     }
 
-    override public class var layerClass : AnyClass {
+    override class var layerClass : AnyClass {
         return CAShapeLayer.self
     }
 
@@ -54,19 +54,19 @@ public final class BasalStateView: UIView {
         updateTintColor()
     }
 
-    required public init?(coder aDecoder: NSCoder) {
+    required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
 
         shapeLayer.lineWidth = 2
         updateTintColor()
     }
 
-    override public func layoutSubviews() {
+    override func layoutSubviews() {
         super.layoutSubviews()
         animateToPath(drawPath())
     }
 
-    public override func tintColorDidChange() {
+    override func tintColorDidChange() {
         super.tintColorDidChange()
         updateTintColor()
     }
@@ -134,6 +134,7 @@ struct BasalStateSwiftUIViewPreviewWrapper: View {
         }
     }
 }
+
 struct BasalStateSwiftUIViewPreview: PreviewProvider {
     static var previews: some View {
         BasalStateSwiftUIViewPreviewWrapper()

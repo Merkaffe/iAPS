@@ -170,7 +170,7 @@ class TempBasalTests: XCTestCase {
         }
         
         // Encode
-        let cmd = TempBasalExtraCommand(rate: 0, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: true, programReminderInterval: .minutes(60), zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd = TempBasalExtraCommand(rate: 0, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: true, programReminderInterval: .minutes(60), podType: dashType)
         XCTAssertEqual("160e7c0000016b49d2000001eb49d200", cmd.data.hexadecimalString)
     }
     
@@ -197,7 +197,7 @@ class TempBasalTests: XCTestCase {
         }
         
         // Encode
-        let cmd = TempBasalExtraCommand(rate: 0, duration: .hours(3), acknowledgementBeep: false, completionBeep: true, programReminderInterval: .minutes(60), zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd = TempBasalExtraCommand(rate: 0, duration: .hours(3), acknowledgementBeep: false, completionBeep: true, programReminderInterval: .minutes(60), podType: dashType)
         XCTAssertEqual("160e7c0000066b49d2000006eb49d200", cmd.data.hexadecimalString)
     }
     
@@ -224,7 +224,7 @@ class TempBasalTests: XCTestCase {
         }
         
         // Encode
-        let cmd = TempBasalExtraCommand(rate: 0, duration: .hours(12), acknowledgementBeep: false, completionBeep: true, programReminderInterval: .minutes(60), zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd = TempBasalExtraCommand(rate: 0, duration: .hours(12), acknowledgementBeep: false, completionBeep: true, programReminderInterval: .minutes(60), podType: dashType)
         XCTAssertEqual("160e7c0000186b49d2000018eb49d200", cmd.data.hexadecimalString)
     }
 
@@ -280,29 +280,29 @@ class TempBasalTests: XCTestCase {
         }
         
         // Encode
-        let cmd = TempBasalExtraCommand(rate: 30, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: true, programReminderInterval: .minutes(60), zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd = TempBasalExtraCommand(rate: 30, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: true, programReminderInterval: .minutes(60), podType: dashType)
         XCTAssertEqual("160e7c000bb8000927c00bb8000927c0", cmd.data.hexadecimalString)
     }
     
     func testBasalExtraCommandForOddPulseCountRate() {
 
-        let cmd1 = TempBasalExtraCommand(rate: 0.05, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: true, programReminderInterval: .minutes(60), zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd1 = TempBasalExtraCommand(rate: 0.05, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: true, programReminderInterval: .minutes(60), podType: dashType)
         XCTAssertEqual("160e7c00000515752a00000515752a00", cmd1.data.hexadecimalString)
         
-        let cmd2 = TempBasalExtraCommand(rate: 2.05, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: false, programReminderInterval: .minutes(60), zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd2 = TempBasalExtraCommand(rate: 2.05, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: false, programReminderInterval: .minutes(60), podType: dashType)
         XCTAssertEqual("160e3c0000cd0085fac700cd0085fac7", cmd2.data.hexadecimalString)
 
-        let cmd3 = TempBasalExtraCommand(rate: 2.10, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: false, programReminderInterval: .minutes(60), zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd3 = TempBasalExtraCommand(rate: 2.10, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: false, programReminderInterval: .minutes(60), podType: dashType)
         XCTAssertEqual("160e3c0000d20082ca2400d20082ca24", cmd3.data.hexadecimalString)
 
-        let cmd4 = TempBasalExtraCommand(rate: 2.15, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: false, programReminderInterval: .minutes(60), zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd4 = TempBasalExtraCommand(rate: 2.15, duration: .hours(0.5), acknowledgementBeep: false, completionBeep: false, programReminderInterval: .minutes(60), podType: dashType)
         XCTAssertEqual("160e3c0000d7007fbf7d00d7007fbf7d", cmd4.data.hexadecimalString)
     }
     
     func testBasalExtraCommandPulseCount() {
         // 16 LL RR MM NNNN XXXXXXXX YYYY ZZZZZZZZ YYYY ZZZZZZZZ
         // 16 14 00 00 f5b9 000a0ad7 f5b9 000a0ad7 0aaf 000a0ad7
-        let cmd2 = TempBasalExtraCommand(rate: 27.35, duration: .hours(12), acknowledgementBeep: false, completionBeep: false, programReminderInterval: 0, zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd2 = TempBasalExtraCommand(rate: 27.35, duration: .hours(12), acknowledgementBeep: false, completionBeep: false, programReminderInterval: 0, podType: dashType)
         XCTAssertEqual("16140000f5b9000a0ad7f5b9000a0ad70aaf000a0ad7", cmd2.data.hexadecimalString)
     }
 
@@ -332,7 +332,7 @@ class TempBasalTests: XCTestCase {
         }
         
         // Encode
-        let cmd = TempBasalExtraCommand(rate: 30, duration: .hours(12), acknowledgementBeep: false, completionBeep: false, programReminderInterval: .minutes(60), zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd = TempBasalExtraCommand(rate: 30, duration: .hours(12), acknowledgementBeep: false, completionBeep: false, programReminderInterval: .minutes(60), podType: dashType)
         XCTAssertEqual("16143c00f618000927c0f618000927c02328000927c0", cmd.data.hexadecimalString)
     }
     
@@ -357,7 +357,7 @@ class TempBasalTests: XCTestCase {
             XCTFail("message decoding threw error: \(error)")
         }
         
-        let cmd = TempBasalExtraCommand(rate: 29.95, duration: .hours(12), acknowledgementBeep: false, completionBeep: false, programReminderInterval: .minutes(60), zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd = TempBasalExtraCommand(rate: 29.95, duration: .hours(12), acknowledgementBeep: false, completionBeep: false, programReminderInterval: .minutes(60), podType: dashType)
         XCTAssertEqual("16143c00f5af00092ba9f5af00092ba9231900092ba9", cmd.data.hexadecimalString)
     }
 }

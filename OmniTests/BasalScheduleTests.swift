@@ -50,10 +50,10 @@ class BasalScheduleTests: XCTestCase {
     
     func testBasalScheduleCommandFromSchedule() {
         // Encode from schedule
-        let entry = BasalScheduleEntry(rate: 0.05, startTime: 0, zeroBasalRate: 0)
+        let entry = BasalScheduleEntry(rate: 0.05, startTime: 0, podType: erosType)
         let schedule = BasalSchedule(entries: [entry])
         
-        let cmd = SetInsulinScheduleCommand(nonce: 0x01020304, basalSchedule: schedule, scheduleOffset: .hours(8.25), zeroBasalRate: 0)
+        let cmd = SetInsulinScheduleCommand(nonce: 0x01020304, basalSchedule: schedule, scheduleOffset: .hours(8.25), podType: erosType)
         
         XCTAssertEqual(0x01020304, cmd.nonce)
         if case SetInsulinScheduleCommand.DeliverySchedule.basalSchedule(let currentSegment, let secondsRemaining, let pulsesRemaining, let table) = cmd.deliverySchedule {
@@ -97,7 +97,7 @@ class BasalScheduleTests: XCTestCase {
         }
         
         // Encode
-        let rateEntries = RateEntry.makeEntries(rate: 3.0, duration: TimeInterval(hours: 24), zeroBasalRate: 0)
+        let rateEntries = RateEntry.makeEntries(rate: 3.0, duration: TimeInterval(hours: 24), podType: erosType)
         let cmd = BasalScheduleExtraCommand(currentEntryIndex: 0, remainingPulses: 689, delayUntilNextTenthOfPulse: TimeInterval(seconds: 20), rateEntries: rateEntries, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0)
 
 
@@ -106,10 +106,10 @@ class BasalScheduleTests: XCTestCase {
     
     func testBasalScheduleExtraCommandFromSchedule() {
         // Encode from schedule
-        let entry = BasalScheduleEntry(rate: 0.05, startTime: 0, zeroBasalRate: 0)
+        let entry = BasalScheduleEntry(rate: 0.05, startTime: 0, podType: erosType)
         let schedule = BasalSchedule(entries: [entry])
         
-        let cmd = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: .hours(8.25), acknowledgementBeep: false, completionBeep: true, programReminderInterval: 60, zeroBasalRate: 0)
+        let cmd = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: .hours(8.25), acknowledgementBeep: false, completionBeep: true, programReminderInterval: 60, podType: erosType)
         
         XCTAssertEqual(false, cmd.acknowledgementBeep)
         XCTAssertEqual(true, cmd.completionBeep)
@@ -129,9 +129,9 @@ class BasalScheduleTests: XCTestCase {
         // Encode
         
         let schedule = BasalSchedule(entries: [
-            BasalScheduleEntry(rate: 1.05, startTime: 0, zeroBasalRate: 0),
-            BasalScheduleEntry(rate: 0.9, startTime: .hours(10.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate: 1, startTime: .hours(18.5), zeroBasalRate: 0)
+            BasalScheduleEntry(rate: 1.05, startTime: 0, podType: erosType),
+            BasalScheduleEntry(rate: 0.9, startTime: .hours(10.5), podType: erosType),
+            BasalScheduleEntry(rate: 1, startTime: .hours(18.5), podType: erosType)
             ])
         
         let hh = 0x2e
@@ -141,12 +141,12 @@ class BasalScheduleTests: XCTestCase {
         // 1a LL NNNNNNNN 00 CCCC HH SSSS PPPP napp napp napp napp
         // 1a 14 0d6612db 00 0310 2e 1be8 0005 f80a 480a f009 a00a
 
-        let cmd1 = SetInsulinScheduleCommand(nonce: 0x0d6612db, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 0   )
+        let cmd1 = SetInsulinScheduleCommand(nonce: 0x0d6612db, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a140d6612db0003102e1be80005f80a480af009a00a", cmd1.data.hexadecimalString)
 
         // 13 LL RR MM NNNN XXXXXXXX YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ
         // 13 1a 40 02 0096 00a7d8c0 089d 01059449 05a0 01312d00 044c 0112a880
-        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, zeroBasalRate: 0)
+        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, podType: erosType)
         XCTAssertEqual("131a4002009600a7d8c0089d0105944905a001312d00044c0112a880", cmd2.data.hexadecimalString) // PDM
     }
     
@@ -175,7 +175,7 @@ class BasalScheduleTests: XCTestCase {
     func testBasalExtraEncoding1() {
         // Encode
         
-        let schedule = BasalSchedule(entries: [BasalScheduleEntry(rate: 1.05, startTime: 0, zeroBasalRate: 0)])
+        let schedule = BasalSchedule(entries: [BasalScheduleEntry(rate: 1.05, startTime: 0, podType: erosType)])
         
         let hh       = 0x20       // 16:00, rate = 1.05
         let ssss     = 0x33c0     // 1656s left, 144s into segment
@@ -185,21 +185,21 @@ class BasalScheduleTests: XCTestCase {
         // 1a 12 2a845e17 00 0314 20 33c0 0009 f80a f80a f80a
         // 1a 12 2a845e17 00 0315 20 33c0 000a f80a f80a f80a
 
-        let cmd1 = SetInsulinScheduleCommand(nonce: 0x2a845e17, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 0)
+        let cmd1 = SetInsulinScheduleCommand(nonce: 0x2a845e17, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a122a845e170003142033c00009f80af80af80a", cmd1.data.hexadecimalString)
         
         
         // 13 LL RR MM NNNN XXXXXXXX YYYY ZZZZZZZZ
         // 13 0e 40 00 0688 009cf291 13b0 01059449
         
-        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, zeroBasalRate: 0)
+        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, podType: erosType)
         checkBasalScheduleExtraCommandDataWithLessPrecision(Data(hexadecimalString: "130e40000688009cf29113b001059449")!, cmd2.data)
     }
     
     func testBasalExtraEncoding2() {
         // Encode
         
-        let schedule = BasalSchedule(entries: [BasalScheduleEntry(rate: 1.05, startTime: 0, zeroBasalRate: 0)])
+        let schedule = BasalSchedule(entries: [BasalScheduleEntry(rate: 1.05, startTime: 0, podType: erosType)])
         
         // 17:47:27 1a 12 0a229e93 00 02d6 23 17a0 0004 f80a f80a f80a 13 0e 40 00 0519 001a2865 13b0 01059449 0220
         
@@ -210,7 +210,7 @@ class BasalScheduleTests: XCTestCase {
         // 1a LL NNNNNNNN 00 CCCC HH SSSS PPPP napp napp napp
         // 1a 12 0a229e93 00 02d6 23 17a0 0004 f80a f80a f80a
         
-        let cmd1 = SetInsulinScheduleCommand(nonce: 0x0a229e93, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 0)
+        let cmd1 = SetInsulinScheduleCommand(nonce: 0x0a229e93, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a120a229e930002d62317a00004f80af80af80a", cmd1.data.hexadecimalString)
         
         
@@ -218,7 +218,7 @@ class BasalScheduleTests: XCTestCase {
         // 13 0e 40 00 0519 001a2865 13b0 01059449
         // 13 0e 40 00 0519 001a286e 13b0 01059449
         
-        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, zeroBasalRate: 0)
+        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, podType: erosType)
         checkBasalScheduleExtraCommandDataWithLessPrecision(Data(hexadecimalString: "130e40000519001a286513b001059449")!, cmd2.data)
     }
 
@@ -240,14 +240,14 @@ class BasalScheduleTests: XCTestCase {
     
     func testSegmentMerging() {
         let entries = [
-            BasalScheduleEntry(rate: 0.80, startTime: 0, zeroBasalRate: 0),
-            BasalScheduleEntry(rate: 0.90, startTime: .hours(3), zeroBasalRate: 0),
-            BasalScheduleEntry(rate: 0.85, startTime: .hours(5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate: 0.85, startTime: .hours(7.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate: 0.85, startTime: .hours(12.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate: 0.70, startTime: .hours(15), zeroBasalRate: 0),
-            BasalScheduleEntry(rate: 0.90, startTime: .hours(18), zeroBasalRate: 0),
-            BasalScheduleEntry(rate: 1.10, startTime: .hours(20), zeroBasalRate: 0),
+            BasalScheduleEntry(rate: 0.80, startTime: 0, podType: erosType),
+            BasalScheduleEntry(rate: 0.90, startTime: .hours(3), podType: erosType),
+            BasalScheduleEntry(rate: 0.85, startTime: .hours(5), podType: erosType),
+            BasalScheduleEntry(rate: 0.85, startTime: .hours(7.5), podType: erosType),
+            BasalScheduleEntry(rate: 0.85, startTime: .hours(12.5), podType: erosType),
+            BasalScheduleEntry(rate: 0.70, startTime: .hours(15), podType: erosType),
+            BasalScheduleEntry(rate: 0.90, startTime: .hours(18), podType: erosType),
+            BasalScheduleEntry(rate: 1.10, startTime: .hours(20), podType: erosType),
             ]
         
         let schedule = BasalSchedule(entries: entries)
@@ -260,24 +260,24 @@ class BasalScheduleTests: XCTestCase {
         let ssss     = 0x1e50
         let offset = TimeInterval(minutes: Double((hh + 1) * 30)) - TimeInterval(seconds: Double(ssss / 8))
         
-        let cmd1 = SetInsulinScheduleCommand(nonce: 0x851072aa, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 0)
+        let cmd1 = SetInsulinScheduleCommand(nonce: 0x851072aa, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a1a851072aa0002422a1e50000650083009f808380850073009700b", cmd1.data.hexadecimalString)
         
         //      13 LL RR MM NNNN XXXXXXXX YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ
         // PDM: 13 2c 40 05 0262 00455b9c 01e0 015752a0 0168 01312d00 06a4 01432096 01a4 01885e6d 0168 01312d00 0370 00f9b074
         
-        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, zeroBasalRate: 0)
+        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, podType: erosType)
         checkBasalScheduleExtraCommandDataWithLessPrecision(Data(hexadecimalString: "132c4005026200455b9c01e0015752a0016801312d0006a40143209601a401885e6d016801312d00037000f9b074")!, cmd2.data)
     }
     
     func testRounding() {
         let entries = [
-            BasalScheduleEntry(rate:  2.75, startTime: 0, zeroBasalRate: 0),
-            BasalScheduleEntry(rate: 20.25, startTime: .hours(1), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  5.00, startTime: .hours(1.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate: 10.10, startTime: .hours(2), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.05, startTime: .hours(2.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  3.50, startTime: .hours(15.5), zeroBasalRate: 0),
+            BasalScheduleEntry(rate:  2.75, startTime: 0, podType: erosType),
+            BasalScheduleEntry(rate: 20.25, startTime: .hours(1), podType: erosType),
+            BasalScheduleEntry(rate:  5.00, startTime: .hours(1.5), podType: erosType),
+            BasalScheduleEntry(rate: 10.10, startTime: .hours(2), podType: erosType),
+            BasalScheduleEntry(rate:  0.05, startTime: .hours(2.5), podType: erosType),
+            BasalScheduleEntry(rate:  3.50, startTime: .hours(15.5), podType: erosType),
             ]
         
         let schedule = BasalSchedule(entries: entries)
@@ -289,18 +289,18 @@ class BasalScheduleTests: XCTestCase {
         let ssss     = 0x1af0
         let offset = TimeInterval(minutes: Double((hh + 1) * 30)) - TimeInterval(seconds: Double(ssss / 8))
         
-        let cmd1 = SetInsulinScheduleCommand(nonce: 0xc2a32da8, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 000)
+        let cmd1 = SetInsulinScheduleCommand(nonce: 0xc2a32da8, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a1ec2a32da800053a281af00010181b00ca003200650001f8008800f0230023", cmd1.data.hexadecimalString)
     }
     
     func testRounding2() {
         let entries = [
-            BasalScheduleEntry(rate:  0.60, startTime: 0, zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.65, startTime: .hours(7.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.50, startTime: .hours(8.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.65, startTime: .hours(9.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.15, startTime: .hours(15.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.80, startTime: .hours(16.3), zeroBasalRate: 0),
+            BasalScheduleEntry(rate:  0.60, startTime: 0, podType: erosType),
+            BasalScheduleEntry(rate:  0.65, startTime: .hours(7.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.50, startTime: .hours(8.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.65, startTime: .hours(9.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.15, startTime: .hours(15.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.80, startTime: .hours(16.3), podType: erosType),
             ]
         
         let schedule = BasalSchedule(entries: entries)
@@ -313,25 +313,25 @@ class BasalScheduleTests: XCTestCase {
         let ssss     = 0x2190
         let offset = TimeInterval(minutes: Double((hh + 1) * 30)) - TimeInterval(seconds: Double(ssss / 8))
         
-        let cmd1 = SetInsulinScheduleCommand(nonce: 0x851072aa, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 00)
+        let cmd1 = SetInsulinScheduleCommand(nonce: 0x851072aa, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a18851072aa00021b2c21900004f00600071005b8061801e008", cmd1.data.hexadecimalString)
     }
     
     func testThirteenEntries() {
         let entries = [
-            BasalScheduleEntry(rate:  1.30, startTime: 0, zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.05, startTime: .hours(0.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  1.70, startTime: .hours(2.0), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.85, startTime: .hours(2.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  1.00, startTime: .hours(3.0), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.65, startTime: .hours(7.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.50, startTime: .hours(8.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.65, startTime: .hours(9.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.60, startTime: .hours(10.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.65, startTime: .hours(11.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  1.65, startTime: .hours(14.0), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.15, startTime: .hours(15.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.85, startTime: .hours(16.5), zeroBasalRate: 0),
+            BasalScheduleEntry(rate:  1.30, startTime: 0, podType: erosType),
+            BasalScheduleEntry(rate:  0.05, startTime: .hours(0.5), podType: erosType),
+            BasalScheduleEntry(rate:  1.70, startTime: .hours(2.0), podType: erosType),
+            BasalScheduleEntry(rate:  0.85, startTime: .hours(2.5), podType: erosType),
+            BasalScheduleEntry(rate:  1.00, startTime: .hours(3.0), podType: erosType),
+            BasalScheduleEntry(rate:  0.65, startTime: .hours(7.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.50, startTime: .hours(8.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.65, startTime: .hours(9.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.60, startTime: .hours(10.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.65, startTime: .hours(11.5), podType: erosType),
+            BasalScheduleEntry(rate:  1.65, startTime: .hours(14.0), podType: erosType),
+            BasalScheduleEntry(rate:  0.15, startTime: .hours(15.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.85, startTime: .hours(16.5), podType: erosType),
             ]
         
         let schedule = BasalSchedule(entries: entries)
@@ -344,30 +344,30 @@ class BasalScheduleTests: XCTestCase {
         let ssss     = 0x1518
         let offset = TimeInterval(minutes: Double((hh + 1) * 30)) - TimeInterval(seconds: Double(ssss / 8))
         
-        let cmd = SetInsulinScheduleCommand(nonce: 0x851072aa, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 0)
+        let cmd = SetInsulinScheduleCommand(nonce: 0x851072aa, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a2a851072aa0001dd2715180003000d280000111809700a180610052806100600072806001118101801e808", cmd.data.hexadecimalString)
         
         //      13 LL RR MM NNNN XXXXXXXX YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ
         // PDM: 13 56 40 0c 02c8 011abc64 0082 00d34689 000f 15752a00 00aa 00a1904b 0055 01432096 0384 0112a880 0082 01a68d13 0064 02255100 0082 01a68d13 0078 01c9c380 0145 01a68d13 01ef 00a675a2 001e 07270e00 04fb 01432096
         
-        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, zeroBasalRate: 0)
+        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, podType: erosType)
         checkBasalScheduleExtraCommandDataWithLessPrecision(Data(hexadecimalString: "1356400c02c8011abc64008200d34689000f15752a0000aa00a1904b00550143209603840112a880008201a68d13006402255100008201a68d13007801c9c380014501a68d1301ef00a675a2001e07270e0004fb01432096")!, cmd2.data)
     }
     
     func testJoe12Entries() {
         let entries = [
-            BasalScheduleEntry(rate:  1.30, startTime: 0, zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.05, startTime: .hours(0.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  1.70, startTime: .hours(2.0), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.85, startTime: .hours(2.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  1.00, startTime: .hours(3.0), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.65, startTime: .hours(7.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.50, startTime: .hours(8.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.65, startTime: .hours(9.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.60, startTime: .hours(10.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.65, startTime: .hours(11.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  1.65, startTime: .hours(14.0), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.85, startTime: .hours(16), zeroBasalRate: 0),
+            BasalScheduleEntry(rate:  1.30, startTime: 0, podType: erosType),
+            BasalScheduleEntry(rate:  0.05, startTime: .hours(0.5), podType: erosType),
+            BasalScheduleEntry(rate:  1.70, startTime: .hours(2.0), podType: erosType),
+            BasalScheduleEntry(rate:  0.85, startTime: .hours(2.5), podType: erosType),
+            BasalScheduleEntry(rate:  1.00, startTime: .hours(3.0), podType: erosType),
+            BasalScheduleEntry(rate:  0.65, startTime: .hours(7.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.50, startTime: .hours(8.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.65, startTime: .hours(9.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.60, startTime: .hours(10.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.65, startTime: .hours(11.5), podType: erosType),
+            BasalScheduleEntry(rate:  1.65, startTime: .hours(14.0), podType: erosType),
+            BasalScheduleEntry(rate:  0.85, startTime: .hours(16), podType: erosType),
             ]
         
         let schedule = BasalSchedule(entries: entries)
@@ -379,30 +379,30 @@ class BasalScheduleTests: XCTestCase {
         let ssss     = 0x3648
         let offset = TimeInterval(minutes: Double((hh + 1) * 30)) - TimeInterval(seconds: Double(ssss / 8))
         
-        let cmd1 = SetInsulinScheduleCommand(nonce: 0xf36a23a3, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 0)
+        let cmd1 = SetInsulinScheduleCommand(nonce: 0xf36a23a3, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a2af36a23a30002351636480005000d280000111809700a180610052806100600072806001128100009e808", cmd1.data.hexadecimalString)
 
         // 13 LL BO MM NNNN XXXXXXXX YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ
         // 13 50 40 08 003a 019bfcc0 0082 00d34689 000f 15752a00 00aa 00a1904b 0055 01432096 0384 0112a880 0082 01a68d13 0064 02255100 0082 01a68d13 0078 01c9c380 0145 01a68d13 0294 00a675a2 0550 01432096
 
-        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, zeroBasalRate: 0)
+        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, podType: erosType)
         checkBasalScheduleExtraCommandDataWithLessPrecision(Data(hexadecimalString: "13504008003a019bfcc0008200d34689000f15752a0000aa00a1904b00550143209603840112a880008201a68d13006402255100008201a68d13007801c9c380014501a68d13029400a675a2055001432096")!, cmd2.data)
     }
     
     func testFunkyRates() {
         let entries = [
-            BasalScheduleEntry(rate:  1.325, startTime: 0, zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.05, startTime: .hours(0.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  1.699, startTime: .hours(2.0), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.850001, startTime: .hours(2.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  1.02499999, startTime: .hours(3.0), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.650001, startTime: .hours(7.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.50, startTime: .hours(8.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.675, startTime: .hours(9.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.59999, startTime: .hours(10.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.666, startTime: .hours(11.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  1.675, startTime: .hours(14.0), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.849, startTime: .hours(16), zeroBasalRate: 0),
+            BasalScheduleEntry(rate:  1.325, startTime: 0, podType: erosType),
+            BasalScheduleEntry(rate:  0.05, startTime: .hours(0.5), podType: erosType),
+            BasalScheduleEntry(rate:  1.699, startTime: .hours(2.0), podType: erosType),
+            BasalScheduleEntry(rate:  0.850001, startTime: .hours(2.5), podType: erosType),
+            BasalScheduleEntry(rate:  1.02499999, startTime: .hours(3.0), podType: erosType),
+            BasalScheduleEntry(rate:  0.650001, startTime: .hours(7.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.50, startTime: .hours(8.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.675, startTime: .hours(9.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.59999, startTime: .hours(10.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.666, startTime: .hours(11.5), podType: erosType),
+            BasalScheduleEntry(rate:  1.675, startTime: .hours(14.0), podType: erosType),
+            BasalScheduleEntry(rate:  0.849, startTime: .hours(16), podType: erosType),
             ]
 
         let schedule = BasalSchedule(entries: entries)
@@ -414,19 +414,19 @@ class BasalScheduleTests: XCTestCase {
         let ssss     = 0x0ae8
         let offset = TimeInterval(minutes: Double((hh + 1) * 30)) - TimeInterval(seconds: Double(ssss / 8))
 
-        let cmd1 = SetInsulinScheduleCommand(nonce: 0xf36a23a3, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 0)
+        let cmd1 = SetInsulinScheduleCommand(nonce: 0xf36a23a3, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a2af36a23a3000291030ae80000000d280000111809700a180610052806100600072806001128100009e808", cmd1.data.hexadecimalString)
     }
 
     func test723ScheduleImportDash() {
         let entries = [
-            BasalScheduleEntry(rate:  0.0, startTime: 0, zeroBasalRate: Pod.nearZeroBasalRate),
-            BasalScheduleEntry(rate:  0.03, startTime: .hours(0.5), zeroBasalRate: Pod.nearZeroBasalRate),
-            BasalScheduleEntry(rate:  0.075, startTime: .hours(1.5), zeroBasalRate: Pod.nearZeroBasalRate),
-            BasalScheduleEntry(rate:  0.0, startTime: .hours(3.5), zeroBasalRate: Pod.nearZeroBasalRate),
-            BasalScheduleEntry(rate:  0.25, startTime: .hours(4.0), zeroBasalRate: Pod.nearZeroBasalRate),
-            BasalScheduleEntry(rate:  0.725, startTime: .hours(6.0), zeroBasalRate: Pod.nearZeroBasalRate),
-            BasalScheduleEntry(rate:  0.78, startTime: .hours(7.5), zeroBasalRate: Pod.nearZeroBasalRate),
+            BasalScheduleEntry(rate:  0.0, startTime: 0, podType: dashType),
+            BasalScheduleEntry(rate:  0.03, startTime: .hours(0.5), podType: dashType),
+            BasalScheduleEntry(rate:  0.075, startTime: .hours(1.5), podType: dashType),
+            BasalScheduleEntry(rate:  0.0, startTime: .hours(3.5), podType: dashType),
+            BasalScheduleEntry(rate:  0.25, startTime: .hours(4.0), podType: dashType),
+            BasalScheduleEntry(rate:  0.725, startTime: .hours(6.0), podType: dashType),
+            BasalScheduleEntry(rate:  0.78, startTime: .hours(7.5), podType: dashType),
             ]
 
         let schedule = BasalSchedule(entries: entries)
@@ -439,25 +439,25 @@ class BasalScheduleTests: XCTestCase {
         let ssss     = 0x0ac0
         let offset = TimeInterval(minutes: Double((hh + 1) * 30)) - TimeInterval(seconds: Double(ssss / 8))
 
-        let cmd1 = SetInsulinScheduleCommand(nonce: 0x494e532e, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd1 = SetInsulinScheduleCommand(nonce: 0x494e532e, basalSchedule: schedule, scheduleOffset: offset, podType: dashType)
         XCTAssertEqual("1a1c494e532e0002122f0ac00001300000012800380230070008f807e807", cmd1.data.hexadecimalString)
 
         //      13 LL RR MM NNNN XXXXXXXX YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ
         // PDM: 13 2c 00 05 000f 007a1200 0003 eb49d200 0014 15752a00 0001 eb49d200 0064 044aa200 00d2 01885e6d 09ab 016e3600
 
-        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: false, programReminderInterval: 0, zeroBasalRate: Pod.nearZeroBasalRate)
+        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: false, programReminderInterval: 0, podType: dashType)
         checkBasalScheduleExtraCommandDataWithLessPrecision(Data(hexadecimalString: "132c0005000f007a12000003eb49d200001415752a000001eb49d2000064044aa20000d201885e6d09ab016e3600")!, cmd2.data)
     }
 
     func test723ScheduleImportEros() {
         let entries = [
-            BasalScheduleEntry(rate:  0.0, startTime: 0, zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.03, startTime: .hours(0.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.075, startTime: .hours(1.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.0, startTime: .hours(3.5), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.25, startTime: .hours(4.0), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.725, startTime: .hours(6.0), zeroBasalRate: 0),
-            BasalScheduleEntry(rate:  0.78, startTime: .hours(7.5), zeroBasalRate: 0),
+            BasalScheduleEntry(rate:  0.0, startTime: 0, podType: erosType),
+            BasalScheduleEntry(rate:  0.03, startTime: .hours(0.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.075, startTime: .hours(1.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.0, startTime: .hours(3.5), podType: erosType),
+            BasalScheduleEntry(rate:  0.25, startTime: .hours(4.0), podType: erosType),
+            BasalScheduleEntry(rate:  0.725, startTime: .hours(6.0), podType: erosType),
+            BasalScheduleEntry(rate:  0.78, startTime: .hours(7.5), podType: erosType),
             ]
 
         let schedule = BasalSchedule(entries: entries)
@@ -470,18 +470,18 @@ class BasalScheduleTests: XCTestCase {
         let ssss     = 0x0cd0
         let offset = TimeInterval(minutes: Double((hh + 1) * 30)) - TimeInterval(seconds: Double(ssss / 8))
 
-        let cmd1Eros = SetInsulinScheduleCommand(nonce: 0xee29db98, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 0)
+        let cmd1Eros = SetInsulinScheduleCommand(nonce: 0xee29db98, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a18ee29db980002242d0cd000017800380230070008f807e807", cmd1Eros.data.hexadecimalString)
 
         //      13 LL RR MM NNNN XXXXXXXX YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ YYYY ZZZZZZZZ
         // PDM: 13 20 00 03 00a8 001e8480 0028 15752a00 0064 044aa200 00d2 01885e6d 09ab 016e3600
 
-        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: false, programReminderInterval: 0, zeroBasalRate: 0)
+        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: false, programReminderInterval: 0, podType: erosType)
         checkBasalScheduleExtraCommandDataWithLessPrecision(Data(hexadecimalString: "1320000300a8001e8480002815752a000064044aa20000d201885e6d09ab016e3600")!, cmd2.data)
     }
 
     func testBasalScheduleExtraCommandRoundsToNearestSecond() {
-        let schedule = BasalSchedule(entries: [BasalScheduleEntry(rate: 1.0, startTime: 0, zeroBasalRate: 0)])
+        let schedule = BasalSchedule(entries: [BasalScheduleEntry(rate: 1.0, startTime: 0, podType: erosType)])
         
         let hh       = 0x2b
         let ssss     = 0x1b38
@@ -492,13 +492,13 @@ class BasalScheduleTests: XCTestCase {
         // 13 LL RR MM NNNN XXXXXXXX YYYY ZZZZZZZZ
         // 13 0e 40 00 01c1 006acfc0 12c0 0112a880
         
-        let cmd = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, zeroBasalRate: 0)
+        let cmd = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, podType: erosType)
         checkBasalScheduleExtraCommandDataWithLessPrecision(Data(hexadecimalString: "130e400001c1006acfc012c00112a880")!, cmd.data)
     }
 
     func testLargeContinuousBasal() {
         let entries = [
-            BasalScheduleEntry(rate:  24.0, startTime: 0, zeroBasalRate: 0),
+            BasalScheduleEntry(rate:  24.0, startTime: 0, podType: erosType),
         ]
 
         let schedule = BasalSchedule(entries: entries)
@@ -510,16 +510,16 @@ class BasalScheduleTests: XCTestCase {
         let ssss     = 0x2dc8
         let offset = TimeInterval(minutes: Double((hh + 1) * 30)) - TimeInterval(seconds: Double(ssss / 8))
 
-        let cmd1 = SetInsulinScheduleCommand(nonce: 0x05281983, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 0)
+        let cmd1 = SetInsulinScheduleCommand(nonce: 0x05281983, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a1205281983002eb9012dc800c3f0f0f0f0f0f0", cmd1.data.hexadecimalString)
 
-        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, zeroBasalRate: 0)
+        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, podType: erosType)
         checkBasalScheduleExtraCommandDataWithLessPrecision(Data(hexadecimalString: "13144000f2020003d090fd20000b71b0c4e0000b71b0")!, cmd2.data)
     }
 
     func testMaxContinuousBasal() {
         let entries = [
-            BasalScheduleEntry(rate:  30.0, startTime: 0, zeroBasalRate: 0),
+            BasalScheduleEntry(rate:  30.0, startTime: 0, podType: erosType),
         ]
 
         let schedule = BasalSchedule(entries: entries)
@@ -531,10 +531,10 @@ class BasalScheduleTests: XCTestCase {
         let ssss     = 0x1a00
         let offset = TimeInterval(minutes: Double((hh + 1) * 30)) - TimeInterval(seconds: Double(ssss / 8))
 
-        let cmd1 = SetInsulinScheduleCommand(nonce: 0x06141980, basalSchedule: schedule, scheduleOffset: offset, zeroBasalRate: 0)
+        let cmd1 = SetInsulinScheduleCommand(nonce: 0x06141980, basalSchedule: schedule, scheduleOffset: offset, podType: erosType)
         XCTAssertEqual("1a12061419800009200c1a00008af12cf12cf12c", cmd1.data.hexadecimalString)
 
-        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, zeroBasalRate: 0)
+        let cmd2 = BasalScheduleExtraCommand(schedule: schedule, scheduleOffset: offset, acknowledgementBeep: false, completionBeep: true, programReminderInterval: 0, podType: erosType)
         checkBasalScheduleExtraCommandDataWithLessPrecision(Data(hexadecimalString: "131a4000632b00061a80f618000927c0f618000927c04650000927c0")!, cmd2.data)
     }
 }

@@ -11,7 +11,7 @@ import Foundation
 import LoopKit
 import os.log
 
-public enum PodCommsError: Error {
+enum PodCommsError: Error {
     case noPodPaired
     case invalidData
     case noResponse
@@ -45,7 +45,7 @@ public enum PodCommsError: Error {
 }
 
 extension PodCommsError: LocalizedError {
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .noPodPaired:
             return LocalizedString("No pod paired", comment: "Error message shown when no pod is paired")
@@ -112,11 +112,11 @@ extension PodCommsError: LocalizedError {
         }
     }
 
-//    public var failureReason: String? {
+//    var failureReason: String? {
 //        return nil
 //    }
 
-    public var recoverySuggestion: String? {
+    var recoverySuggestion: String? {
         switch self {
         case .noPodPaired:
             return nil
@@ -184,7 +184,7 @@ extension PodCommsError: LocalizedError {
         }
     }
 
-    public var isFaulted: Bool {
+    var isFaulted: Bool {
         switch self {
         case .podFault, .activationTimeExceeded, .podIncompatible:
             return true
@@ -194,7 +194,7 @@ extension PodCommsError: LocalizedError {
     }
 
     // BLE pods only
-    public func isVerboseBluetoothCommsError(_ error: Error) -> Bool {
+    func isVerboseBluetoothCommsError(_ error: Error) -> Bool {
         if let peripheralManagerError = error as? PeripheralManagerError {
             switch peripheralManagerError {
             case .cbPeripheralError:
@@ -217,13 +217,13 @@ extension PodCommsError: LocalizedError {
     }
 }
 
-public protocol PodCommsSessionDelegate: AnyObject {
+protocol PodCommsSessionDelegate: AnyObject {
     func podCommsSession(_ podCommsSession: PodCommsSession, didChange state: PodState)
 }
 
-public class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
+class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
 
-    public let log = OSLog(category: "PodCommsSession")
+    let log = OSLog(category: "PodCommsSession")
 
     private var podState: PodState {
         didSet {
@@ -608,13 +608,13 @@ public class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDele
     }
 
     // Throws SetBolusError
-    public enum DeliveryCommandResult {
+    enum DeliveryCommandResult {
         case success(statusResponse: StatusResponse)
         case certainFailure(error: PodCommsError)
         case unacknowledged(error: PodCommsError)
     }
 
-    public enum CancelDeliveryResult {
+    enum CancelDeliveryResult {
         case success(statusResponse: StatusResponse, canceledDose: UnfinalizedDose?)
         case certainFailure(error: PodCommsError)
         case unacknowledged(error: PodCommsError)
@@ -682,7 +682,7 @@ public class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDele
         }
 
         let tempBasalCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, tempBasalRate: rate, duration: duration)
-        let tempBasalExtraCommand = TempBasalExtraCommand(rate: rate, duration: duration, acknowledgementBeep: acknowledgementBeep, completionBeep: completionBeep, programReminderInterval: programReminderInterval, zeroBasalRate: podState.podType.zeroBasalRate)
+        let tempBasalExtraCommand = TempBasalExtraCommand(rate: rate, duration: duration, acknowledgementBeep: acknowledgementBeep, completionBeep: completionBeep, programReminderInterval: programReminderInterval, podType: podState.podType)
 
         guard podState.unfinalizedBolus?.isFinished() != false else {
             return DeliveryCommandResult.certainFailure(error: .unfinalizedBolus)
@@ -897,8 +897,8 @@ public class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDele
             try tryToResolvePendingCommand()
         }
 
-        let basalScheduleCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, basalSchedule: schedule, scheduleOffset: scheduleOffset, zeroBasalRate: podState.podType.zeroBasalRate)
-        let basalExtraCommand = BasalScheduleExtraCommand.init(schedule: schedule, scheduleOffset: scheduleOffset, acknowledgementBeep: acknowledgementBeep, programReminderInterval: programReminderInterval, zeroBasalRate: podState.podType.zeroBasalRate)
+        let basalScheduleCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, basalSchedule: schedule, scheduleOffset: scheduleOffset, podType: podState.podType)
+        let basalExtraCommand = BasalScheduleExtraCommand.init(schedule: schedule, scheduleOffset: scheduleOffset, acknowledgementBeep: acknowledgementBeep, programReminderInterval: programReminderInterval, podType: podState.podType)
 
         do {
             if !podState.isSuspended || podState.lastDeliveryStatusReceived == nil || !podState.lastDeliveryStatusReceived!.suspended {

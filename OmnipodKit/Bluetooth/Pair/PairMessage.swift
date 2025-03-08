@@ -10,13 +10,13 @@
 import Foundation
 
 struct PairMessage {
-    public let sequenceNumber: UInt8
-    public let source: Id
-    public let destination: Id
-    private let keys: [String]
-    private let payloads: [Data]
-    public let message: MessagePacket
-    
+    let sequenceNumber: UInt8
+    let source: Id
+    let destination: Id
+    let keys: [String]
+    let payloads: [Data]
+    let message: MessagePacket
+
     init(sequenceNumber: UInt8, source: Id, destination: Id, keys: [String], payloads: [Data]) {
         self.sequenceNumber = sequenceNumber
         self.source = source

@@ -9,14 +9,14 @@
 
 import Foundation
 
-public enum MessageBlockError: Error {
+enum MessageBlockError: Error {
     case notEnoughData
     case unknownBlockType(rawVal: UInt8)
     case parseError
 }
 
 // See https://github.com/openaps/openomni/wiki/Message-Types
-public enum MessageBlockType: UInt8 {
+enum MessageBlockType: UInt8 {
     case versionResponse    = 0x01
     case podInfoResponse    = 0x02
     case setupPod           = 0x03
@@ -35,7 +35,7 @@ public enum MessageBlockType: UInt8 {
     case beepConfig         = 0x1e
     case cancelDelivery     = 0x1f
 
-    public var blockType: MessageBlock.Type {
+    var blockType: MessageBlock.Type {
         switch self {
         case .versionResponse:
             return VersionResponse.self
@@ -75,13 +75,13 @@ public enum MessageBlockType: UInt8 {
     }
 }
 
-public protocol MessageBlock {
+protocol MessageBlock {
     init(encodedData: Data) throws
 
     var blockType: MessageBlockType { get }
     var data: Data { get  }
 }
 
-public protocol NonceResyncableMessageBlock : MessageBlock {
+protocol NonceResyncableMessageBlock : MessageBlock {
     var nonce: UInt32 { get set }
 }

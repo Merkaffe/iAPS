@@ -9,7 +9,7 @@
 
 import Foundation
 
-public struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
+struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
 
     fileprivate enum ScheduleTypeCode: UInt8 {
         case basalSchedule = 0
@@ -17,7 +17,7 @@ public struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
         case bolus = 2
     }
 
-    public enum DeliverySchedule {
+    enum DeliverySchedule {
         case basalSchedule(currentSegment: UInt8, secondsRemaining: UInt16, pulsesRemaining: UInt16, table: BasalDeliveryTable)
         case tempBasal(secondsRemaining: UInt16, firstSegmentPulses: UInt16, table: BasalDeliveryTable)
         case bolus(units: Double, timeBetweenPulses: TimeInterval, table: BolusDeliveryTable)
@@ -81,12 +81,12 @@ public struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
         }
     }
     
-    public let blockType: MessageBlockType = .setInsulinSchedule
+    let blockType: MessageBlockType = .setInsulinSchedule
 
-    public var nonce: UInt32
-    public let deliverySchedule: DeliverySchedule
+    var nonce: UInt32
+    let deliverySchedule: DeliverySchedule
 
-    public var data: Data {
+    var data: Data {
         var data = Data([
             blockType.rawValue,
             UInt8(7 + deliverySchedule.data.count),
@@ -98,7 +98,7 @@ public struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
         return data
     }
     
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         if encodedData.count < 6 {
             throw MessageBlockError.notEnoughData
         }
@@ -162,22 +162,22 @@ public struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
         }
     }
 
-    public init(nonce: UInt32, deliverySchedule: DeliverySchedule) {
+    init(nonce: UInt32, deliverySchedule: DeliverySchedule) {
         self.nonce = nonce
         self.deliverySchedule = deliverySchedule
     }
 
-    public init(nonce: UInt32, tempBasalRate: Double, duration: TimeInterval) {
+    init(nonce: UInt32, tempBasalRate: Double, duration: TimeInterval) {
         self.nonce = nonce
         let pulsesPerHour = Int(round(tempBasalRate / Pod.pulseSize))
         let table = BasalDeliveryTable(tempBasalRate: tempBasalRate, duration: duration)
         self.deliverySchedule = SetInsulinScheduleCommand.DeliverySchedule.tempBasal(secondsRemaining: 30*60, firstSegmentPulses: UInt16(pulsesPerHour / 2), table: table)
     }
 
-    public init(nonce: UInt32, basalSchedule: BasalSchedule, scheduleOffset: TimeInterval, zeroBasalRate: Double) {
+    init(nonce: UInt32, basalSchedule: BasalSchedule, scheduleOffset: TimeInterval, podType: PodType) {
         let scheduleOffsetNearestSecond = round(scheduleOffset)
         let table = BasalDeliveryTable(schedule: basalSchedule)
-        var rate = roundToSupportedBasalTimingRate(rate: basalSchedule.rateAt(offset: scheduleOffsetNearestSecond), zeroBasalRate: zeroBasalRate)
+        var rate = roundToSupportedBasalTimingRate(rate: basalSchedule.rateAt(offset: scheduleOffsetNearestSecond), podType: podType)
         if rate == 0.0 {
             rate = Pod.nearZeroBasalRate // prevent crash if a 0.0 schedule basal ever gets here for Eros
         }
@@ -198,11 +198,7 @@ public struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
         self.nonce = nonce
     }
 
-    public init(nonce: UInt32, basalSchedule: BasalSchedule, scheduleOffset: TimeInterval, podType: PodType) {
-        self.init(nonce: nonce, basalSchedule: basalSchedule, scheduleOffset: scheduleOffset, zeroBasalRate: podType.zeroBasalRate)
-    }
-
-    public init(nonce: UInt32, units: Double, timeBetweenPulses: TimeInterval = 0, extendedUnits: Double = 0, extendedDuration: TimeInterval = 0) {
+    init(nonce: UInt32, units: Double, timeBetweenPulses: TimeInterval = 0, extendedUnits: Double = 0, extendedDuration: TimeInterval = 0) {
         self.nonce = nonce
         let table = BolusDeliveryTable(units: units, extendedUnits: extendedUnits, extendedDuration: extendedDuration)
         let timeBetweenImmediatePulses = (units > 0.0 && timeBetweenPulses > 0) ? timeBetweenPulses : Pod.secondsPerBolusPulse
@@ -211,7 +207,7 @@ public struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
 }
 
 extension SetInsulinScheduleCommand: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "SetInsulinScheduleCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), \(deliverySchedule))"
     }
 }

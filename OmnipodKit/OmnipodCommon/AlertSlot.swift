@@ -16,13 +16,13 @@ fileprivate let defaultExpiredTime = Pod.nominalPodLife
 // PDM and pre-SwiftUI use every1MinuteFor3MinutesAndRepeatEvery15Minutes, but with SwiftUI use every15Minutes
 fileprivate let suspendTimeExpiredBeepRepeat = BeepRepeat.every15Minutes
 
-public enum AlertTrigger {
+enum AlertTrigger {
     case unitsRemaining(Double)
     case timeUntilAlert(TimeInterval)
 }
 
 extension AlertTrigger: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         switch self {
         case .unitsRemaining(let units):
             return "\(Int(units))U"
@@ -32,7 +32,7 @@ extension AlertTrigger: CustomDebugStringConvertible {
     }
 }
 
-public enum BeepRepeat: UInt8 {
+enum BeepRepeat: UInt8 {
     case once = 0
     case every1MinuteFor3MinutesAndRepeatEvery60Minutes = 1
     case every1MinuteFor15Minutes = 2
@@ -45,7 +45,7 @@ public enum BeepRepeat: UInt8 {
 }
 
 
-public struct AlertConfiguration {
+struct AlertConfiguration {
 
     let slot: AlertSlot
     let active: Bool
@@ -58,7 +58,7 @@ public struct AlertConfiguration {
 
     static let length = 6
 
-    public init(alertType: AlertSlot, active: Bool = true, duration: TimeInterval = 0, trigger: AlertTrigger, beepRepeat: BeepRepeat, beepType: BeepType, silent: Bool, autoOffModifier: Bool = false)
+    init(alertType: AlertSlot, active: Bool = true, duration: TimeInterval = 0, trigger: AlertTrigger, beepRepeat: BeepRepeat, beepType: BeepType, silent: Bool, autoOffModifier: Bool = false)
     {
         self.slot = alertType
         self.active = active
@@ -72,7 +72,7 @@ public struct AlertConfiguration {
 }
 
 extension AlertConfiguration: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         var str = "slot:\(slot)"
         if !active {
             str += ", active:\(active)"
@@ -94,9 +94,8 @@ extension AlertConfiguration: CustomDebugStringConvertible {
 }
 
 
-
-public enum PodAlert: CustomStringConvertible, RawRepresentable, Equatable {
-    public typealias RawValue = [String: Any]
+enum PodAlert: CustomStringConvertible, RawRepresentable, Equatable {
+    typealias RawValue = [String: Any]
 
     // slot0AutoOff: auto-off timer; requires user input every x minutes -- NOT IMPLEMENTED
     case autoOff(active: Bool, offset: TimeInterval, countdownDuration: TimeInterval, silent: Bool = false)
@@ -134,7 +133,7 @@ public enum PodAlert: CustomStringConvertible, RawRepresentable, Equatable {
     // slot7Expired: 72 hour alarm
     case expired(offset: TimeInterval, absAlertTime: TimeInterval, duration: TimeInterval, silent: Bool = false)
 
-    public var description: String {
+    var description: String {
         var alertName: String
         switch self {
         // slot0AutoOff
@@ -172,7 +171,7 @@ public enum PodAlert: CustomStringConvertible, RawRepresentable, Equatable {
         return alertName
     }
 
-    public var configuration: AlertConfiguration {
+    var configuration: AlertConfiguration {
         switch self {
         // slot0AutoOff
         case .autoOff(let active, _, let countdownDuration, let silent):
@@ -299,7 +298,7 @@ public enum PodAlert: CustomStringConvertible, RawRepresentable, Equatable {
 
 
     // MARK: - RawRepresentable
-    public init?(rawValue: RawValue) {
+    init?(rawValue: RawValue) {
 
         guard let name = rawValue["name"] as? String else {
             return nil
@@ -397,7 +396,7 @@ public enum PodAlert: CustomStringConvertible, RawRepresentable, Equatable {
         }
     }
 
-    public var rawValue: RawValue {
+    var rawValue: RawValue {
 
         let name: String = {
             switch self {
@@ -468,6 +467,7 @@ public enum PodAlert: CustomStringConvertible, RawRepresentable, Equatable {
     }
 }
 
+// XXX still needs be declared public with the current Trio implementation
 public enum AlertSlot: UInt8 {
     case slot0AutoOff = 0x00
     case slot1NotUsed = 0x01
@@ -478,52 +478,52 @@ public enum AlertSlot: UInt8 {
     case slot6SuspendTimeExpired = 0x06
     case slot7Expired = 0x07
 
-    public var bitMaskValue: UInt8 {
+    var bitMaskValue: UInt8 {
         return 1<<rawValue
     }
 
-    public typealias AllCases = [AlertSlot]
+    typealias AllCases = [AlertSlot]
 
     static var allCases: AllCases {
         return (0..<8).map { AlertSlot(rawValue: $0)! }
     }
 }
 
-public struct AlertSet: RawRepresentable, Collection, CustomStringConvertible, Equatable {
+struct AlertSet: RawRepresentable, Collection, CustomStringConvertible, Equatable {
 
-    public typealias RawValue = UInt8
-    public typealias Index = Int
+    typealias RawValue = UInt8
+    typealias Index = Int
 
-    public let startIndex: Int
-    public let endIndex: Int
+    let startIndex: Int
+    let endIndex: Int
 
     private let elements: [AlertSlot]
 
-    public static let none = AlertSet(rawValue: 0)
+    static let none = AlertSet(rawValue: 0)
 
-    public var rawValue: UInt8 {
+    var rawValue: UInt8 {
         return elements.reduce(0) { $0 | $1.bitMaskValue }
     }
 
-    public init(slots: [AlertSlot]) {
+    init(slots: [AlertSlot]) {
         self.elements = slots
         self.startIndex = 0
         self.endIndex = self.elements.count
     }
 
-    public init(rawValue: UInt8) {
+    init(rawValue: UInt8) {
         self.init(slots: AlertSlot.allCases.filter { rawValue & $0.bitMaskValue != 0 })
     }
 
-    public subscript(index: Index) -> AlertSlot {
+    subscript(index: Index) -> AlertSlot {
         return elements[index]
     }
 
-    public func index(after i: Int) -> Int {
+    func index(after i: Int) -> Int {
         return i+1
     }
 
-    public var description: String {
+    var description: String {
         if elements.count == 0 {
             return LocalizedString("No alerts", comment: "Pod alert state when no alerts are active")
         } else {
@@ -532,7 +532,7 @@ public struct AlertSet: RawRepresentable, Collection, CustomStringConvertible, E
         }
     }
 
-    public func compare(to other: AlertSet) -> (added: AlertSet, removed: AlertSet) {
+    func compare(to other: AlertSet) -> (added: AlertSet, removed: AlertSet) {
         let added = Set(other.elements).subtracting(Set(elements))
         let removed = Set(elements).subtracting(Set(other.elements))
         return (added: AlertSet(slots: Array(added)), removed: AlertSet(slots: Array(removed)))
@@ -540,7 +540,7 @@ public struct AlertSet: RawRepresentable, Collection, CustomStringConvertible, E
 }
 
 // Returns true if there are any active suspend related alerts
-public func hasActiveSuspendAlert(configuredAlerts: [AlertSlot : PodAlert]) -> Bool {
+func hasActiveSuspendAlert(configuredAlerts: [AlertSlot : PodAlert]) -> Bool {
     if configuredAlerts.contains(where: { ($0.key == .slot5SuspendedReminder || $0.key == .slot6SuspendTimeExpired) && $0.value.configuration.active })
     {
         return true
@@ -549,7 +549,7 @@ public func hasActiveSuspendAlert(configuredAlerts: [AlertSlot : PodAlert]) -> B
 }
 
 // Returns a descriptive string for all the alerts in alertSet
-public func alertSetString(alertSet: AlertSet) -> String {
+func alertSetString(alertSet: AlertSet) -> String {
 
     if alertSet.isEmpty {
         // Don't bother displaying any additional info for an inactive alert

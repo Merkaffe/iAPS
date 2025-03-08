@@ -19,7 +19,7 @@ enum PodProtocolError: Error {
 }
 
 extension PodProtocolError: LocalizedError {
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .invalidLTKKey(let message):
             return String(format: LocalizedString("Invalid LTK Key: %1$@", comment: "The format string for PodProtocolError.invalidLTKKey (1: message associated with error)"), message)
@@ -37,11 +37,11 @@ extension PodProtocolError: LocalizedError {
         }
     }
 
-    public var failureReason: String? {
+    var failureReason: String? {
         return nil
     }
 
-    public var recoverySuggestion: String? {
+    var recoverySuggestion: String? {
         return nil
     }
 }
