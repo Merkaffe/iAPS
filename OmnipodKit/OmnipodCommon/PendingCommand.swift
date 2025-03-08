@@ -10,8 +10,8 @@
 import Foundation
 
 
-public enum StartProgram: RawRepresentable {
-    public typealias RawValue = [String: Any]
+enum StartProgram: RawRepresentable {
+    typealias RawValue = [String: Any]
 
     case bolus(volume: Double, automatic: Bool)
     case basalProgram(schedule: BasalSchedule)
@@ -21,7 +21,7 @@ public enum StartProgram: RawRepresentable {
         case bolus, basalProgram, tempBasal
     }
     
-    public var rawValue: RawValue {
+    var rawValue: RawValue {
         switch self {
         case .bolus(let volume, let automatic):
             return [
@@ -45,7 +45,7 @@ public enum StartProgram: RawRepresentable {
         }
     }
 
-    public init?(rawValue: RawValue) {
+    init?(rawValue: RawValue) {
         guard let encodedTypeRaw = rawValue["programType"] as? StartProgramType.RawValue,
             let encodedType = StartProgramType(rawValue: encodedTypeRaw) else
         {
@@ -78,7 +78,7 @@ public enum StartProgram: RawRepresentable {
         }
     }
     
-    public static func == (lhs: StartProgram, rhs: StartProgram) -> Bool {
+    static func == (lhs: StartProgram, rhs: StartProgram) -> Bool {
         switch(lhs, rhs) {
         case (.bolus(let lhsVolume, let lhsAutomatic), .bolus(let rhsVolume, let rhsAutomatic)):
             return lhsVolume == rhsVolume && lhsAutomatic == rhsAutomatic
@@ -92,8 +92,8 @@ public enum StartProgram: RawRepresentable {
     }
 }
 
-public enum PendingCommand: RawRepresentable, Equatable {
-    public typealias RawValue = [String: Any]
+enum PendingCommand: RawRepresentable, Equatable {
+    typealias RawValue = [String: Any]
 
     case program(StartProgram, Int, Date, Bool = true)
     case stopProgram(CancelDeliveryCommand.DeliveryType, Int, Date, Bool = true)
@@ -102,7 +102,7 @@ public enum PendingCommand: RawRepresentable, Equatable {
         case startProgram, stopProgram
     }
 
-    public var commandDate: Date {
+    var commandDate: Date {
         switch self {
         case .program(_, _, let date, _):
             return date
@@ -111,7 +111,7 @@ public enum PendingCommand: RawRepresentable, Equatable {
         }
     }
 
-    public var sequence: Int {
+    var sequence: Int {
         switch self {
         case .program(_, let sequence, _, _):
             return sequence
@@ -120,7 +120,7 @@ public enum PendingCommand: RawRepresentable, Equatable {
         }
     }
 
-    public var isInFlight: Bool {
+    var isInFlight: Bool {
         switch self {
         case .program(_, _, _, let inflight):
             return inflight
@@ -129,7 +129,7 @@ public enum PendingCommand: RawRepresentable, Equatable {
         }
     }
 
-    public var commsFinished: PendingCommand {
+    var commsFinished: PendingCommand {
         switch self {
         case .program(let program, let sequence, let date, _):
             return PendingCommand.program(program, sequence, date, false)
@@ -138,7 +138,7 @@ public enum PendingCommand: RawRepresentable, Equatable {
         }
     }
 
-    public init?(rawValue: RawValue) {
+    init?(rawValue: RawValue) {
         guard let rawPendingCommandType = rawValue["type"] as? PendingCommandType.RawValue else {
             return nil
         }
@@ -174,7 +174,7 @@ public enum PendingCommand: RawRepresentable, Equatable {
         }
     }
 
-    public var rawValue: RawValue {
+    var rawValue: RawValue {
         var rawValue: RawValue = [:]
         
         switch self {
@@ -194,7 +194,7 @@ public enum PendingCommand: RawRepresentable, Equatable {
         return rawValue
     }
     
-    public static func == (lhs: PendingCommand, rhs: PendingCommand) -> Bool {
+    static func == (lhs: PendingCommand, rhs: PendingCommand) -> Bool {
         switch(lhs, rhs) {
         case (.program(let lhsProgram, let lhsSequence, let lhsDate, let lhsInflight), .program(let rhsProgram, let rhsSequence, let rhsDate, let rhsInflight)):
             return lhsProgram == rhsProgram && lhsSequence == rhsSequence && lhsDate == rhsDate && lhsInflight == rhsInflight

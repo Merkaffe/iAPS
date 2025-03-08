@@ -12,17 +12,17 @@ import Foundation
 // Type 1 Pod Info returns information about the currently unacknowledged triggered alert values
 // All triggered alerts values are the pod time when triggered for all current Eros and Dash pods.
 // For at least earlier Eros pods, low reservoir triggered alerts might be the # of pulses remaining.
-public struct PodInfoTriggeredAlerts: PodInfo {
+struct PodInfoTriggeredAlerts: PodInfo {
     // CMD 1  2  3 4  5 6  7 8  910 1112 1314 1516 1718 1920
     // DATA   0  1 2  3 4  5 6  7 8  910 1112 1314 1516 1718
     // 02 13 01 XXXX VVVV VVVV VVVV VVVV VVVV VVVV VVVV VVVV
 
-    public let podInfoType: PodInfoResponseSubType = .triggeredAlerts
-    public let unknown_word: UInt16
-    public var alertActivations: [TimeInterval] = Array(repeating: 0, count: 8)
-    public let data: Data
+    let podInfoType: PodInfoResponseSubType = .triggeredAlerts
+    let unknown_word: UInt16
+    var alertActivations: [TimeInterval] = Array(repeating: 0, count: 8)
+    let data: Data
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         guard encodedData.count >= 11 else {
             throw MessageBlockError.notEnoughData
         }
@@ -59,12 +59,12 @@ private func triggeredAlerts(podInfoTriggeredAlerts: PodInfoTriggeredAlerts, sta
     return result.joined(separator: sepString)
 }
 
-public func triggeredAlertsString(podInfoTriggeredAlerts: PodInfoTriggeredAlerts) -> String {
+func triggeredAlertsString(podInfoTriggeredAlerts: PodInfoTriggeredAlerts) -> String {
     return triggeredAlerts(podInfoTriggeredAlerts: podInfoTriggeredAlerts, startOffset: 27, sepString: "\n", printAll: false)
 }
 
 extension PodInfoTriggeredAlerts: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return triggeredAlerts(podInfoTriggeredAlerts: self, startOffset: 33, sepString: ", ", printAll: true)
     }
 }

@@ -17,9 +17,9 @@ struct LowReservoirReminderSetupView: View {
 
     @State var lowReservoirReminderValue: Int
     
-    public var valueChanged: ((_ value: Int) -> Void)?
-    public var continueButtonTapped: (() -> Void)?
-    public var cancelButtonTapped: (() -> Void)?
+    var valueChanged: ((_ value: Int) -> Void)?
+    var continueButtonTapped: (() -> Void)?
+    var cancelButtonTapped: (() -> Void)?
 
     var insulinQuantityFormatter = QuantityFormatter(for: .internationalUnit())
 

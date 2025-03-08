@@ -9,7 +9,7 @@
 import Foundation
 import OSLog
 
-public class Omni {
+class Omni {
     var manager: PeripheralManager
     var advertisement: PodAdvertisement?
 
@@ -22,7 +22,7 @@ public class Omni {
 }
 
 extension Omni: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "Omni - advertisement: \(String(describing: advertisement))"
     }
 }

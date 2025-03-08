@@ -20,7 +20,7 @@ import Foundation
 // Beep type 0xF will will have no beeps or errors (when used in 0x19 Configure Alerts
 // or 0x1E Beep Configure), but will generate a 0x37 pod fault when used in 0x1F Cancel!
 //
-public enum BeepType: UInt8 {
+enum BeepType: UInt8 {
     case noBeepCancel = 0x0 // silent for 0x1F Cancel & inactive 0x19 alerts; error for 0x1E Beep Options & active 0x19 alerts
     case beepBeepBeepBeep = 0x1
     case bipBeepBipBeepBipBeepBipBeep = 0x2

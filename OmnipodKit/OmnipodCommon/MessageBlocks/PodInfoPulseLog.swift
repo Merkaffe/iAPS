@@ -10,18 +10,18 @@
 import Foundation
 
 // Type $50 Pod Info returns (up to) the most recent 50 32-bit pulse log entries
-public struct PodInfoPulseLogRecent : PodInfo {
+struct PodInfoPulseLogRecent : PodInfo {
     // CMD 1  2  3 4  5 6 7 8
     // DATA   0  1 2  3 4 5 6
     // 02 LL 50 IIII XXXXXXXX ...
 
-    public let podInfoType   : PodInfoResponseSubType = .pulseLogRecent
-    public let indexLastEntry: Int // the pulse # for last pulse log entry
-    public let nEntries      : Int // how many 32-bit pulse entries returned (calculated)
-    public let pulseLog      : [UInt32]
-    public let data          : Data
+    let podInfoType   : PodInfoResponseSubType = .pulseLogRecent
+    let indexLastEntry: Int // the pulse # for last pulse log entry
+    let nEntries      : Int // how many 32-bit pulse entries returned (calculated)
+    let pulseLog      : [UInt32]
+    let data          : Data
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         let logStartByteOffset = 3 // starting byte offset of the pulse log in DATA
         let nLogBytesReturned = encodedData.count - logStartByteOffset
         guard encodedData.count >= logStartByteOffset && (nLogBytesReturned & 0x3) == 0 else {
@@ -35,17 +35,17 @@ public struct PodInfoPulseLogRecent : PodInfo {
 }
 
 // Type $51 Pod info returns (up to) the most previous 50 32-bit pulse log entries
-public struct PodInfoPulseLogPrevious : PodInfo {
+struct PodInfoPulseLogPrevious : PodInfo {
     // CMD 1  2  3 4  5 6 7 8
     // DATA   0  1 2  3 4 5 6
     // 02 LL 51 NNNN XXXXXXXX ...
 
-    public let podInfoType : PodInfoResponseSubType = .pulseLogPrevious
-    public let nEntries    : Int // how many 32-bit pulse log entries returned
-    public let pulseLog    : [UInt32]
-    public let data        : Data
+    let podInfoType : PodInfoResponseSubType = .pulseLogPrevious
+    let nEntries    : Int // how many 32-bit pulse log entries returned
+    let pulseLog    : [UInt32]
+    let data        : Data
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         let logStartByteOffset = 3 // starting byte offset of the pulse log in DATA
         let nLogBytesReturned = encodedData.count - logStartByteOffset
         guard encodedData.count >= logStartByteOffset && (nLogBytesReturned & 0x3) == 0  else {
@@ -90,7 +90,7 @@ extension BinaryInteger {
     }
 }
 
-public func pulseLogString(pulseLogEntries: [UInt32], lastPulseNumber: Int) -> String {
+func pulseLogString(pulseLogEntries: [UInt32], lastPulseNumber: Int) -> String {
     var result: [String] = ["Pulse eeeeee0a pppliiib cccccccc dfgggggg"]
     var index = pulseLogEntries.count - 1
     var pulseNumber = lastPulseNumber

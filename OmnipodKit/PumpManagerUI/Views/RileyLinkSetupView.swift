@@ -13,7 +13,7 @@ import RileyLinkKit
 import RileyLinkKitUI
 
 struct RileyLinkSetupView: View {
-    public var cancelButtonTapped: (() -> Void)?
+    var cancelButtonTapped: (() -> Void)?
 
     @Environment(\.dismissAction) private var dismiss
 

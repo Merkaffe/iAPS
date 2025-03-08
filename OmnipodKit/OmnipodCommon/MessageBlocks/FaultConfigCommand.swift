@@ -8,23 +8,23 @@
 //
 import Foundation
 
-public struct FaultConfigCommand: NonceResyncableMessageBlock {
+struct FaultConfigCommand: NonceResyncableMessageBlock {
     // OFF 1  2 3 4 5  6  7
     // 08 06 NNNNNNNN JJ KK
 
-    public let blockType: MessageBlockType = .faultConfig
-    public let length: UInt8 = 6
-    public var nonce: UInt32
-    public let tab5Sub16: UInt8
-    public let tab5Sub17: UInt8
+    let blockType: MessageBlockType = .faultConfig
+    let length: UInt8 = 6
+    var nonce: UInt32
+    let tab5Sub16: UInt8
+    let tab5Sub17: UInt8
 
-    public init(nonce: UInt32, tab5Sub16: UInt8, tab5Sub17: UInt8) {
+    init(nonce: UInt32, tab5Sub16: UInt8, tab5Sub17: UInt8) {
         self.nonce = nonce
         self.tab5Sub16 = tab5Sub16
         self.tab5Sub17 = tab5Sub17
     }
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         if encodedData.count < 8 {
             throw MessageBlockError.notEnoughData
         }
@@ -35,7 +35,7 @@ public struct FaultConfigCommand: NonceResyncableMessageBlock {
         self.tab5Sub17 = encodedData[7]
     }
 
-    public var data: Data {
+    var data: Data {
         var data = Data([
             blockType.rawValue,
             length])
@@ -48,7 +48,7 @@ public struct FaultConfigCommand: NonceResyncableMessageBlock {
 }
 
 extension FaultConfigCommand: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "FaultConfigCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), tab5Sub16:\(tab5Sub16), tab5Sub17:\(tab5Sub17))"
     }
 }

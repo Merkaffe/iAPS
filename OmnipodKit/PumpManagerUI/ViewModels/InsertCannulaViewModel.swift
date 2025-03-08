@@ -11,14 +11,14 @@ import LoopKit
 import LoopKitUI
 
 
-public protocol CannulaInserter {
+protocol CannulaInserter {
     func insertCannula(completion: @escaping (Result<TimeInterval,OmniPumpManagerError>) -> ())
     func checkCannulaInsertionFinished(completion: @escaping (OmniPumpManagerError?) -> Void)
     var cannulaInsertionSuccessfullyStarted: Bool { get }
 }
 
 extension OmniPumpManager: CannulaInserter {
-    public var cannulaInsertionSuccessfullyStarted: Bool {
+    var cannulaInsertionSuccessfullyStarted: Bool {
         return state.podState?.setupProgress.cannulaInsertionSuccessfullyStarted == true
     }
 }
@@ -132,7 +132,7 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
 
     @Published var state: InsertCannulaViewModelState = .ready
 
-    public var stateNeedsDeliberateUserAcceptance : Bool {
+    var stateNeedsDeliberateUserAcceptance : Bool {
         switch state {
         case .ready:
             true
@@ -209,8 +209,8 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
             }
         }
     }
-    
-    public func continueButtonTapped() {
+
+    func continueButtonTapped() {
         switch state {
         case .finished:
             didFinish?()
@@ -226,7 +226,7 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
     }
 }
 
-public extension OmniPumpManagerError {
+extension OmniPumpManagerError {
     var recoverable: Bool {
         //TODO
         return true

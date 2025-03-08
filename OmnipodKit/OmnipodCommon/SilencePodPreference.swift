@@ -9,11 +9,11 @@
 
 import Foundation
 
-public enum SilencePodPreference: Int, CaseIterable {
+enum SilencePodPreference: Int, CaseIterable {
     case disabled
     case enabled
 
-    public var title: String {
+    var title: String {
         switch self {
         case .disabled:
             return LocalizedString("Disabled", comment: "Title string for SilencePodPreference.disabled")
@@ -22,7 +22,7 @@ public enum SilencePodPreference: Int, CaseIterable {
         }
     }
 
-    public var description: String {
+    var description: String {
         switch self {
         case .disabled:
             return LocalizedString("Normal operation mode where audible Pod beeps are used for all Pod alerts and when confidence reminders are enabled.", comment: "Description for SilencePodPreference.disabled")

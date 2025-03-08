@@ -9,18 +9,18 @@
 
 import Foundation
 
-public struct TempBasalExtraCommand : MessageBlock {
+struct TempBasalExtraCommand : MessageBlock {
 
-    public let acknowledgementBeep: Bool
-    public let completionBeep: Bool
-    public let programReminderInterval: TimeInterval
-    public let remainingPulses: Double
-    public let delayUntilFirstPulse: TimeInterval
-    public let rateEntries: [RateEntry]
+    let acknowledgementBeep: Bool
+    let completionBeep: Bool
+    let programReminderInterval: TimeInterval
+    let remainingPulses: Double
+    let delayUntilFirstPulse: TimeInterval
+    let rateEntries: [RateEntry]
 
-    public let blockType: MessageBlockType = .tempBasalExtra
+    let blockType: MessageBlockType = .tempBasalExtra
 
-    public var data: Data {
+    var data: Data {
         let beepOptions = (UInt8(programReminderInterval.minutes) & 0x3f) + (completionBeep ? (1<<6) : 0) + (acknowledgementBeep ? (1<<7) : 0)
         var data = Data([
             blockType.rawValue,
@@ -36,7 +36,7 @@ public struct TempBasalExtraCommand : MessageBlock {
         return data
     }
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         if encodedData.count < 14 {
             throw MessageBlockError.notEnoughData
         }
@@ -63,19 +63,9 @@ public struct TempBasalExtraCommand : MessageBlock {
         rateEntries = entries
     }
 
-    public init(rate: Double, duration: TimeInterval, acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0, zeroBasalRate: Double)
+    init(rate: Double, duration: TimeInterval, acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0, podType: PodType)
     {
-        rateEntries = RateEntry.makeEntries(rate: rate, duration: duration, zeroBasalRate: zeroBasalRate)
-        remainingPulses = rateEntries[0].totalPulses
-        delayUntilFirstPulse = rateEntries[0].delayBetweenPulses
-        self.acknowledgementBeep = acknowledgementBeep
-        self.completionBeep = completionBeep
-        self.programReminderInterval = programReminderInterval
-    }
-
-    public init(rate: Double, duration: TimeInterval, acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0, podType: PodType)
-    {
-        rateEntries = RateEntry.makeEntries(rate: rate, duration: duration, zeroBasalRate: podType.zeroBasalRate)
+        rateEntries = RateEntry.makeEntries(rate: rate, duration: duration, podType: podType)
         remainingPulses = rateEntries[0].totalPulses
         delayUntilFirstPulse = rateEntries[0].delayBetweenPulses
         self.acknowledgementBeep = acknowledgementBeep
@@ -85,7 +75,7 @@ public struct TempBasalExtraCommand : MessageBlock {
 }
 
 extension TempBasalExtraCommand: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "TempBasalExtraCommand(completionBeep:\(completionBeep), programReminderInterval:\(programReminderInterval.timeIntervalStr), remainingPulses:\(remainingPulses), delayUntilFirstPulse:\(delayUntilFirstPulse.timeIntervalStr), rateEntries:\(rateEntries))"
     }
 }

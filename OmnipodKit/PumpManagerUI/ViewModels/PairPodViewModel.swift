@@ -234,7 +234,7 @@ class PairPodViewModel: ObservableObject, Identifiable {
         }
     }
 
-    public func continueButtonTapped() {
+    func continueButtonTapped() {
         switch state {
         case .error(let error):
             if !error.recoverable {
@@ -302,7 +302,7 @@ enum OmniPairingError : LocalizedError {
     }
 }
 
-public protocol PodPairer {
+protocol PodPairer {
     func pairAndPrimePod(completion: @escaping (PumpManagerResult<TimeInterval>) -> Void)
     func discardPod(completion: @escaping (Bool) -> ())
     var podCommState: PodCommState { get }
@@ -310,9 +310,9 @@ public protocol PodPairer {
 }
 
 extension OmniPumpManager: PodPairer {
-    public func discardPod(completion: @escaping (Bool) -> ()) { }
+    func discardPod(completion: @escaping (Bool) -> ()) { }
 
-    public func pairAndPrimePod(completion: @escaping (PumpManagerResult<TimeInterval>) -> Void) {
+    func pairAndPrimePod(completion: @escaping (PumpManagerResult<TimeInterval>) -> Void) {
         pairAndPrime(completion: completion)
     }
 }

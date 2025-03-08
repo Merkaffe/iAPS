@@ -8,19 +8,19 @@
 //
 import Foundation
 
-public struct GetStatusCommand: MessageBlock {
+struct GetStatusCommand: MessageBlock {
     // OFF 1  2
     // Oe 01 TT
 
-    public let blockType: MessageBlockType = .getStatus
-    public let length: UInt8 = 1
-    public let podInfoType: PodInfoResponseSubType
+    let blockType: MessageBlockType = .getStatus
+    let length: UInt8 = 1
+    let podInfoType: PodInfoResponseSubType
 
-    public init(podInfoType: PodInfoResponseSubType = .normal) {
+    init(podInfoType: PodInfoResponseSubType = .normal) {
         self.podInfoType = podInfoType
     }
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         if encodedData.count < 3 {
             throw MessageBlockError.notEnoughData
         }
@@ -30,7 +30,7 @@ public struct GetStatusCommand: MessageBlock {
         self.podInfoType = podInfoType
     }
 
-    public var data: Data {
+    var data: Data {
         var data = Data([
             blockType.rawValue,
             length
@@ -41,7 +41,7 @@ public struct GetStatusCommand: MessageBlock {
 }
 
 extension GetStatusCommand: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "GetStatusCommand(\(podInfoType))"
     }
 }

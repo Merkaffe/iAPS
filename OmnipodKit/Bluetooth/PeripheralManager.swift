@@ -325,7 +325,7 @@ extension PeripheralManager {
 }
 
 extension PeripheralManager {
-    public override var debugDescription: String {
+    override var debugDescription: String {
         var items = [
             "## PeripheralManager",
             "peripheral: \(peripheral)",
@@ -534,7 +534,7 @@ extension CBPeripheral {
 
 // MARK: - Command session management
 extension PeripheralManager {
-    public func runSession(withName name: String , _ block: @escaping () -> Void) {
+    func runSession(withName name: String , _ block: @escaping () -> Void) {
         self.log.default("Scheduling session %{public}@", name)
 
         sessionQueue.addOperation({ [weak self] in

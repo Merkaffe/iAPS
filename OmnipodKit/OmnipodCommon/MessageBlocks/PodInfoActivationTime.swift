@@ -10,22 +10,22 @@
 import Foundation
 
 // Type 5 PodInfo returns the pod activation time and possible fault code & fault time
-public struct PodInfoActivationTime : PodInfo {
+struct PodInfoActivationTime : PodInfo {
     // OFF 1  2  3  4 5  6 7 8 9 10111213 1415161718
     // DATA   0  1  2 3  4 5 6 7 8 9 1011 1213141516
     // 02 11 05 PP QQQQ 00000000 00000000 MMDDYYHHMM
 
-    public let podInfoType: PodInfoResponseSubType = .activationTime
-    public let faultEventCode: FaultEventCode
-    public let faultTime: TimeInterval
-    public let year: Int
-    public let month: Int
-    public let day: Int
-    public let hour: Int
-    public let minute: Int
-    public let data: Data
+    let podInfoType: PodInfoResponseSubType = .activationTime
+    let faultEventCode: FaultEventCode
+    let faultTime: TimeInterval
+    let year: Int
+    let month: Int
+    let day: Int
+    let hour: Int
+    let minute: Int
+    let data: Data
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         guard encodedData.count >= 16 else {
             throw MessageBlockError.notEnoughData
         }
@@ -40,7 +40,7 @@ public struct PodInfoActivationTime : PodInfo {
     }
 }
 
-public func activationTimeString(podInfoActivationTime: PodInfoActivationTime) -> String {
+func activationTimeString(podInfoActivationTime: PodInfoActivationTime) -> String {
     var result: [String] = []
 
     // activation time info

@@ -17,7 +17,7 @@ struct ErrorView: View {
     
     @Environment(\.guidanceColors) var guidanceColors
     
-    public enum ErrorCriticality {
+    enum ErrorCriticality {
         case critical
         case normal
         

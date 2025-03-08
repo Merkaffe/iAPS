@@ -10,21 +10,22 @@
 import Foundation
 import LoopKit
 
+// XXX still needs be declared public with the current Trio implementation
 public struct UnfinalizedDose: RawRepresentable, Equatable, CustomStringConvertible {
     public typealias RawValue = [String: Any]
 
-    public enum DoseType: Int {
+    enum DoseType: Int {
         case bolus = 0
         case tempBasal
         case suspend
         case resume
     }
 
-    public enum ScheduledCertainty: Int {
+    enum ScheduledCertainty: Int {
         case certain = 0
         case uncertain
 
-        public var localizedDescription: String {
+        var localizedDescription: String {
             switch self {
             case .certain:
                 return LocalizedString("Certain", comment: "String describing a dose that was certainly scheduled")
@@ -54,19 +55,20 @@ public struct UnfinalizedDose: RawRepresentable, Equatable, CustomStringConverti
         return "\(doseType) \(scheduledUnits ?? units) \(dateFormatter.string(from: startTime))".data(using: .utf8)!
     }
 
-    public let doseType: DoseType
-    public var units: Double
+    let doseType: DoseType
+    var units: Double
+    // XXX still needs be declared public with the current Trio implementation
     public var automatic: Bool // Tracks if this dose was issued automatically or manually
-    public var scheduledUnits: Double? // Tracks the scheduled units, as boluses may be canceled before finishing, at which point units would reflect actual delivered volume.
-    public var scheduledTempRate: Double? // Tracks the original temp rate, as during finalization the units are discretized to pump pulses, changing the actual rate
-    public let startTime: Date
-    public var duration: TimeInterval?
-    public var scheduledCertainty: ScheduledCertainty
-    public var isHighTemp: Bool =
+    var scheduledUnits: Double? // Tracks the scheduled units, as boluses may be canceled before finishing, at which point units would reflect actual delivered volume.
+    var scheduledTempRate: Double? // Tracks the original temp rate, as during finalization the units are discretized to pump pulses, changing the actual rate
+    let startTime: Date
+    var duration: TimeInterval?
+    var scheduledCertainty: ScheduledCertainty
+    var isHighTemp: Bool =
         false // Track this for situations where cancelling temp basal is unacknowledged, and recovery fails, and we have to assume the most possible delivery
-    public var insulinType: InsulinType?
+    var insulinType: InsulinType?
 
-    public var finishTime: Date? {
+    var finishTime: Date? {
         get {
             duration != nil ? startTime.addingTimeInterval(duration!) : nil
         }
@@ -75,7 +77,7 @@ public struct UnfinalizedDose: RawRepresentable, Equatable, CustomStringConverti
         }
     }
 
-    public func progress(at date: Date = Date()) -> Double {
+    func progress(at date: Date = Date()) -> Double {
         guard let duration = duration else {
             return 0
         }
@@ -83,26 +85,27 @@ public struct UnfinalizedDose: RawRepresentable, Equatable, CustomStringConverti
         return min(elapsed / duration, 1)
     }
 
+    // XXX still needs be declared public with the current Trio implementation
     public func isFinished(at date: Date = Date()) -> Bool {
         progress(at: date) >= 1
     }
 
     // Units per hour
-    public var rate: Double {
+    var rate: Double {
         guard let duration = duration else {
             return 0
         }
         return units / duration.hours
     }
 
-    public var finalizedUnits: Double? {
+    var finalizedUnits: Double? {
         guard isFinished() else {
             return nil
         }
         return units
     }
 
-    public init(
+    init(
         bolusAmount: Double,
         startTime: Date,
         scheduledCertainty: ScheduledCertainty,
@@ -119,7 +122,7 @@ public struct UnfinalizedDose: RawRepresentable, Equatable, CustomStringConverti
         self.insulinType = insulinType
     }
 
-    public init(
+    init(
         tempBasalRate: Double,
         startTime: Date,
         duration: TimeInterval,
@@ -139,7 +142,7 @@ public struct UnfinalizedDose: RawRepresentable, Equatable, CustomStringConverti
         self.insulinType = insulinType
     }
 
-    public init(suspendStartTime: Date, scheduledCertainty: ScheduledCertainty) {
+    init(suspendStartTime: Date, scheduledCertainty: ScheduledCertainty) {
         doseType = .suspend
         units = 0
         startTime = suspendStartTime
@@ -147,7 +150,7 @@ public struct UnfinalizedDose: RawRepresentable, Equatable, CustomStringConverti
         automatic = false
     }
 
-    public init(resumeStartTime: Date, scheduledCertainty: ScheduledCertainty, insulinType: InsulinType) {
+    init(resumeStartTime: Date, scheduledCertainty: ScheduledCertainty, insulinType: InsulinType) {
         doseType = .resume
         units = 0
         startTime = resumeStartTime
@@ -156,7 +159,7 @@ public struct UnfinalizedDose: RawRepresentable, Equatable, CustomStringConverti
         self.insulinType = insulinType
     }
 
-    public mutating func cancel(at date: Date, withRemaining remaining: Double? = nil) {
+    mutating func cancel(at date: Date, withRemaining remaining: Double? = nil) {
         guard let finishTime = finishTime, date < finishTime else {
             return
         }
@@ -186,7 +189,7 @@ public struct UnfinalizedDose: RawRepresentable, Equatable, CustomStringConverti
         duration = newDuration
     }
 
-    public func isMutable(at date: Date = Date()) -> Bool {
+    func isMutable(at date: Date = Date()) -> Bool {
         switch doseType {
         case .bolus,
              .tempBasal:
@@ -262,7 +265,7 @@ public struct UnfinalizedDose: RawRepresentable, Equatable, CustomStringConverti
         }
     }
 
-    public var eventTitle: String {
+    var eventTitle: String {
         switch doseType {
         case .bolus:
             return LocalizedString("Bolus", comment: "Pump Event title for UnfinalizedDose with doseType of .bolus")
@@ -351,14 +354,14 @@ private extension TimeInterval {
     }
 }
 
-public extension NewPumpEvent {
+extension NewPumpEvent {
     init(_ dose: UnfinalizedDose) {
         let entry = DoseEntry(dose)
         self.init(date: dose.startTime, dose: entry, raw: dose.uniqueKey, title: dose.eventTitle)
     }
 }
 
-public extension DoseEntry {
+extension DoseEntry {
     init(_ dose: UnfinalizedDose) {
         switch dose.doseType {
         case .bolus:
@@ -393,7 +396,7 @@ public extension DoseEntry {
     }
 }
 
-public extension StartProgram {
+extension StartProgram {
     func unfinalizedDose(
         at programDate: Date,
         withCertainty certainty: UnfinalizedDose.ScheduledCertainty,

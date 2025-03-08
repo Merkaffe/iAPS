@@ -79,9 +79,9 @@ protocol OmniUINavigator: AnyObject {
 
 class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, CompletionNotifying, UINavigationControllerDelegate {
 
-    public weak var pumpManagerOnboardingDelegate: PumpManagerOnboardingDelegate?
+    weak var pumpManagerOnboardingDelegate: PumpManagerOnboardingDelegate?
 
-    public weak var completionDelegate: CompletionDelegate?
+    weak var completionDelegate: CompletionDelegate?
 
     var podType = unknownOmnipodType
 
@@ -437,7 +437,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 isOnboarded: false,
                 podState: nil,
                 timeZone: basalSchedule.timeZone,
-                basalSchedule: BasalSchedule(repeatingScheduleValues: basalSchedule.items, zeroBasalRate: 0),
+                basalSchedule: BasalSchedule(repeatingScheduleValues: basalSchedule.items, podType: self.podType),
                 insulinType: nil,
                 maximumTempBasalRate: pumpManagerSettings.maxBasalRateUnitsPerHour,
                 podType: self.podType)
@@ -521,7 +521,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
         completionDelegate?.completionNotifyingDidComplete(self)
     }
 
-    public func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
+    func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
                 
         setOverrideTraitCollection(customTraitCollection, forChild: viewController)
         

@@ -7,17 +7,18 @@
 //  Copyright © 2024 LoopKit Authors. All rights reserved.
 //
 
-import RileyLinkKit
 import RileyLinkBLEKit
 import LoopKit
 
+// XXX still needs be declared public with the current Trio implementation
 public struct OmniPumpManagerState: RawRepresentable, Equatable {
     public typealias RawValue = PumpManager.RawStateValue
 
-    public static let version = 3
+    static let version = 3
 
-    public var isOnboarded: Bool = false
+    var isOnboarded: Bool = false
 
+    // XXX still needs be declared public with the current Trio implementatio
     private(set) public var podState: PodState?
 
     // State should only be modifiable by PodComms
@@ -25,29 +26,30 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         self.podState = podState
     }
 
-    public var timeZone: TimeZone
+    var timeZone: TimeZone
 
-    public var basalSchedule: BasalSchedule
+    var basalSchedule: BasalSchedule
 
-    public var unstoredDoses: [UnfinalizedDose]
+    var unstoredDoses: [UnfinalizedDose]
 
-    public var silencePod: Bool
+    var silencePod: Bool
 
-    public var confirmationBeeps: BeepPreference
+    var confirmationBeeps: BeepPreference
 
-    public var scheduledExpirationReminderOffset: TimeInterval?
+    var scheduledExpirationReminderOffset: TimeInterval?
 
-    public var defaultExpirationReminderOffset = Pod.defaultExpirationReminderOffset
+    var defaultExpirationReminderOffset = Pod.defaultExpirationReminderOffset
 
-    public var lowReservoirReminderValue: Double
+    var lowReservoirReminderValue: Double
 
-    public var podAttachmentConfirmed: Bool
+    var podAttachmentConfirmed: Bool
 
+    // XXX still needs be declared public with the current Trio implementatio
     public var activeAlerts: Set<PumpManagerAlert>
 
-    public var alertsWithPendingAcknowledgment: Set<PumpManagerAlert>
+    var alertsWithPendingAcknowledgment: Set<PumpManagerAlert>
 
-    public var acknowledgedTimeOffsetAlert: Bool
+    var acknowledgedTimeOffsetAlert: Bool
 
     internal var lastPumpDataReportDate: Date?
 
@@ -59,30 +61,30 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     // Indicates that the user has completed initial configuration
     // which means they have configured any parameters, but may not have paired a pod yet.
-    public var initialConfigurationCompleted: Bool = false
+    var initialConfigurationCompleted: Bool = false
 
     internal var maximumTempBasalRate: Double
 
 
     // From last status response
-    public var reservoirLevel: ReservoirLevel? {
+    var reservoirLevel: ReservoirLevel? {
         guard let level = podState?.lastInsulinMeasurements?.reservoirLevel else {
             return nil
         }
         return ReservoirLevel(rawValue: level)
     }
 
-    public var podType: PodType
+    var podType: PodType
 
     // Eros only state
-    public var rileyLinkConnectionManagerState: RileyLinkConnectionState?
-    public var pairingAttemptAddress: UInt32? = nil
-    public var rileyLinkBatteryAlertLevel: Int? = nil
-    public var lastRileyLinkBatteryAlertDate: Date = .distantPast
+    var rileyLinkConnectionManagerState: RileyLinkConnectionState?
+    var pairingAttemptAddress: UInt32? = nil
+    var rileyLinkBatteryAlertLevel: Int? = nil
+    var lastRileyLinkBatteryAlertDate: Date = .distantPast
 
     // DASH only state
-    public var controllerId: UInt32 = 0
-    public var podId: UInt32 = 0
+    var controllerId: UInt32 = 0
+    var podId: UInt32 = 0
 
 
     // Temporal state not persisted
@@ -104,7 +106,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     // MARK: -
 
-    public init(
+    init(
         isOnboarded: Bool,
         podState: PodState?,
         timeZone: TimeZone,

@@ -11,7 +11,7 @@ import SwiftUI
 import LoopKitUI
 
 
-public struct PodDetails {
+struct PodDetails {
     var lotNumber: UInt32
     var sequenceNumber: UInt32
     var firmwareVersion: String

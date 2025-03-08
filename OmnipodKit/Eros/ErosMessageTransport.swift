@@ -296,7 +296,7 @@ class ErosPodMessageTransport: MessageTransport {
 }
 
 extension ErosPodMessageTransport: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return [
             "## ErosPodMessageTransport",
             "packetNumber: \(packetNumber)",

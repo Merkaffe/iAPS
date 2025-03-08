@@ -9,7 +9,7 @@
 
 import Foundation
 
-public enum PodProgressStatus: UInt8, CustomStringConvertible, Equatable {
+enum PodProgressStatus: UInt8, CustomStringConvertible, Equatable {
     case initialized = 0
     case memoryInitialized = 1
     case reminderInitialized = 2
@@ -27,11 +27,11 @@ public enum PodProgressStatus: UInt8, CustomStringConvertible, Equatable {
     case activationTimeExceeded = 14    // took > 2 hrs from progress 2 to 3 OR > 1 hr from 3 to 8
     case inactive = 15                  // pod deactivated or a fatal packet state error
 
-    public var readyForDelivery: Bool {
+    var readyForDelivery: Bool {
         return self == .fiftyOrLessUnits || self == .aboveFiftyUnits
     }
 
-    public var description: String {
+    var description: String {
         switch self {
         case .initialized:
             return LocalizedString("Initialized", comment: "Pod initialized")

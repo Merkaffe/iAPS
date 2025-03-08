@@ -21,7 +21,7 @@ enum OmniSettingsViewAlert {
     case syncTimeError(OmniPumpManagerError)
 }
 
-public enum ReservoirLevelHighlightState: String, Equatable {
+enum ReservoirLevelHighlightState: String, Equatable {
     case normal
     case warning
     case critical
@@ -509,7 +509,7 @@ class OmniSettingsViewModel: ObservableObject {
         }
     }
 
-    public var allowedTempBasalRates: [Double] {
+    var allowedTempBasalRates: [Double] {
         return Pod.supportedTempBasalRates.filter { $0 <= pumpManager.state.maximumTempBasalRate }
     }
 
@@ -624,14 +624,14 @@ extension OmniPumpManager {
         )
     }
 
-    public var podDetails: PodDetails? {
+    var podDetails: PodDetails? {
         guard let podState = state.podState else {
             return nil
         }
         return podDetails(fromPodState: podState, andDeviceName: deviceBLEName)
     }
 
-    public var previousPodDetails: PodDetails? {
+    var previousPodDetails: PodDetails? {
         guard let podState = state.previousPodState else {
             return nil
         }

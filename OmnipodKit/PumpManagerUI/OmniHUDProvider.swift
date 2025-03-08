@@ -12,7 +12,7 @@ import SwiftUI
 import LoopKit
 import LoopKitUI
 
-public enum ReservoirAlertState {
+enum ReservoirAlertState {
     case ok
     case lowReservoir
     case empty
@@ -43,7 +43,7 @@ internal class OmniHUDProvider: NSObject, HUDProvider {
         }
     }
 
-    public init(pumpManager: OmniPumpManager, bluetoothProvider: BluetoothProvider, colorPalette: LoopUIColorPalette, allowedInsulinTypes: [InsulinType]) {
+    init(pumpManager: OmniPumpManager, bluetoothProvider: BluetoothProvider, colorPalette: LoopUIColorPalette, allowedInsulinTypes: [InsulinType]) {
         self.pumpManager = pumpManager
         self.bluetoothProvider = bluetoothProvider
         self.colorPalette = colorPalette
@@ -52,14 +52,14 @@ internal class OmniHUDProvider: NSObject, HUDProvider {
         self.pumpManager.addPodStateObserver(self, queue: .main)
     }
 
-    public func createHUDView() -> BaseHUDView? {
+    func createHUDView() -> BaseHUDView? {
         reservoirView = OmniReservoirView.instantiate()
         updateReservoirView()
 
         return reservoirView
     }
 
-    public func didTapOnHUDView(_ view: BaseHUDView, allowDebugFeatures: Bool) -> HUDTapAction? {
+    func didTapOnHUDView(_ view: BaseHUDView, allowDebugFeatures: Bool) -> HUDTapAction? {
         let vc = pumpManager.settingsViewController(bluetoothProvider: bluetoothProvider, colorPalette: colorPalette, allowDebugFeatures: allowDebugFeatures, allowedInsulinTypes: allowedInsulinTypes)
         return HUDTapAction.presentViewController(vc)
     }
@@ -69,7 +69,7 @@ internal class OmniHUDProvider: NSObject, HUDProvider {
         refresh()
     }
     
-    public var hudViewRawState: HUDProvider.HUDViewRawState {
+    var hudViewRawState: HUDProvider.HUDViewRawState {
         var rawValue: HUDProvider.HUDViewRawState = [:]
         
         rawValue["lastStatusDate"] = pumpManager.lastStatusDate
@@ -85,7 +85,7 @@ internal class OmniHUDProvider: NSObject, HUDProvider {
         return rawValue
     }
 
-    public static func createHUDView(rawValue: HUDProvider.HUDViewRawState) -> BaseHUDView? {
+    static func createHUDView(rawValue: HUDProvider.HUDViewRawState) -> BaseHUDView? {
         guard let rawReservoirLevel = rawValue["reservoirLevel"] as? ReservoirLevel.RawValue,
               let rawReservoirLevelHighlightState = rawValue["reservoirLevelHighlightState"] as? ReservoirLevelHighlightState.RawValue,
               let reservoirLevelHighlightState = ReservoirLevelHighlightState(rawValue: rawReservoirLevelHighlightState)

@@ -9,13 +9,13 @@
 
 import Foundation
 
-public enum ReservoirLevel: RawRepresentable, Equatable {
-    public typealias RawValue = Double
+enum ReservoirLevel: RawRepresentable, Equatable {
+    typealias RawValue = Double
 
     case valid(Double)
     case aboveThreshold
 
-    public var percentage: Double {
+    var percentage: Double {
         switch self {
         case .aboveThreshold:
             return 1
@@ -25,7 +25,7 @@ public enum ReservoirLevel: RawRepresentable, Equatable {
         }
     }
 
-    public init(rawValue: RawValue) {
+    init(rawValue: RawValue) {
         if rawValue > Pod.maximumReservoirReading {
             self = .aboveThreshold
         } else {
@@ -33,7 +33,7 @@ public enum ReservoirLevel: RawRepresentable, Equatable {
         }
     }
 
-    public var rawValue: RawValue {
+    var rawValue: RawValue {
         switch self {
         case .valid(let value):
             return value

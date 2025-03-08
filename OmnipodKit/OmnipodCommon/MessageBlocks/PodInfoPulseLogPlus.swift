@@ -10,22 +10,22 @@
 import Foundation
 
 // Type 3 Pod Info returns up to the last 60 pulse log entries pulse some additional info
-public struct PodInfoPulseLogPlus : PodInfo {
+struct PodInfoPulseLogPlus : PodInfo {
     // CMD 1  2  3  4 5  6 7  8  9 10
     // DATA   0  1  2 3  4 5  6  7  8
     // 02 LL 03 PP QQQQ SSSS 04 3c XXXXXXXX ...
 
-    public let podInfoType   : PodInfoResponseSubType = .pulseLogPlus
-    public let faultEventCode: FaultEventCode // fault code
-    public let timeFaultEvent: TimeInterval // fault time since activation
-    public let timeActivation: TimeInterval // current time since activation
-    public let entrySize     : Int // always 4
-    public let maxEntries    : Int // always 60
-    public let nEntries      : Int // how many 32-bit pulse log entries returned (calculated)
-    public let pulseLog      : [UInt32]
-    public let data          : Data
+    let podInfoType   : PodInfoResponseSubType = .pulseLogPlus
+    let faultEventCode: FaultEventCode // fault code
+    let timeFaultEvent: TimeInterval // fault time since activation
+    let timeActivation: TimeInterval // current time since activation
+    let entrySize     : Int // always 4
+    let maxEntries    : Int // always 60
+    let nEntries      : Int // how many 32-bit pulse log entries returned (calculated)
+    let pulseLog      : [UInt32]
+    let data          : Data
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         guard encodedData[6] == MemoryLayout<UInt32>.size else {
             throw MessageError.unknownValue(value: encodedData[6], typeDescription: "pulseLog entry size")
         }
@@ -51,7 +51,7 @@ public struct PodInfoPulseLogPlus : PodInfo {
     }
 }
 
-public func pulseLogPlusString(podInfoPulseLogPlus: PodInfoPulseLogPlus) -> String {
+func pulseLogPlusString(podInfoPulseLogPlus: PodInfoPulseLogPlus) -> String {
     var result: [String] = []
 
     result.append(String(format: "Pod Active: %@", podInfoPulseLogPlus.timeActivation.timeIntervalStr))

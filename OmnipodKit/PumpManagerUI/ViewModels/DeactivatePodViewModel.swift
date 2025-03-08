@@ -11,7 +11,7 @@ import Foundation
 import LoopKitUI
 
 
-public protocol PodDeactivater {
+protocol PodDeactivater {
     func deactivatePod(completion: @escaping (OmniPumpManagerError?) -> Void)
     func forgetPod(completion: @escaping () -> Void)
 }
@@ -103,7 +103,7 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
     
     @Published var state: DeactivatePodViewModelState = .active
 
-    public var stateNeedsDeliberateUserAcceptance : Bool {
+    var stateNeedsDeliberateUserAcceptance : Bool {
         switch state {
         case .active:
             true
@@ -159,7 +159,7 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
         self.instructionText = text
     }
     
-    public func continueButtonTapped() {
+    func continueButtonTapped() {
         if case .finished = state {
             didFinish?()
         } else {
@@ -176,7 +176,7 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
         }
     }
     
-    public func discardPod(navigateOnCompletion: Bool = true) {
+    func discardPod(navigateOnCompletion: Bool = true) {
         podDeactivator.forgetPod {
             DispatchQueue.main.async {
                 if navigateOnCompletion {

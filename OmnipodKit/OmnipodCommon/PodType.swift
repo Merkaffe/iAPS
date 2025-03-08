@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct PodType: CustomStringConvertible, Equatable {
+struct PodType: CustomStringConvertible, Equatable {
     let rawValue: UInt8
 
     // Product ID code values returned in the VersionResponse productId byte
@@ -40,7 +40,7 @@ public struct PodType: CustomStringConvertible, Equatable {
         self.rawValue = podType.rawValue
     }
 
-    public var description: String {
+    var description: String {
         switch podType {
         case .productIdEros:
             return LocalizedString("Omnipod Classic pods (also known as Eros pods) have a clear needle tab with a 6-character LOT number starting with 'L'. These pods require the use of a RileyLink to communicate with the iPhone.", comment: "Description for Omnipod Classic pods")

@@ -23,7 +23,7 @@ open class PodDoseProgressEstimator: DoseProgressTimerEstimator {
         return DoseProgress(deliveredUnits: delivered, percentComplete: percentComplete)
     }
 
-    public init(dose: DoseEntry, pumpManager: PumpManager, reportingQueue: DispatchQueue) {
+    init(dose: DoseEntry, pumpManager: PumpManager, reportingQueue: DispatchQueue) {
         self.dose = dose
         self.pumpManager = pumpManager
         super.init(reportingQueue: reportingQueue)

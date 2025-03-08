@@ -12,49 +12,49 @@ import Foundation
 fileprivate let assignAddressVersionLength: UInt8 = 0x15
 fileprivate let setupPodVersionLength: UInt8 = 0x1B
 
-public struct VersionResponse : MessageBlock {
+struct VersionResponse : MessageBlock {
 
-    public struct FirmwareVersion : CustomStringConvertible {
+    struct FirmwareVersion : CustomStringConvertible {
         let major: UInt8
         let minor: UInt8
         let patch: UInt8
 
-        public init(encodedData: Data) {
+        init(encodedData: Data) {
             major = encodedData[0]
             minor = encodedData[1]
             patch = encodedData[2]
         }
 
-        public var description: String {
+        var description: String {
             return "\(major).\(minor).\(patch)"
         }
     }
 
-    public let blockType: MessageBlockType = .versionResponse
+    let blockType: MessageBlockType = .versionResponse
 
-    public let firmwareVersion: FirmwareVersion     // for Eros (PM) 2.x.y, for NXP Dash 3.x.y, for TWI Dash 4.x.y
-    public let iFirmwareVersion: FirmwareVersion    // for Eros (PI) same as PM, for Dash BLE firmware version #
-    public let podType: PodType                     // 02 for Eros, 04 for Dash, perhaps 05 for Omnipod 5
-    public let lot: UInt32
-    public let tid: UInt32
-    public let address: UInt32
-    public let podProgressStatus: PodProgressStatus
+    let firmwareVersion: FirmwareVersion     // for Eros (PM) 2.x.y, for NXP Dash 3.x.y, for TWI Dash 4.x.y
+    let iFirmwareVersion: FirmwareVersion    // for Eros (PI) same as PM, for Dash BLE firmware version #
+    let podType: PodType                     // 02 for Eros, 04 for Dash, perhaps 05 for Omnipod 5
+    let lot: UInt32
+    let tid: UInt32
+    let address: UInt32
+    let podProgressStatus: PodProgressStatus
 
     // These values only included in the shorter 0x15 VersionResponse for the AssignAddress command for Eros.
-    public let gain: UInt8?                         // 2-bit value, max gain is at 0, min gain is at 2
-    public let rssi: UInt8?                         // 6-bit value, max rssi seen 61
+    let gain: UInt8?                         // 2-bit value, max gain is at 0, min gain is at 2
+    let rssi: UInt8?                         // 6-bit value, max rssi seen 61
 
     // These values only included in the longer 0x1B VersionResponse for the SetupPod command.
-    public let pulseSize: Double?                   // VVVV / 100,000, must be 0x1388 / 100,000 = 0.05U
-    public let secondsPerBolusPulse: Double?        // BR / 8, nominally 0x10 / 8 = 2 seconds per pulse
-    public let secondsPerPrimePulse: Double?        // PR / 8, nominally 0x08 / 8 = 1 seconds per priming pulse
-    public let primeUnits: Double?                  // PP / pulsesPerUnit, nominally 0x34 / 20 = 2.6U
-    public let cannulaInsertionUnits: Double?       // CP / pulsesPerUnit, nominally 0x0A / 20 = 0.5U
-    public let serviceDuration: TimeInterval?       // PL hours, nominally 0x50 = 80 hours
+    let pulseSize: Double?                   // VVVV / 100,000, must be 0x1388 / 100,000 = 0.05U
+    let secondsPerBolusPulse: Double?        // BR / 8, nominally 0x10 / 8 = 2 seconds per pulse
+    let secondsPerPrimePulse: Double?        // PR / 8, nominally 0x08 / 8 = 1 seconds per priming pulse
+    let primeUnits: Double?                  // PP / pulsesPerUnit, nominally 0x34 / 20 = 2.6U
+    let cannulaInsertionUnits: Double?       // CP / pulsesPerUnit, nominally 0x0A / 20 = 0.5U
+    let serviceDuration: TimeInterval?       // PL hours, nominally 0x50 = 80 hours
 
-    public let data: Data
+    let data: Data
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         let responseLength = encodedData[1]
         data = encodedData.subdata(in: 0..<Int(responseLength + 2))
 
@@ -145,17 +145,17 @@ public struct VersionResponse : MessageBlock {
         }
     }
 
-    public var isAssignAddressVersionResponse: Bool {
+    var isAssignAddressVersionResponse: Bool {
         return self.data.count == assignAddressVersionLength + 2
     }
 
-    public var isSetupPodVersionResponse: Bool {
+    var isSetupPodVersionResponse: Bool {
         return self.data.count == setupPodVersionLength + 2
     }
 }
 
 extension VersionResponse: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "VersionResponse(lot:\(lot), tid:\(tid), address:\(Data(bigEndian: address).hexadecimalString), firmwareVersion:\(firmwareVersion), iFirmwareVersion:\(iFirmwareVersion), podType.:\(podType.localizedDescription), podProgressStatus:\(podProgressStatus), gain:\(gain?.description ?? "NA"), rssi:\(rssi?.description ?? "NA"), pulseSize:\(pulseSize?.description ?? "NA"), secondsPerBolusPulse:\(secondsPerBolusPulse?.description ?? "NA"), secondsPerPrimePulse:\(secondsPerPrimePulse?.description ?? "NA"), primeUnits:\(primeUnits?.description ?? "NA"), cannulaInsertionUnits:\(cannulaInsertionUnits?.description ?? "NA"), serviceDuration:\(serviceDuration?.description ?? "NA"), )"
     }
 }

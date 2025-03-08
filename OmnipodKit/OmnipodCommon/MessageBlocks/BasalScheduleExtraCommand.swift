@@ -9,18 +9,18 @@
 
 import Foundation
 
-public struct BasalScheduleExtraCommand: MessageBlock {
-    public let blockType: MessageBlockType = .basalScheduleExtra
+ struct BasalScheduleExtraCommand: MessageBlock {
+    let blockType: MessageBlockType = .basalScheduleExtra
 
-    public let acknowledgementBeep: Bool
-    public let completionBeep: Bool
-    public let programReminderInterval: TimeInterval
-    public let currentEntryIndex: UInt8
-    public let remainingPulses: Double
-    public let delayUntilNextTenthOfPulse: TimeInterval
-    public let rateEntries: [RateEntry]
+    let acknowledgementBeep: Bool
+    let completionBeep: Bool
+    let programReminderInterval: TimeInterval
+    let currentEntryIndex: UInt8
+    let remainingPulses: Double
+    let delayUntilNextTenthOfPulse: TimeInterval
+    let rateEntries: [RateEntry]
 
-    public var data: Data {
+    var data: Data {
         let beepOptions = (UInt8(programReminderInterval.minutes) & 0x3f) + (completionBeep ? (1<<6) : 0) + (acknowledgementBeep ? (1<<7) : 0)
         var data = Data([
             blockType.rawValue,
@@ -36,7 +36,7 @@ public struct BasalScheduleExtraCommand: MessageBlock {
         return data
     }
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         if encodedData.count < 14 {
             throw MessageBlockError.notEnoughData
         }
@@ -62,7 +62,7 @@ public struct BasalScheduleExtraCommand: MessageBlock {
         rateEntries = entries
     }
 
-    public init(currentEntryIndex: UInt8, remainingPulses: Double, delayUntilNextTenthOfPulse: TimeInterval, rateEntries: [RateEntry], acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0) {
+    init(currentEntryIndex: UInt8, remainingPulses: Double, delayUntilNextTenthOfPulse: TimeInterval, rateEntries: [RateEntry], acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0) {
         self.currentEntryIndex = currentEntryIndex
         self.remainingPulses = remainingPulses
         self.delayUntilNextTenthOfPulse = delayUntilNextTenthOfPulse
@@ -72,12 +72,12 @@ public struct BasalScheduleExtraCommand: MessageBlock {
         self.programReminderInterval = programReminderInterval
     }
 
-    public init(schedule: BasalSchedule, scheduleOffset: TimeInterval, acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0, zeroBasalRate: Double) {
+    init(schedule: BasalSchedule, scheduleOffset: TimeInterval, acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0, podType: PodType) {
         var rateEntries = [RateEntry]()
 
         let mergedSchedule = BasalSchedule(entries: schedule.entries.adjacentEqualRatesMerged())
         for entry in mergedSchedule.durations() {
-            rateEntries.append(contentsOf: RateEntry.makeEntries(rate: entry.rate, duration: entry.duration, zeroBasalRate: zeroBasalRate))
+            rateEntries.append(contentsOf: RateEntry.makeEntries(rate: entry.rate, duration: entry.duration, podType: podType))
         }
 
         self.rateEntries = rateEntries
@@ -105,10 +105,5 @@ public struct BasalScheduleExtraCommand: MessageBlock {
             entryIndex += 1
         }
         fatalError("RateEntry schedule incomplete")
-    }
-
-    public init(schedule: BasalSchedule, scheduleOffset: TimeInterval, acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0, podType: PodType)
-    {
-        self.init(schedule: schedule, scheduleOffset: scheduleOffset, acknowledgementBeep: acknowledgementBeep, completionBeep: completionBeep, programReminderInterval: programReminderInterval, zeroBasalRate: podType.zeroBasalRate)
     }
 }

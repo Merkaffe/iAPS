@@ -15,12 +15,12 @@ import CoreBluetooth
 import UserNotifications
 import os.log
 
-public protocol PodStateObserver: AnyObject {
+protocol PodStateObserver: AnyObject {
     func podStateDidUpdate(_ state: PodState?)
     func podConnectionStateDidChange(isConnected: Bool)
 }
 
-public enum PodCommState: Equatable {
+enum PodCommState: Equatable {
     case noPod
     case activating
     case active
@@ -28,7 +28,7 @@ public enum PodCommState: Equatable {
     case deactivating
 }
 
-public enum OmniPumpManagerError: Error {
+enum OmniPumpManagerError: Error {
     case noPodPaired
     case podAlreadyPaired
     case insulinTypeNotConfigured
@@ -40,7 +40,7 @@ public enum OmniPumpManagerError: Error {
 }
 
 extension OmniPumpManagerError: LocalizedError {
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .noPodPaired:
             return LocalizedString("No pod paired", comment: "Error message shown when no pod is paired")
@@ -69,11 +69,11 @@ extension OmniPumpManagerError: LocalizedError {
         }
     }
 
-    public var failureReason: String? {
+    var failureReason: String? {
         return nil
     }
 
-    public var recoverySuggestion: String? {
+    var recoverySuggestion: String? {
         switch self {
         case .noPodPaired:
             return LocalizedString("Please pair a new pod", comment: "Recovery suggestion shown when no pod is paired")
@@ -87,17 +87,15 @@ extension OmniPumpManagerError: LocalizedError {
 // even though for non-Eros pods the RileyLink code will not be used.
 public class OmniPumpManager: RileyLinkPumpManager {
 
-    // Must be declared public static for the Pluggable protocol.
     // This string should match the PumpManagerIdentifier string.
     public static let pluginIdentifier: String = "Omni"
 
-    // Must be declared public for the DeviceManger protocol.
     // This string is the displayed Insulin Pump name in Loop Settings.
     public var localizedTitle = LocalizedString("Omnipod", comment: "Generic title for the Omnipod pump manager")
 
     static let podAlarmNotificationIdentifier = "Omni:\(LoopNotificationCategory.pumpFault.rawValue)"
 
-    public init(state: OmniPumpManagerState, rileyLinkDeviceProvider: RileyLinkDeviceProvider, dateGenerator: @escaping () -> Date = Date.init) {
+    init(state: OmniPumpManagerState, rileyLinkDeviceProvider: RileyLinkDeviceProvider, dateGenerator: @escaping () -> Date = Date.init) {
         self.lockedState = Locked(state)
         let podComms = PodComms(podState: state.podState, myId: state.controllerId, podId: state.podId)
         self.lockedPodComms = Locked(podComms)
@@ -128,7 +126,7 @@ public class OmniPumpManager: RileyLinkPumpManager {
     }
 
     // non-RL only
-    public var deviceBLEName: String? {
+    var deviceBLEName: String? {
         return self.podComms.manager?.peripheral.name
     }
 
@@ -145,8 +143,9 @@ public class OmniPumpManager: RileyLinkPumpManager {
     private let podStateObservers = WeakSynchronizedSet<PodStateObserver>()
 
     // Primarily used for testing
-    public let dateGenerator: () -> Date
+    let dateGenerator: () -> Date
 
+    // XXX still needs be declared public with the current Trio implementation
     public var state: OmniPumpManagerState {
         return lockedState.value
     }
@@ -308,7 +307,7 @@ public class OmniPumpManager: RileyLinkPumpManager {
 
     private let pumpDelegate = WeakSynchronizedDelegate<PumpManagerDelegate>()
 
-    public let log = OSLog(category: "OmniPumpManager")
+    let log = OSLog(category: "OmniPumpManager")
 
     private var lastLoopRecommendation: Date?
 
@@ -391,11 +390,11 @@ public class OmniPumpManager: RileyLinkPumpManager {
 extension OmniPumpManager {
     // MARK: - PodStateObserver
 
-    public func addPodStateObserver(_ observer: PodStateObserver, queue: DispatchQueue) {
+    func addPodStateObserver(_ observer: PodStateObserver, queue: DispatchQueue) {
         podStateObservers.insert(observer, queue: queue)
     }
 
-    public func removePodStateObserver(_ observer: PodStateObserver) {
+    func removePodStateObserver(_ observer: PodStateObserver) {
         podStateObservers.removeElement(observer)
     }
 
@@ -555,28 +554,28 @@ extension OmniPumpManager {
         return .deactivating // Can't be reached and thus will never be returned
     }
 
-    public var podCommState: PodCommState {
+    var podCommState: PodCommState {
         return podCommState(for: state)
     }
 
-    public var podActivatedAt: Date? {
+    var podActivatedAt: Date? {
         return state.podState?.activatedAt
     }
 
-    public var podExpiresAt: Date? {
+    var podExpiresAt: Date? {
         return state.podState?.expiresAt
     }
 
-    public var hasActivePod: Bool {
+    var hasActivePod: Bool {
         return state.hasActivePod
     }
 
-    public var hasSetupPod: Bool {
+    var hasSetupPod: Bool {
         return state.hasSetupPod
     }
 
     // If time remaining is negative, the pod has been expired for that amount of time.
-    public var podTimeRemaining: TimeInterval? {
+    var podTimeRemaining: TimeInterval? {
         guard let expiresAt = state.podState?.expiresAt else { return nil }
         return expiresAt.timeIntervalSince(dateGenerator())
     }
@@ -592,7 +591,7 @@ extension OmniPumpManager {
         return true
     }
 
-    public var durationBetweenLastPodCommAndActivation: TimeInterval? {
+    var durationBetweenLastPodCommAndActivation: TimeInterval? {
         guard let lastPodCommDate = state.podState?.lastInsulinMeasurements?.validTime,
               let activationTime = podActivatedAt else
         {
@@ -602,38 +601,38 @@ extension OmniPumpManager {
         return lastPodCommDate.timeIntervalSince(activationTime)
     }
 
-    public var beepPreference: BeepPreference {
+    var beepPreference: BeepPreference {
         get {
             return state.confirmationBeeps
         }
     }
 
-    public var silencePod: Bool {
+    var silencePod: Bool {
         get {
             return state.silencePod
         }
     }
 
     // From last status response
-    public var reservoirLevel: ReservoirLevel? {
+    var reservoirLevel: ReservoirLevel? {
         return state.reservoirLevel
     }
 
-    public var podTotalDelivery: HKQuantity? {
+    var podTotalDelivery: HKQuantity? {
         guard let delivery = state.podState?.lastInsulinMeasurements?.delivered else {
             return nil
         }
         return HKQuantity(unit: .internationalUnit(), doubleValue: delivery)
     }
 
-    public var lastStatusDate: Date? {
+    var lastStatusDate: Date? {
         guard let date = state.podState?.lastInsulinMeasurements?.validTime else {
             return nil
         }
         return date
     }
 
-    public var defaultExpirationReminderOffset: TimeInterval {
+    var defaultExpirationReminderOffset: TimeInterval {
         set {
             setState { (state) in
                 state.defaultExpirationReminderOffset = newValue
@@ -644,7 +643,7 @@ extension OmniPumpManager {
         }
     }
 
-    public var lowReservoirReminderValue: Double {
+    var lowReservoirReminderValue: Double {
         set {
             setState { (state) in
                 state.lowReservoirReminderValue = newValue
@@ -655,7 +654,7 @@ extension OmniPumpManager {
         }
     }
 
-    public var podAttachmentConfirmed: Bool {
+    var podAttachmentConfirmed: Bool {
         set {
             setState { (state) in
                 state.podAttachmentConfirmed = newValue
@@ -666,7 +665,7 @@ extension OmniPumpManager {
         }
     }
 
-    public var initialConfigurationCompleted: Bool {
+    var initialConfigurationCompleted: Bool {
         set {
             setState { (state) in
                 state.initialConfigurationCompleted = newValue
@@ -677,11 +676,11 @@ extension OmniPumpManager {
         }
     }
 
-    public var expiresAt: Date? {
+    var expiresAt: Date? {
         return state.podState?.expiresAt
     }
 
-    public func buildPumpStatusHighlight(for state: OmniPumpManagerState, andDate date: Date = Date()) -> PumpStatusHighlight? {
+     func buildPumpStatusHighlight(for state: OmniPumpManagerState, andDate date: Date = Date()) -> PumpStatusHighlight? {
         if state.podState?.needsCommsRecovery == true {
             return PumpStatusHighlight(
                 localizedMessage: LocalizedString("Comms Issue", comment: "Status highlight that delivery is uncertain."),
@@ -747,14 +746,14 @@ extension OmniPumpManager {
         }
     }
 
-    public func isRunningManualTempBasal(for state: OmniPumpManagerState) -> Bool {
+    func isRunningManualTempBasal(for state: OmniPumpManagerState) -> Bool {
         if let tempBasal = state.podState?.unfinalizedTempBasal, !tempBasal.isFinished(), !tempBasal.automatic {
             return true
         }
         return false
     }
 
-    public var reservoirLevelHighlightState: ReservoirLevelHighlightState? {
+    var reservoirLevelHighlightState: ReservoirLevelHighlightState? {
         guard let reservoirLevel = reservoirLevel else {
             return nil
         }
@@ -773,7 +772,7 @@ extension OmniPumpManager {
         }
     }
 
-    public func buildPumpLifecycleProgress(for state: OmniPumpManagerState) -> PumpLifecycleProgress? {
+    func buildPumpLifecycleProgress(for state: OmniPumpManagerState) -> PumpLifecycleProgress? {
         switch podCommState {
         case .active:
             if shouldWarnPodEOL,
@@ -803,7 +802,7 @@ extension OmniPumpManager {
         }
     }
 
-    public var podType: PodType {
+    var podType: PodType {
         set {
             assert(state.podState == nil) // switching pod type only allowed with no pod
             setState { (state) in
@@ -891,7 +890,7 @@ extension OmniPumpManager {
         self.podComms.prepForNewPod(myId: self.state.controllerId, podId: self.state.podId)
     }
 
-    public func forgetPod(completion: @escaping () -> Void) {
+     func forgetPod(completion: @escaping () -> Void) {
 
         self.podComms.forgetPod()
 
@@ -958,7 +957,7 @@ extension OmniPumpManager {
     }
 
     // Called on the main thread
-    public func pairAndPrime(completion: @escaping (PumpManagerResult<TimeInterval>) -> Void) {
+     func pairAndPrime(completion: @escaping (PumpManagerResult<TimeInterval>) -> Void) {
 
         guard self.state.podType != unknownOmnipodType else {
             completion(.failure(.configuration(OmniPumpManagerError.podTypeNotConfigured)))
@@ -1117,7 +1116,7 @@ extension OmniPumpManager {
     }
 
     // Called on the main thread
-    public func insertCannula(completion: @escaping (Result<TimeInterval,OmniPumpManagerError>) -> Void) {
+    func insertCannula(completion: @escaping (Result<TimeInterval,OmniPumpManagerError>) -> Void) {
         
         #if targetEnvironment(simulator)
         let mockDelay = TimeInterval(seconds: 3)
@@ -1200,7 +1199,7 @@ extension OmniPumpManager {
         #endif
     }
 
-    public func checkCannulaInsertionFinished(completion: @escaping (OmniPumpManagerError?) -> Void) {
+    func checkCannulaInsertionFinished(completion: @escaping (OmniPumpManagerError?) -> Void) {
 #if targetEnvironment(simulator)
         completion(nil)
 #else
@@ -1212,11 +1211,11 @@ extension OmniPumpManager {
                     try session.checkInsertionCompleted()
                     completion(nil)
                 } catch let error {
-                    self.log.error("Failed to fetch pod status: %{public}@", String(describing: error))
+                    self.log.error("Failed to fetch pod status: %{}@", String(describing: error))
                     completion(.communication(error))
                 }
             case .failure(let error):
-                self.log.error("Failed to fetch pod status: %{public}@", String(describing: error))
+                self.log.error("Failed to fetch pod status: %{}@", String(describing: error))
                 completion(.communication(error))
             }
         }
@@ -1225,7 +1224,7 @@ extension OmniPumpManager {
 
     // Called when resuming a pod setup operation which sometimes can fail on the first pod command in various situations.
     // Attempting a getStatus and sleeping a couple of seconds on errors greatly improves the odds for first pod command success.
-    public func resumingPodSetup() {
+     func resumingPodSetup() {
         let sleepTime:UInt32 = 2
 
         if state.podType.usesRileyLink == false && !isConnected {
@@ -1478,7 +1477,7 @@ extension OmniPumpManager {
     // Called on the main thread.
     // The UI is responsible for serializing calls to this method;
     // it does not handle concurrent calls.
-    public func deactivatePod(completion: @escaping (OmniPumpManagerError?) -> Void) {
+    func deactivatePod(completion: @escaping (OmniPumpManagerError?) -> Void) {
         #if targetEnvironment(simulator)
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + .seconds(2)) {
             completion(nil)
@@ -1879,7 +1878,7 @@ extension OmniPumpManager: PumpManager {
 
     public var isOnboarded: Bool { state.isOnboarded }
 
-    public var insulinType: InsulinType? {
+    var insulinType: InsulinType? {
         get {
             return self.state.insulinType
         }
@@ -1929,7 +1928,7 @@ extension OmniPumpManager: PumpManager {
 
     // MARK: Methods
 
-    public func completeOnboard() {
+    func completeOnboard() {
         setState({ (state) in
             state.isOnboarded = true
         })
@@ -1942,7 +1941,7 @@ extension OmniPumpManager: PumpManager {
 
     // A nil suspendReminder is untimed with no reminders beeps, a suspendReminder of 0 is untimed using reminders beeps, otherwise it
     // specifies a suspend duration implemented using an appropriate combination of suspended reminder and suspend time expired beeps.
-    public func suspendDelivery(withSuspendReminders suspendReminder: TimeInterval? = nil, completion: @escaping (Error?) -> Void) {
+    func suspendDelivery(withSuspendReminders suspendReminder: TimeInterval? = nil, completion: @escaping (Error?) -> Void) {
         guard self.hasActivePod else {
             completion(OmniPumpManagerError.noPodPaired)
             return
@@ -2402,7 +2401,7 @@ extension OmniPumpManager: PumpManager {
     }
 
     public func syncBasalRateSchedule(items scheduleItems: [RepeatingScheduleValue<Double>], completion: @escaping (Result<BasalRateSchedule, Error>) -> Void) {
-        let newSchedule = BasalSchedule(repeatingScheduleValues: scheduleItems, zeroBasalRate: state.podType.zeroBasalRate)
+        let newSchedule = BasalSchedule(repeatingScheduleValues: scheduleItems, podType: state.podType)
         setBasalSchedule(newSchedule) { (error) in
             if let error = error {
                 completion(.failure(error))
@@ -2426,7 +2425,7 @@ extension OmniPumpManager: PumpManager {
 
     // MARK: - Alerts
 
-    public var isClockOffset: Bool {
+    var isClockOffset: Bool {
         let now = dateGenerator()
         return TimeZone.current.secondsFromGMT(for: now) != state.timeZone.secondsFromGMT(for: now)
     }
@@ -2441,7 +2440,7 @@ extension OmniPumpManager: PumpManager {
         }
     }
 
-    public func updateExpirationReminder(_ intervalBeforeExpiration: TimeInterval?, completion: @escaping (OmniPumpManagerError?) -> Void) {
+    func updateExpirationReminder(_ intervalBeforeExpiration: TimeInterval?, completion: @escaping (OmniPumpManagerError?) -> Void) {
 
         guard self.hasActivePod, let podState = state.podState, let expiresAt = podState.expiresAt else {
             completion(OmniPumpManagerError.noPodPaired)
@@ -2489,7 +2488,7 @@ extension OmniPumpManager: PumpManager {
         }
     }
 
-    public var allowedExpirationReminderDates: [Date]? {
+    var allowedExpirationReminderDates: [Date]? {
 
         guard let expiration = state.podState?.expiresAt else {
             return nil
@@ -2507,7 +2506,7 @@ extension OmniPumpManager: PumpManager {
         return allDates.filter { $0.timeIntervalSince(now) > .minutes(2) }
     }
 
-    public var scheduledExpirationReminder: Date? {
+    var scheduledExpirationReminder: Date? {
         guard let expiration = state.podState?.expiresAt, let offset = state.scheduledExpirationReminderOffset, offset > 0 else {
             return nil
         }
@@ -2518,7 +2517,7 @@ extension OmniPumpManager: PumpManager {
     }
 
     // Updates the low reservior reminder value both for the current pod (when applicable) and for future pods
-    public func updateLowReservoirReminder(_ value: Int, completion: @escaping (OmniPumpManagerError?) -> Void) {
+    func updateLowReservoirReminder(_ value: Int, completion: @escaping (OmniPumpManagerError?) -> Void) {
 
         let supportedValue = min(max(0, Double(value)), Pod.maximumReservoirReading)
         let setLowReservoirReminderValue = {

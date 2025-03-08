@@ -14,9 +14,9 @@ import SwiftUI
 
 class RileyLinkListDataSource: ObservableObject {
 
-    public let rileyLinkPumpManager: RileyLinkPumpManager
+    let rileyLinkPumpManager: RileyLinkPumpManager
 
-    @Published private(set) public var devices: [RileyLinkDevice] = []
+    @Published private(set) var devices: [RileyLinkDevice] = []
 
     init(rileyLinkPumpManager: RileyLinkPumpManager) {
         self.rileyLinkPumpManager = rileyLinkPumpManager
@@ -58,7 +58,7 @@ class RileyLinkListDataSource: ObservableObject {
         }
     }
 
-    public var isScanningEnabled: Bool = false {
+    var isScanningEnabled: Bool = false {
         didSet {
             rileyLinkPumpManager.rileyLinkDeviceProvider.setScanningEnabled(isScanningEnabled)
 
@@ -87,7 +87,7 @@ class RileyLinkListDataSource: ObservableObject {
         }
     }
 
-    @objc public func updateRSSI() {
+    @objc func updateRSSI() {
         for device in devices {
             device.readRSSI()
         }

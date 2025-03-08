@@ -9,20 +9,20 @@
 
 import Foundation
 
-public struct BolusExtraCommand: MessageBlock {
-    public let blockType: MessageBlockType = .bolusExtra
+struct BolusExtraCommand: MessageBlock {
+    let blockType: MessageBlockType = .bolusExtra
 
-    public let acknowledgementBeep: Bool
-    public let completionBeep: Bool
-    public let programReminderInterval: TimeInterval
-    public let units: Double
-    public let timeBetweenPulses: TimeInterval
-    public let extendedUnits: Double
-    public let extendedDuration: TimeInterval
+    let acknowledgementBeep: Bool
+    let completionBeep: Bool
+    let programReminderInterval: TimeInterval
+    let units: Double
+    let timeBetweenPulses: TimeInterval
+    let extendedUnits: Double
+    let extendedDuration: TimeInterval
 
     // 17 0d 7c 1770 00030d40 0000 00000000
     // 0  1  2  3    5        9    13
-    public var data: Data {
+    var data: Data {
         let beepOptions = (UInt8(programReminderInterval.minutes) & 0x3f) + (completionBeep ? (1<<6) : 0) + (acknowledgementBeep ? (1<<7) : 0)
 
         var data = Data([
@@ -42,7 +42,7 @@ public struct BolusExtraCommand: MessageBlock {
         return data
     }
 
-    public init(encodedData: Data) throws {
+    init(encodedData: Data) throws {
         if encodedData.count < 15 {
             throw MessageBlockError.notEnoughData
         }
@@ -64,7 +64,7 @@ public struct BolusExtraCommand: MessageBlock {
         extendedDuration = timeBetweenExtendedPulses * (Double(pulseCountX10) / 10)
     }
 
-    public init(units: Double = 0, timeBetweenPulses: TimeInterval = Pod.secondsPerBolusPulse, extendedUnits: Double = 0.0, extendedDuration: TimeInterval = 0, acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0) {
+    init(units: Double = 0, timeBetweenPulses: TimeInterval = Pod.secondsPerBolusPulse, extendedUnits: Double = 0.0, extendedDuration: TimeInterval = 0, acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0) {
         self.acknowledgementBeep = acknowledgementBeep
         self.completionBeep = completionBeep
         self.programReminderInterval = programReminderInterval
@@ -76,7 +76,7 @@ public struct BolusExtraCommand: MessageBlock {
 }
 
 extension BolusExtraCommand: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return "BolusExtraCommand(units:\(units), timeBetweenPulses:\(timeBetweenPulses), extendedUnits:\(extendedUnits), extendedDuration:\(extendedDuration), acknowledgementBeep:\(acknowledgementBeep), completionBeep:\(completionBeep), programReminderInterval:\(programReminderInterval.minutes))"
     }
 }

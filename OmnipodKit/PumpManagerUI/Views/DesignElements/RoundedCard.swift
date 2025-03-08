@@ -38,20 +38,20 @@ struct RoundedCardFooter: View {
     }
 }
 
-public struct RoundedCardValueRow: View {
+struct RoundedCardValueRow: View {
     var label: String
     var value: String
     var highlightValue: Bool
     var disclosure: Bool
 
-    public init(label: String, value: String, highlightValue: Bool = false, disclosure: Bool = false) {
+    init(label: String, value: String, highlightValue: Bool = false, disclosure: Bool = false) {
         self.label = label
         self.value = value
         self.highlightValue = highlightValue
         self.disclosure = disclosure
     }
     
-    public var body: some View {
+    var body: some View {
         HStack {
             Text(label)
                 .fixedSize(horizontal: false, vertical: true)

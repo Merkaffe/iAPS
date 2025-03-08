@@ -314,7 +314,7 @@ class BlePodMessageTransport: MessageTransport {
 }
 
 extension BlePodMessageTransport: CustomDebugStringConvertible {
-    public var debugDescription: String {
+    var debugDescription: String {
         return [
             "## BlePodMessageTransport",
             "eapSeq: \(eapSeq)",
