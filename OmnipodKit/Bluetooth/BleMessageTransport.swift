@@ -73,7 +73,7 @@ struct BleMessageTransportState: MessageTransportState {
 extension BleMessageTransportState: CustomDebugStringConvertible {
     var debugDescription: String {
         return [
-            "## MessageTransportState",
+            "## BleMessageTransportState",
             "eapSeq: \(eapSeq)",
             "msgSeq: \(msgSeq)",
             "nonceSeq: \(nonceSeq)",

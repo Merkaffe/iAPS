@@ -221,7 +221,7 @@ protocol PodCommsSessionDelegate: AnyObject {
     func podCommsSession(_ podCommsSession: PodCommsSession, didChange state: PodState)
 }
 
-class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
+class PodCommsSession: MessageTransportDelegate {
 
     let log = OSLog(category: "PodCommsSession")
 
