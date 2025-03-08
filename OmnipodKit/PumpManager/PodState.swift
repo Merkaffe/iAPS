@@ -247,7 +247,8 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     }
 
     mutating func resyncNonce(syncWord: UInt16, sentNonce: UInt32, messageSequenceNum: Int) {
-        if self.podType == erosType {
+        if self.nonceState != nil {
+            // Eros pod, need to reseed the NonceState to resync
             let sum = (sentNonce & 0xFFFF) + UInt32(crc16Table[messageSequenceNum]) + (lotNo & 0xFFFF) + (lotSeq & 0xFFFF)
             let seed = UInt16(sum & 0xFFFF) ^ syncWord
             self.nonceState = NonceState(lot: lotNo, tid: lotSeq, seed: seed)
@@ -697,6 +698,53 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
         return retVal
     }
+
+    // Need to use a custom equality checker as "any MessageTransportState" breaks Equatable protocol.
+    // QQQ is there a better way to do this or a better way to reorganize things so this isn't needed?
+    public static func == (lhs: PodState, rhs: PodState) -> Bool {
+        let lhsBleMessageTransportState = lhs.messageTransportState as? BleMessageTransportState
+        let rhsBleMessageTransportState = rhs.messageTransportState as? BleMessageTransportState
+        let lhsErosMessageTransportState = lhs.messageTransportState as? ErosMessageTransportState
+        let rhsErosMessageTransportState = rhs.messageTransportState as? ErosMessageTransportState
+        guard
+            lhsBleMessageTransportState == rhsBleMessageTransportState,
+            lhsErosMessageTransportState == rhsErosMessageTransportState,
+            lhs.address == rhs.address,
+            lhs.expiresAt == rhs.expiresAt,
+            lhs.activatedAt == rhs.activatedAt,
+            lhs.activeTime == rhs.activeTime,
+            lhs.podTime == rhs.podTime,
+            lhs.podTimeUpdated == rhs.podTimeUpdated,
+            lhs.setupUnitsDelivered == rhs.setupUnitsDelivered,
+            lhs.firmwareVersion == rhs.firmwareVersion,
+            lhs.iFirmwareVersion == rhs.iFirmwareVersion,
+            lhs.lotNo == rhs.lotNo,
+            lhs.lotSeq == rhs.lotSeq,
+            lhs.podType == rhs.podType,
+            lhs.activeAlertSlots == rhs.activeAlertSlots,
+            lhs.lastInsulinMeasurements == rhs.lastInsulinMeasurements,
+            lhs.unacknowledgedCommand == rhs.unacknowledgedCommand,
+            lhs.unfinalizedBolus == rhs.unfinalizedBolus,
+            lhs.unfinalizedTempBasal == rhs.unfinalizedTempBasal,
+            lhs.unfinalizedSuspend == rhs.unfinalizedSuspend,
+            lhs.unfinalizedResume == rhs.unfinalizedResume,
+            lhs.finalizedDoses == rhs.finalizedDoses,
+            lhs.suspendState == rhs.suspendState,
+            lhs.fault == rhs.fault,
+            lhs.primeFinishTime == rhs.primeFinishTime,
+            lhs.setupProgress == rhs.setupProgress,
+            lhs.configuredAlerts == rhs.configuredAlerts,
+            lhs.insulinType == rhs.insulinType,
+            lhs.ltk == rhs.ltk,
+            lhs.bleIdentifier == rhs.bleIdentifier,
+            lhs.nonceState == rhs.nonceState
+        else {
+            return false
+        }
+        return true
+    }
+
+
 }
 
 enum SuspendState: Equatable, RawRepresentable {
