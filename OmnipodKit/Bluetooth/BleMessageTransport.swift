@@ -313,14 +313,3 @@ class BlePodMessageTransport: MessageTransport {
     }
 }
 
-extension BlePodMessageTransport: CustomDebugStringConvertible {
-    var debugDescription: String {
-        return [
-            "## BlePodMessageTransport",
-            "eapSeq: \(eapSeq)",
-            "msgSeq: \(msgSeq)",
-            "nonceSeq: \(nonceSeq)",
-            "messageNumber: \(messageNumber)",
-        ].joined(separator: "\n")
-    }
-}

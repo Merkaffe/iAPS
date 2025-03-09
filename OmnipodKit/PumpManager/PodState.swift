@@ -52,8 +52,10 @@ enum SetupProgress: Int {
 // mutating funcs should be moved to something like this:
 // extension Locked where T == PodState {
 // }
-// QQQ "any MessageTransportState" var breaks Equatable protocol which is needed!
 // XXX still needs be declared public with the current Trio implementation
+// QQQ The "messageTransport: <any MessageTransportState" variable breaks the
+// Equatable protocol conformance without the PodState equality func since for some
+// unknown reason <any MessageTransportState> equality func isn't sufficient.
 public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertible {
 
     public typealias RawValue = [String: Any]
@@ -120,10 +122,8 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         return false
     }
 
-    // QQQ This declaration breaks Equatable for PodState which is needed!
-    // QQQ Is it possible to write a custom static equatable func for any
-    // MessageTransportState that checks the types and then the values of
-    // the either bleMessageTransportState or ersMessageTransportState?
+    // Declaring amessageTransportState as an any MessageTransportState to handle both transport types
+    // means a custom PodState equality operator is needed to be compatible with the Equatable protocol.
     var messageTransportState: any MessageTransportState
 
     // Dash specific variables
@@ -247,8 +247,8 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     }
 
     mutating func resyncNonce(syncWord: UInt16, sentNonce: UInt32, messageSequenceNum: Int) {
-        if self.nonceState != nil {
-            // Eros pod, need to reseed the NonceState to resync
+        if self.podType == erosType {
+            // Need to initialize or reseed the pod's nonceState
             let sum = (sentNonce & 0xFFFF) + UInt32(crc16Table[messageSequenceNum]) + (lotNo & 0xFFFF) + (lotSeq & 0xFFFF)
             let seed = UInt16(sum & 0xFFFF) ^ syncWord
             self.nonceState = NonceState(lot: lotNo, tid: lotSeq, seed: seed)
@@ -257,6 +257,26 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
     }
 
+    // QQQ Original OmniBLE version when messageTransportState is what is now BleMessageTransportState:
+    // self.messageTransportState.eapSeq += 1
+    // return messageTransportState.eapSeq
+    //
+    // QQQ If we are going to continue using a MessageTransportState protocol define,
+    // would it be better to include a func incrementEapSeq() that would be a No-op for Eros?
+    // QQQ Or would it be better to just not use a MessageTransportState protocol at all?
+    //
+    mutating func incrementEapSeq() -> Int {
+        var bleMessageTransportState = self.messageTransportState as! BleMessageTransportState
+
+        bleMessageTransportState.eapSeq += 1
+        self.messageTransportState = bleMessageTransportState // upcast
+        return bleMessageTransportState.eapSeq
+
+        // Ugh, not much better...
+        // let eapSeq = bleMessageTransportState.incrementEapSeq()
+        // self.messageTransportState = bleMessageTransportState // upcast
+        // return eapSeq
+    }
 
     // MARK: - PodState update funcs
 
@@ -654,6 +674,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         var retVal = [
             "### PodState",
             "* address: \(String(format: "%08X", address))",
+            "* bleIdentifier: \(optionalString(bleIdentifier))",
             "* activatedAt: \(optionalString(activatedAt))",
             "* expiresAt: \(optionalString(expiresAt))",
             "* podTime: \(podTime.timeIntervalStr)",
@@ -679,28 +700,14 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "* configuredAlerts: \(configuredAlertsString(configuredAlerts: configuredAlerts))",
             "* insulinType: \(optionalString(insulinType))",
             "* messageTransportState: \(String(describing: messageTransportState))",
-            "",
-        ].joined(separator: "\n")
-
-        if !podType.usesRileyLink {
-            retVal += [
-                "",
-                "* bleIdentifier: \(optionalString(bleIdentifier))",
-                "* ltk: \(ltk == nil ? "nil" : ltk!.hexadecimalString)",
-            ].joined(separator: "\n")
-        }
-
-        retVal += [
-            "",
             "* pdmRef: \(optionalString(fault?.pdmRef))",
             "* fault: \(optionalString(fault))",
         ].joined(separator: "\n")
-
         return retVal
     }
 
-    // Need to use a custom equality checker as "any MessageTransportState" breaks Equatable protocol.
-    // QQQ is there a better way to do this or a better way to reorganize things so this isn't needed?
+    // QQQ Still need to sse a custom PodState equality checker as "any MessageTransportState" breaks Equatable protocol and the
+    // current MessageTransportState equality func isn't sufficient for PodState Equatable conformance for some unknown reason.
     public static func == (lhs: PodState, rhs: PodState) -> Bool {
         let lhsBleMessageTransportState = lhs.messageTransportState as? BleMessageTransportState
         let rhsBleMessageTransportState = rhs.messageTransportState as? BleMessageTransportState
@@ -709,18 +716,9 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         guard
             lhsBleMessageTransportState == rhsBleMessageTransportState,
             lhsErosMessageTransportState == rhsErosMessageTransportState,
-            lhs.address == rhs.address,
-            lhs.expiresAt == rhs.expiresAt,
-            lhs.activatedAt == rhs.activatedAt,
             lhs.activeTime == rhs.activeTime,
             lhs.podTime == rhs.podTime,
             lhs.podTimeUpdated == rhs.podTimeUpdated,
-            lhs.setupUnitsDelivered == rhs.setupUnitsDelivered,
-            lhs.firmwareVersion == rhs.firmwareVersion,
-            lhs.iFirmwareVersion == rhs.iFirmwareVersion,
-            lhs.lotNo == rhs.lotNo,
-            lhs.lotSeq == rhs.lotSeq,
-            lhs.podType == rhs.podType,
             lhs.activeAlertSlots == rhs.activeAlertSlots,
             lhs.lastInsulinMeasurements == rhs.lastInsulinMeasurements,
             lhs.unacknowledgedCommand == rhs.unacknowledgedCommand,
@@ -730,21 +728,28 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             lhs.unfinalizedResume == rhs.unfinalizedResume,
             lhs.finalizedDoses == rhs.finalizedDoses,
             lhs.suspendState == rhs.suspendState,
+            lhs.nonceState == rhs.nonceState,
             lhs.fault == rhs.fault,
             lhs.primeFinishTime == rhs.primeFinishTime,
             lhs.setupProgress == rhs.setupProgress,
             lhs.configuredAlerts == rhs.configuredAlerts,
             lhs.insulinType == rhs.insulinType,
+            lhs.address == rhs.address,
+            lhs.expiresAt == rhs.expiresAt,
+            lhs.activatedAt == rhs.activatedAt,
+            lhs.setupUnitsDelivered == rhs.setupUnitsDelivered,
+            lhs.firmwareVersion == rhs.firmwareVersion,
+            lhs.iFirmwareVersion == rhs.iFirmwareVersion,
+            lhs.lotNo == rhs.lotNo,
+            lhs.lotSeq == rhs.lotSeq,
+            lhs.podType == rhs.podType,
             lhs.ltk == rhs.ltk,
-            lhs.bleIdentifier == rhs.bleIdentifier,
-            lhs.nonceState == rhs.nonceState
+            lhs.bleIdentifier == rhs.bleIdentifier
         else {
             return false
         }
         return true
     }
-
-
 }
 
 enum SuspendState: Equatable, RawRepresentable {

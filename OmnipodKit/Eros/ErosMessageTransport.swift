@@ -48,6 +48,16 @@ struct ErosMessageTransportState: MessageTransportState {
 
 }
 
+extension ErosMessageTransportState: CustomDebugStringConvertible {
+    var debugDescription: String {
+        return [
+            "## ErosMessageTransportState",
+            "packetNumber: \(packetNumber)",
+            "messageNumber: \(messageNumber)",
+        ].joined(separator: "\n")
+    }
+}
+
 class ErosPodMessageTransport: MessageTransport {
     
     private let session: CommandSession
@@ -292,15 +302,5 @@ class ErosPodMessageTransport: MessageTransport {
 
     func assertOnSessionQueue() {
         session.assertOnSessionQueue()
-    }
-}
-
-extension ErosPodMessageTransport: CustomDebugStringConvertible {
-    var debugDescription: String {
-        return [
-            "## ErosPodMessageTransport",
-            "packetNumber: \(packetNumber)",
-            "messageNumber: \(messageNumber)",
-        ].joined(separator: "\n")
     }
 }
