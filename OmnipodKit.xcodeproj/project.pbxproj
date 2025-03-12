@@ -10,6 +10,9 @@
 		D82CA8FA2D4B7305009C5276 /* CryptoSwift in Frameworks */ = {isa = PBXBuildFile; productRef = D82CA8F92D4B7305009C5276 /* CryptoSwift */; };
 		D82D262A2D44515000B8B25E /* OmnipodKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8F83F882D155ADA0005D165 /* OmnipodKit.framework */; };
 		D82D262B2D44515000B8B25E /* OmnipodKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D8F83F882D155ADA0005D165 /* OmnipodKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		D850B71E2D81733D0095CDF2 /* RileyLinkBLEKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D850B71B2D81733D0095CDF2 /* RileyLinkBLEKit.framework */; };
+		D850B7202D81733D0095CDF2 /* RileyLinkKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D850B71C2D81733D0095CDF2 /* RileyLinkKit.framework */; };
+		D850B7222D81733D0095CDF2 /* RileyLinkKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D850B71D2D81733D0095CDF2 /* RileyLinkKitUI.framework */; };
 		D8B88D502D33A52F001893B6 /* LoopKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8B88D4F2D33A52F001893B6 /* LoopKit.framework */; };
 		D8B88D522D33A53E001893B6 /* LoopKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8B88D512D33A53E001893B6 /* LoopKitUI.framework */; };
 		D8F83FB52D1563B70005D165 /* SlideButton in Frameworks */ = {isa = PBXBuildFile; productRef = D8F83FB42D1563B70005D165 /* SlideButton */; };
@@ -56,6 +59,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D850B71B2D81733D0095CDF2 /* RileyLinkBLEKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = RileyLinkBLEKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D850B71C2D81733D0095CDF2 /* RileyLinkKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = RileyLinkKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D850B71D2D81733D0095CDF2 /* RileyLinkKitUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = RileyLinkKitUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D889B2392D2B4BFE00C8E64C /* OmnipodKitPlugin.loopplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OmnipodKitPlugin.loopplugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8B88D4F2D33A52F001893B6 /* LoopKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LoopKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8B88D512D33A53E001893B6 /* LoopKitUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LoopKitUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -211,8 +217,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D850B71E2D81733D0095CDF2 /* RileyLinkBLEKit.framework in Frameworks */,
 				D8F83FB52D1563B70005D165 /* SlideButton in Frameworks */,
 				D82CA8FA2D4B7305009C5276 /* CryptoSwift in Frameworks */,
+				D850B7202D81733D0095CDF2 /* RileyLinkKit.framework in Frameworks */,
+				D850B7222D81733D0095CDF2 /* RileyLinkKitUI.framework in Frameworks */,
 				D8B88D502D33A52F001893B6 /* LoopKit.framework in Frameworks */,
 				D8B88D522D33A53E001893B6 /* LoopKitUI.framework in Frameworks */,
 			);
@@ -248,6 +257,9 @@
 		D8F83FB02D15621C0005D165 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D850B71B2D81733D0095CDF2 /* RileyLinkBLEKit.framework */,
+				D850B71C2D81733D0095CDF2 /* RileyLinkKit.framework */,
+				D850B71D2D81733D0095CDF2 /* RileyLinkKitUI.framework */,
 				D8B88D512D33A53E001893B6 /* LoopKitUI.framework */,
 				D8B88D4F2D33A52F001893B6 /* LoopKit.framework */,
 			);
