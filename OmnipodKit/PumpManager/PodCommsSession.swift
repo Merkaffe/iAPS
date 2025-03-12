@@ -1155,8 +1155,15 @@ class PodCommsSession: MessageTransportDelegate {
         self.transport.assertOnSessionQueue()
     }
 
-    func messageTransport(_ messageTransport: MessageTransport, didUpdate state: any MessageTransportState) {
+    func messageTransport(_ messageTransport: any MessageTransport, didUpdate state: any MessageTransportState) {
         messageTransport.assertOnSessionQueue()
-        podState.messageTransportState = state
+
+        if let bleMessageTransportState = state as? BleMessageTransportState {
+            self.podState.bleMessageTransportState = bleMessageTransportState
+        } else if let erosMessageTransportState = state as? ErosMessageTransportState {
+            self.podState.erosMessageTransportState = erosMessageTransportState
+        } else {
+            assertionFailure("Unsupported state update")
+        }
     }
 }

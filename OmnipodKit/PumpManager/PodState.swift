@@ -53,9 +53,6 @@ enum SetupProgress: Int {
 // extension Locked where T == PodState {
 // }
 // XXX still needs be declared public with the current Trio implementation
-// QQQ The "messageTransport: <any MessageTransportState" variable breaks the
-// Equatable protocol conformance without the PodState equality func since for some
-// unknown reason <any MessageTransportState> equality func isn't sufficient.
 public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertible {
 
     public typealias RawValue = [String: Any]
@@ -122,15 +119,13 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         return false
     }
 
-    // Declaring amessageTransportState as an any MessageTransportState to handle both transport types
-    // means a custom PodState equality operator is needed to be compatible with the Equatable protocol.
-    var messageTransportState: any MessageTransportState
-
     // Dash specific variables
+    var bleMessageTransportState: BleMessageTransportState
     var ltk: Data? = nil
     var bleIdentifier: String? = nil
 
     // Eros specific variables
+    var erosMessageTransportState: ErosMessageTransportState
     var nonceState: NonceState? = nil
 
     var lastDeliveryStatusReceived: DeliveryStatus? // this variable is not persistent across app restarts
@@ -145,12 +140,13 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         insulinType: InsulinType,
         podType: PodType,
 
-        // BLE or Eros specific message transport state
-        messageTransportState: (any MessageTransportState)? = nil,
-
         // BLE specific variables
+        bleMessageTransportState: BleMessageTransportState? = nil,
         ltk: Data? = nil,
         bleIdentifier: String? = nil,
+
+        // Eros specific variables
+        erosMessageTransportState: ErosMessageTransportState? = nil,
 
         setupUnitsDelivered: Double = 0.0,
         initialDeliveryStatus: DeliveryStatus? = nil)
@@ -177,24 +173,23 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         self.podTime = 0
 
         if podType == erosType {
-            // Eros specific initializations
-            self.nonceState = NonceState(lot: lotNo, tid: lotSeq)
+            // Eros specific initializations, nonceState will be initialized on initial nonce resync()
+            if let erosMessageTransportState = erosMessageTransportState {
+                self.erosMessageTransportState = erosMessageTransportState
+            } else {
+                self.erosMessageTransportState = ErosMessageTransportState()
+            }
+            self.bleMessageTransportState = BleMessageTransportState()
         } else {
             // BLE specific initializations
             self.ltk = ltk
             self.bleIdentifier = bleIdentifier
-        }
-
-        if let messageTransportState = messageTransportState {
-            self.messageTransportState = messageTransportState
-        } else {
-            // No initial messageTransportState given, so create one
-            // of the correct type using its default initial values.
-            if podType == erosType {
-                self.messageTransportState = ErosMessageTransportState()
+            if let bleMessageTransportState = bleMessageTransportState {
+                self.bleMessageTransportState = bleMessageTransportState
             } else {
-                self.messageTransportState = BleMessageTransportState()
+                self.bleMessageTransportState = BleMessageTransportState()
             }
+            self.erosMessageTransportState = ErosMessageTransportState()
         }
     }
 
@@ -257,25 +252,10 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
     }
 
-    // QQQ Original OmniBLE version when messageTransportState is what is now BleMessageTransportState:
-    // self.messageTransportState.eapSeq += 1
-    // return messageTransportState.eapSeq
-    //
-    // QQQ If we are going to continue using a MessageTransportState protocol define,
-    // would it be better to include a func incrementEapSeq() that would be a No-op for Eros?
-    // QQQ Or would it be better to just not use a MessageTransportState protocol at all?
-    //
+    // BLE specific
     mutating func incrementEapSeq() -> Int {
-        var bleMessageTransportState = self.messageTransportState as! BleMessageTransportState
-
-        bleMessageTransportState.eapSeq += 1
-        self.messageTransportState = bleMessageTransportState // upcast
+        self.bleMessageTransportState.eapSeq += 1
         return bleMessageTransportState.eapSeq
-
-        // Ugh, not much better...
-        // let eapSeq = bleMessageTransportState.incrementEapSeq()
-        // self.messageTransportState = bleMessageTransportState // upcast
-        // return eapSeq
     }
 
     // MARK: - PodState update funcs
@@ -595,25 +575,35 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
 
         // Dash specific values
-        if let ltkString = rawValue["ltk"] as? String,
-            let bleIdentifier = rawValue["bleIdentifier"] as? String
-        {
+        if let ltkString = rawValue["ltk"] as? String, let bleIdentifier = rawValue["bleIdentifier"] as? String {
             self.ltk = Data(hexadecimalString: ltkString)
             self.bleIdentifier = bleIdentifier
         }
 
-        if let bleMessageTransportStateRaw = rawValue["messageTransportState"] as? BleMessageTransportState.RawValue,
-            let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
+        if let erosMessageTransportStateRaw = rawValue["erosMessageTransportState"] as? ErosMessageTransportState.RawValue,
+            let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
         {
-            self.messageTransportState = bleMessageTransportState
+            self.erosMessageTransportState = erosMessageTransportState
         } else if let erosMessageTransportStateRaw = rawValue["messageTransportState"] as? ErosMessageTransportState.RawValue,
             let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
         {
-            self.messageTransportState = erosMessageTransportState
-        } else if podType == erosType {
-            self.messageTransportState = ErosMessageTransportState()
+            // compatability for the case of PodState having an messageTransportState: Any MessageTransport var
+            self.erosMessageTransportState = erosMessageTransportState
         } else {
-            self.messageTransportState = BleMessageTransportState()
+            self.erosMessageTransportState = ErosMessageTransportState()
+        }
+
+        if let bleMessageTransportStateRaw = rawValue["bleMessageTransportState"] as? BleMessageTransportState.RawValue,
+            let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
+        {
+            self.bleMessageTransportState = bleMessageTransportState
+        } else if let bleMessageTransportStateRaw = rawValue["messageTransportState"] as? BleMessageTransportState.RawValue,
+            let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
+        {
+            // compatability for the case of PodState having an messageTransportState: Any MessageTransport var
+            self.bleMessageTransportState = bleMessageTransportState
+        } else {
+            self.bleMessageTransportState = BleMessageTransportState()
         }
     }
 
@@ -630,8 +620,6 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "alerts": activeAlertSlots.rawValue,
             "setupProgress": setupProgress.rawValue,
             "insulinType": insulinType.rawValue,
-            
-            "messageTransportState": messageTransportState.rawValue,
         ]
 
         rawValue["podType"] = podType.rawValue
@@ -656,12 +644,16 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             rawValue["configuredAlerts"] = rawConfiguredAlerts
         }
 
-        // Dash specific variables
-        if let bleIdentifier = bleIdentifier {
-            rawValue["bleIdentifier"] = bleIdentifier
-        }
-        if let ltk = ltk {
-            rawValue["ltk"] = ltk.hexadecimalString
+        if podType == erosType {
+            rawValue["erosMessageTransportState"] = erosMessageTransportState.rawValue
+        } else {
+            rawValue["bleMessageTransportState"] = bleMessageTransportState.rawValue
+            if let bleIdentifier = bleIdentifier {
+                rawValue["bleIdentifier"] = bleIdentifier
+            }
+            if let ltk = ltk {
+                rawValue["ltk"] = ltk.hexadecimalString
+            }
         }
 
         return rawValue
@@ -671,7 +663,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     // MARK: - CustomDebugStringConvertible
 
     public var debugDescription: String {
-        var retVal = [
+        let retVal = [
             "### PodState",
             "* address: \(String(format: "%08X", address))",
             "* bleIdentifier: \(optionalString(bleIdentifier))",
@@ -699,56 +691,11 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "* primeFinishTime: \(optionalString(primeFinishTime))",
             "* configuredAlerts: \(configuredAlertsString(configuredAlerts: configuredAlerts))",
             "* insulinType: \(optionalString(insulinType))",
-            "* messageTransportState: \(String(describing: messageTransportState))",
+            "* messageTransportState: \(podType.usesRileyLink ? String(describing: erosMessageTransportState) : String(describing: bleMessageTransportState))",
             "* pdmRef: \(optionalString(fault?.pdmRef))",
             "* fault: \(optionalString(fault))",
         ].joined(separator: "\n")
         return retVal
-    }
-
-    // QQQ Still need to sse a custom PodState equality checker as "any MessageTransportState" breaks Equatable protocol and the
-    // current MessageTransportState equality func isn't sufficient for PodState Equatable conformance for some unknown reason.
-    public static func == (lhs: PodState, rhs: PodState) -> Bool {
-        let lhsBleMessageTransportState = lhs.messageTransportState as? BleMessageTransportState
-        let rhsBleMessageTransportState = rhs.messageTransportState as? BleMessageTransportState
-        let lhsErosMessageTransportState = lhs.messageTransportState as? ErosMessageTransportState
-        let rhsErosMessageTransportState = rhs.messageTransportState as? ErosMessageTransportState
-        guard
-            lhsBleMessageTransportState == rhsBleMessageTransportState,
-            lhsErosMessageTransportState == rhsErosMessageTransportState,
-            lhs.activeTime == rhs.activeTime,
-            lhs.podTime == rhs.podTime,
-            lhs.podTimeUpdated == rhs.podTimeUpdated,
-            lhs.activeAlertSlots == rhs.activeAlertSlots,
-            lhs.lastInsulinMeasurements == rhs.lastInsulinMeasurements,
-            lhs.unacknowledgedCommand == rhs.unacknowledgedCommand,
-            lhs.unfinalizedBolus == rhs.unfinalizedBolus,
-            lhs.unfinalizedTempBasal == rhs.unfinalizedTempBasal,
-            lhs.unfinalizedSuspend == rhs.unfinalizedSuspend,
-            lhs.unfinalizedResume == rhs.unfinalizedResume,
-            lhs.finalizedDoses == rhs.finalizedDoses,
-            lhs.suspendState == rhs.suspendState,
-            lhs.nonceState == rhs.nonceState,
-            lhs.fault == rhs.fault,
-            lhs.primeFinishTime == rhs.primeFinishTime,
-            lhs.setupProgress == rhs.setupProgress,
-            lhs.configuredAlerts == rhs.configuredAlerts,
-            lhs.insulinType == rhs.insulinType,
-            lhs.address == rhs.address,
-            lhs.expiresAt == rhs.expiresAt,
-            lhs.activatedAt == rhs.activatedAt,
-            lhs.setupUnitsDelivered == rhs.setupUnitsDelivered,
-            lhs.firmwareVersion == rhs.firmwareVersion,
-            lhs.iFirmwareVersion == rhs.iFirmwareVersion,
-            lhs.lotNo == rhs.lotNo,
-            lhs.lotSeq == rhs.lotSeq,
-            lhs.podType == rhs.podType,
-            lhs.ltk == rhs.ltk,
-            lhs.bleIdentifier == rhs.bleIdentifier
-        else {
-            return false
-        }
-        return true
     }
 }
 

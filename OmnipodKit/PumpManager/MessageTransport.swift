@@ -9,7 +9,6 @@
 //
 
 import Foundation
-import os.log
 
 protocol MessageTransportState: Equatable, RawRepresentable {
 
@@ -35,25 +34,4 @@ protocol MessageTransport {
 
     /// Asserts that the caller is currently on the session's queue
     func assertOnSessionQueue()
-}
-
-// Unsuccessful equality func as the messageTransportState PodState var breaks its protocol Equatable conformance.
-// QQQ Why isn't this func sufficient for the PodState Equatable protocol conformance???
-// QQQ Is it possible to rewrite this so that PodState won't need to have its own equality checker func?
-// QQQ Would it be better to use separate {ble,eros}MessageTransportState and {ble,eros}MessageTransport
-// vars instead of trying to use {M,m}essageTransportState and {M,m}essageTransport protocols and vars.
-extension MessageTransportState {
-    static func == (lhs: any MessageTransportState, rhs: any MessageTransportState) -> Bool {
-        let lhsBleMessageTransportState = lhs as? BleMessageTransportState
-        let rhsBleMessageTransportState = rhs as? BleMessageTransportState
-        let lhsErosMessageTransportState = lhs as? ErosMessageTransportState
-        let rhsErosMessageTransportState = rhs as? ErosMessageTransportState
-        guard
-            lhsBleMessageTransportState == rhsBleMessageTransportState,
-            lhsErosMessageTransportState == rhsErosMessageTransportState
-        else {
-            return false
-        }
-        return true
-    }
 }

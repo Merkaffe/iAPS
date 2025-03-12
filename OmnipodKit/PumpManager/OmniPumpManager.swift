@@ -1359,11 +1359,15 @@ extension OmniPumpManager {
 
     func setTime(completion: @escaping (OmniPumpManagerError?) -> Void) {
 
+        #if targetEnvironment(simulator)
+        let justUpdateState = true
+        #else
+        // Just update the pump manager state if there is no active Pod
+        let justUpdateState = !self.hasActivePod
+        #endif
+
         let timeZone = TimeZone.currentFixed
-        guard let podState = state.podState, podState.fault == nil else {
-            // With no non-faulted pod just update our pump manager
-            // state with the current timezone and return success
-            // instead of an inappropriate "No pod paired" error.
+        if justUpdateState {
             self.setState { (state) in
                 state.timeZone = timeZone
             }
@@ -1371,7 +1375,7 @@ extension OmniPumpManager {
             return
         }
 
-        guard podState.isSetupComplete else {
+        guard let podState = state.podState, podState.isSetupComplete else {
             // A cancel delivery command before pod setup is complete will fault the pod
             completion(.state(PodCommsError.setupNotComplete))
             return
@@ -1675,10 +1679,15 @@ extension OmniPumpManager {
 
     func setConfirmationBeeps(newPreference: BeepPreference, completion: @escaping (OmniPumpManagerError?) -> Void) {
 
-        // If there isn't an active pod or the pod is currently silenced,
-        // just need to update the internal state without any pod commands.
+        #if targetEnvironment(simulator)
+        let justUpdateState = true
+        #else
+        // Just update the pump manager state if there is no active Pod or if currently silenced
+        let justUpdateState = !self.hasActivePod || self.silencePod
+        #endif
+
         let name = String(format: "Set Beep Preference to %@", String(describing: newPreference))
-        if !self.hasActivePod || self.silencePod {
+        if justUpdateState {
             self.log.default("%{public}@ for internal state only", name)
             self.setState { state in
                 state.confirmationBeeps = newPreference
@@ -1724,9 +1733,15 @@ extension OmniPumpManager {
     // self.silencePod state variable which silences all confirmation beeping when enabled.
     func setSilencePod(silencePod: Bool, completion: @escaping (OmniPumpManagerError?) -> Void) {
 
+        #if targetEnvironment(simulator)
+        let justUpdateState = true
+        #else
+        // Just update the pump manager state if there is no active Pod
+        let justUpdateState = !self.hasActivePod
+        #endif
+
         let name = String(format: "%@ Pod", silencePod ? "Silence" : "Unsilence")
-        // allow Silence Pod changes without an active Pod
-        guard self.hasActivePod else {
+        if justUpdateState {
             self.log.default("%{public}@", name)
             self.setState { state in
                 state.silencePod = silencePod
