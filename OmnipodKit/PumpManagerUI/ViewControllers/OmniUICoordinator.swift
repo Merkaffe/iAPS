@@ -338,14 +338,11 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             return hostedView
 
         case .pendingCommandRecovery:
-            // ZZZ not currently being used as it should no longer be needed with all the other built in the Omni PumpManager and PodCommsSession checks.
-            // User can now debug the comms issue in pod settings using things like Pod Diagnostics, play test beeps, and the RL's settings (if applicable).
-            // Consider using a generic alternate DeliveryUncertaintyRecoveryView that documents these options and goes to pod settings when dismissed.
             guard let podState = pumpManager.state.podState, let pendingCommand = podState.unacknowledgedCommand, podState.needsCommsRecovery == true else {
                 fatalError("Pending command recovery UI attempted without pending command")
             }
 
-            let model = DeliveryUncertaintyRecoveryViewModel(appName: appName, uncertaintyStartedAt: pendingCommand.commandDate)
+            let model = DeliveryUncertaintyRecoveryViewModel(appName: appName, uncertaintyStartedAt: pendingCommand.commandDate, usesRileyLink: self.pumpManager.podType.usesRileyLink)
             model.didRecover = { [weak self] in
                 self?.navigateTo(.uncertaintyRecovered)
             }
@@ -353,40 +350,17 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 self?.navigateTo(.deactivate)
             }
             model.onDismiss = { [weak self] in
-                if let self = self {
-                    self.completionDelegate?.completionNotifyingDidComplete(self)
-                }
+                // Navigate to the settings view on dismissal to allow the
+                // user can work on reestablishing pod communications there.
+                self?.navigateTo(.settings)
             }
             pumpManager.addStatusObserver(model, queue: DispatchQueue.main)
             pumpManager.getPodStatus() { _ in }
 
-            if self.podType.usesRileyLink {
-                let handleRileyLinkSelection = { [weak self] (device: RileyLinkDevice) in
-                    if let self = self {
-                        let vc = RileyLinkDeviceTableViewController(
-                            device: device,
-                            batteryAlertLevel: self.pumpManager.rileyLinkBatteryAlertLevel,
-                            batteryAlertLevelChanged: { [weak self] value in
-                                self?.pumpManager.rileyLinkBatteryAlertLevel = value
-                            }
-                        )
-                        self.show(vc, sender: self)
-                    }
-                }
-
-                let dataSource = RileyLinkListDataSource(rileyLinkPumpManager: pumpManager)
-
-                let view = DeliveryUncertaintyRecoveryView(model: model /*, rileyLinkListDataSource: dataSource, handleRileyLinkSelection: handleRileyLinkSelection */)
-                let hostedView = hostingController(rootView: view)
-                hostedView.navigationItem.title = LocalizedString("Unable To Reach Pod", comment: "Title for pending command recovery screen")
-                return hostedView
-            } else {
-                // No RileyLink
-                let view = DeliveryUncertaintyRecoveryView(model: model)
-                let hostedView = hostingController(rootView: view)
-                hostedView.navigationItem.title = LocalizedString("Unable To Reach Pod", comment: "Title for pending command recovery screen")
-                return hostedView
-            }
+            let view = DeliveryUncertaintyRecoveryView(model: model)
+            let hostedView = hostingController(rootView: view)
+            hostedView.navigationItem.title = LocalizedString("Unable To Reach Pod", comment: "Title for pending command recovery screen")
+            return hostedView
 
         case .uncertaintyRecovered:
             var view = UncertaintyRecoveredView(appName: appName)
@@ -465,7 +439,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
 
     private func determineInitialStep() -> OmniUIScreen {
         if pumpManager.state.podState?.needsCommsRecovery == true {
-            return .settings // ZZZ previously .pendingCommandRecovery
+            return .pendingCommandRecovery
         } else if pumpManager.podCommState == .activating {
             if pumpManager.podAttachmentConfirmed {
                 return .insertCannula

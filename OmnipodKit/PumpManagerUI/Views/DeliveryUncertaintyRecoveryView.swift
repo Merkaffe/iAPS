@@ -22,7 +22,7 @@ struct DeliveryUncertaintyRecoveryView: View {
 
     var body: some View {
         GuidePage(content: {
-            Text(String(format: LocalizedString("%1$@ has been unable to communicate with the pod on your body since %2$@.\n\nDo not Discard the Pod without scrolling to read this entire screen.\n\nCommunication was interrupted at a critical time. Information about active insulin / pod temp basal rate is uncertain.\n\nYou can toggle phone Bluetooth off and on or quit and restart the app. (Wait up to 30 seconds for recovery.)\n\nIf you decide to give up because communication cannot be restored, tap the Discard Pod button, follow the steps and start a new pod.\nMonitor your glucose closely for the next 6 hours, as there may or may not be insulin actively working in your body that %3$@ cannot display.", comment: "Format string for main text of delivery uncertainty recovery page. (1: app name)(2: date of command)(3: app name)"), self.model.appName, self.uncertaintyDateLocalizedString, self.model.appName))
+            Text(String(format: LocalizedString("%1$@ has been unable to communicate with the pod on your body since %2$@.\n\nDo not Discard the Pod without scrolling to read this entire screen.\n\nCommunication was interrupted at a critical time. Information about active insulin / pod temp basal rate is uncertain.\n\n%3$@ (Wait up to 30 seconds for recovery.)\n\nIf you decide to give up because communication cannot be restored, tap the Discard Pod button, follow the steps and start a new pod. Monitor your glucose closely for the next 6 hours, as there may or may not be insulin actively working in your body that %4$@ cannot display.", comment: "Format string for main text of delivery uncertainty recovery page. (1: app name)(2: date of command)(3: localized recovery suggestion)(4: app name)"), self.model.appName, self.uncertaintyDateLocalizedString, self.model.possibleRecoveryActions, self.model.appName))
                 .padding([.top, .bottom])
         }) {
             VStack {
@@ -31,7 +31,7 @@ struct DeliveryUncertaintyRecoveryView: View {
                 Button(action: {
                     self.model.onDismiss?()
                 }) {
-                    Text(LocalizedString("Keep Waiting", comment: "Button title to return to prior screen"))
+                    Text(LocalizedString("Wait for Recovery", comment: "Button title to wait for recovery"))
                     .actionButtonStyle(.primary)
                     .padding([.horizontal])
                 }
@@ -61,7 +61,7 @@ struct DeliveryUncertaintyRecoveryView: View {
 
 struct DeliveryUncertaintyRecoveryView_Previews: PreviewProvider {
     static var previews: some View {
-        let model = DeliveryUncertaintyRecoveryViewModel(appName: "Test App", uncertaintyStartedAt: Date())
+        let model = DeliveryUncertaintyRecoveryViewModel(appName: "Test App", uncertaintyStartedAt: Date(), usesRileyLink: true)
         return DeliveryUncertaintyRecoveryView(model: model)
     }
 }
