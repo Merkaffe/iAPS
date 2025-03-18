@@ -94,7 +94,7 @@ and then select "Add to LoopWorkspace".
 Unfortunately Trio requires editing multiple Trio source files to incorporate a Pump Manager,
 and even more edits are required for a successful addition of
 any Omnipod Pump Manager (OmniBLE, OmniKit or OmnipodKit).
-There is patch to handle all the Trio pump manager integration requirements to add the the
+There is patch to handle all the Trio pump manager integration requirements to add the
 OmnipodKit (private repo) pump manager to the closed-beta Trio-dev (private repo).
 
 ```quote

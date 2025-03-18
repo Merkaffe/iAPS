@@ -12,8 +12,8 @@ import Foundation
 import XCTest
 @testable import OmnipodKit
 
-class MockMessageTransport: BleMessageTransport {
-    var delegate: BleMessageTransportDelegate?
+class MockMessageTransport: MessageTransport {
+    var delegate: MessageTransportDelegate?
 
     var messageNumber: Int
 
@@ -67,7 +67,7 @@ class PodCommsSessionTests: XCTestCase, PodCommsSessionDelegate {
     func testBolusFinishedEarlyOnPodIsMarkedNonMutable() {
          let mockStart = Date()
          podState.unfinalizedBolus = UnfinalizedDose(bolusAmount: 4.45, startTime: mockStart, scheduledCertainty: .certain, insulinType: .novolog)
-         let session = PodCommsSession(podState: podState, bleTransport: mockTransport, delegate: self)
+         let session = PodCommsSession(podState: podState, transport: mockTransport, delegate: self)
 
          // Simulate a status request a bit before the bolus is expected to finish
          let statusRequestTime = podState.unfinalizedBolus!.finishTime!.addingTimeInterval(-5)
