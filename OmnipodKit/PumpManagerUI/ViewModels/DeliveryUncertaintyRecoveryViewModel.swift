@@ -12,24 +12,22 @@ import LoopKit
 
 
 class DeliveryUncertaintyRecoveryViewModel: PumpManagerStatusObserver {
-    
+
     let appName: String
     let uncertaintyStartedAt: Date
-    let possibleRecoveryActions: String
-    
+    var podTypeDependentRecoveryActions = ""
+
     var onDismiss: (() -> Void)?
     var didRecover: (() -> Void)?
     var onDeactivate: (() -> Void)?
-    
+
     private var finished = false
-    
+
     init(appName: String, uncertaintyStartedAt: Date, usesRileyLink: Bool) {
         self.appName = appName
         self.uncertaintyStartedAt = uncertaintyStartedAt
         if usesRileyLink {
-            self.possibleRecoveryActions = LocalizedString("You can use manual commands, toggle phone Bluetooth off and on, toggle RileyLink connections, power the RileyLink device off and on, and/or quit and restart the app.", comment: "delivery uncertainty recovery suggestion when using a RileyLink")
-        } else {
-            self.possibleRecoveryActions = LocalizedString("You can use manual commands, toggle phone Bluetooth off and on, and/or quit and restart the app.", comment: "delivery uncertainly recovery suggestion when not using a RileyLink")
+            self.podTypeDependentRecoveryActions = LocalizedString(" or select a different RileyLink; power the RileyLink device off and on", comment: "delivery uncertainty recovery phrase when using a RileyLink")
         }
     }
 
@@ -40,7 +38,7 @@ class DeliveryUncertaintyRecoveryViewModel: PumpManagerStatusObserver {
             }
         }
     }
-    
+
     func podDeactivationChosen() {
         finished = true
         self.onDeactivate?()

@@ -16,7 +16,7 @@ by scrolling to the bottom of the pod settings view and tapping on
 "Switch to another pod or pump type".
 
 The "Omnipod" (OmniKit) and "Omnipod DASH" (OmniBLE) pump managers
-still displayed by "Add Pump" are still the original unmodified
+displayed with "Add Pump" are still the original unmodified
 pump managers which maintain their own separate pump manager state.
 Therefore if you already have an active pod session using a previous pump manager,
 you must select "Switch to other insulin delivery device" after deactivating any active pod
@@ -26,11 +26,11 @@ should be totally replaced by OmnipodKit.
 
 ![Screen for changing pod or pump type](img/OmnipodKit_pod_selection.png)
 
-Note that this is still an evolving prototyping work -- use at your own risk!
+Note that OmnipodKit is still an evolving prototype -- use at your own risk!
 
 ## Status
 
-### March 15, 2025
+### March 17, 2025
 
 At this time, there is nothing implementing Omnipod 5 communications
 which is still trying to be understood by the DIY community.
@@ -39,7 +39,7 @@ transport to test having a third pod type showing new Omnipod 5 UI additions
 (different text, pod tab color, etc)
 and using an alternate base pod id in the pod comms.
 For DIY use, the Omnipod 5 pod ids will start with 0x15
-while the DIY DASH pod ids start with 0x17 and
+while the DIY DASH pod ids will start with 0x17.
 Eros addresses (pod ids) for both DIY and PDM use always start with 0x1F.
 
 The pump settings show the name of the selected pod type.
@@ -51,7 +51,16 @@ to examine the attributes of the new unified Pump Manager & pod state used by Om
 Figure out possible future migration aids to help transition pod use
 to OmnnipodKit while deprecating use of OmniKit and OmniBLE.
 
-## To Add to any modern Loop Workspace
+Figure out the Omnipod 5 encryption and transport and
+update OmnpodKit to actually fully support this pod type!
+
+## To Add to LoopWorkspace
+
+In the near future that will be a patch which can be run to automatically handle
+the few integration issues of OmnipodKit to a modern LoopWorkspace.
+In the meantime a manual add to LoopWorkspace can be easily performed.
+
+#### To Manually Add to LoopWorkspace
 
 ```quote
 $ cd <the-top-of-LoopWorkspace-directory>
@@ -61,7 +70,6 @@ $ xed .
 In Xcode, select File->'Add Files to "LoopWorkspace"...'
 Scroll down to select and double click to open the "OmnipodKit" directory
 Select the "OmnipodKit.xcodeproj" file and tap the blue (Add) button
-Leave the Action as "Reference files in place"
 Tap the blue (Finish) button
 
 In Xcode with the LoopWorkspace selected, select Product->Scheme->Edit Scheme...
@@ -78,17 +86,16 @@ To add the OmniTests to the LoopWorkspace tests,
 verify that the LoopWorkspace is selected,
 click on the diamond with the check near the top
 of the lefthand panel to display the Test Navigator panel,
-long press on OmniTests under the "Other Tests" section near the end of the panel,
+right click on OmniTests under the "Other Tests" section near the end of the panel,
 and then select "Add to LoopWorkspace".
 
 ## To Add to Trio-dev
 
 Unfortunately Trio requires editing multiple Trio source files to incorporate a Pump Manager,
 and even more edits are required for a successful addition of
-an Omnipod Pump Manager (OmniBLE, OmniKit or OmnipodKit).
-Fortunately Marion Barker has developed a patch which handles all the messy
-Trio pump manager integration issues needed to add the the OmnipodKit (private repo)
-pump manager to the closed-bsed Trio-dev (private repo).
+any Omnipod Pump Manager (OmniBLE, OmniKit or OmnipodKit).
+There is patch to handle all the Trio pump manager integration requirements to add the the
+OmnipodKit (private repo) pump manager to the closed-beta Trio-dev (private repo).
 
 ```quote
 $ cd <the-top-of-a-buildable-Trio-dev-directory>
