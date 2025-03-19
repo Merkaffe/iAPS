@@ -95,7 +95,7 @@ If Trio is open in Xcode, then before executing these commands:
 
 ```
 git clone https://github.com/loopandlearn/OmnipodKit.git
-git apply OmnipodKit/patch/add_omnipodkit_to_Trio-dev.patch
+git apply OmnipodKit/patches/add_omnipodkit_to_Trio-dev.patch
 xed .
 ```
 
