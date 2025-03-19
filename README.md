@@ -64,12 +64,18 @@ There is patch to add the OmnipodKit (private repo) pump manager to a fresh clon
 
 The commands below should be pasted into Terminal with the path at the top-of-a-buildable LoopWorkspace directory.
 
+If LoopWorkspace is open in Xcode, then before executing these commands:
+
+* select Product, Clean Build Folder
+* select File, Close Workspace
+
 ```
 git clone https://github.com/loopandlearn/OmnipodKit.git
 git apply OmnipodKit/patches/add_omnipodkit_to_LoopWorkspace.patch
 xed .
 ```
 
+When Xcode opens, if questioned, select use the version on disk.
 
 After building Loop, be sure to select the new "All Omnipod Types"
 when doing an "Add Pump" to use the new OmnipodKit pump manager.
@@ -82,11 +88,18 @@ There is patch to add the OmnipodKit (private repo) pump manager to a fresh clon
 The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio-dev directory. This patch handles all the Trio pump manager integration requirements to add the
 OmnipodKit (private repo) pump manager to the closed-beta Trio-dev (private repo).
 
+If Trio is open in Xcode, then before executing these commands:
+
+* select Product, Clean Build Folder
+* select File, Close Workspace
+
 ```
 git clone https://github.com/loopandlearn/OmnipodKit.git
 git apply OmnipodKit/patch/add_omnipodkit_to_Trio-dev.patch
 xed .
 ```
+
+When Xcode opens, if questioned, select use the version on disk.
 
 It is expected that the Trio-dev repository will become public before the OmnipodKit repo.
 
