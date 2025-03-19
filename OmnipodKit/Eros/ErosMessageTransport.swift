@@ -1,7 +1,8 @@
 //
-//  MessageTransport.swift
-//  OmniKit
+//  ErosMessageTransport.swift
+//  OmnipodKit
 //
+//  From OmniKit/OmniKit/MessageTransport/MessageTransport.swift
 //  Created by Pete Schwamb on 8/5/18.
 //  Copyright © 2018 Pete Schwamb. All rights reserved.
 //
@@ -11,12 +12,16 @@ import os.log
 
 import RileyLinkBLEKit
 
-struct ErosMessageTransportState: Equatable, RawRepresentable {
+struct ErosMessageTransportState: MessageTransportState {
     typealias RawValue = [String: Any]
 
     var packetNumber: Int
     var messageNumber: Int
-    
+
+    init() {
+        self.init(packetNumber: 0, messageNumber: 0)
+    }
+
     init(packetNumber: Int, messageNumber: Int) {
         self.packetNumber = packetNumber
         self.messageNumber = messageNumber
@@ -43,28 +48,23 @@ struct ErosMessageTransportState: Equatable, RawRepresentable {
 
 }
 
-protocol ErosMessageTransportDelegate: AnyObject {
-    func messageTransport(_ messageTransport: ErosMessageTransport, didUpdate state: ErosMessageTransportState)
+extension ErosMessageTransportState: CustomDebugStringConvertible {
+    var debugDescription: String {
+        return [
+            "## ErosMessageTransportState",
+            "packetNumber: \(packetNumber)",
+            "messageNumber: \(messageNumber)",
+        ].joined(separator: "\n")
+    }
 }
 
-protocol ErosMessageTransport {
-    var delegate: ErosMessageTransportDelegate? { get set }
-
-    var messageNumber: Int { get }
-
-    func sendMessage(_ message: Message) throws -> Message
-
-    /// Asserts that the caller is currently on the session's queue
-    func assertOnSessionQueue()
-}
-
-class ErosPodMessageTransport: ErosMessageTransport {
+class ErosPodMessageTransport: MessageTransport {
     
     private let session: CommandSession
     
-    private let log = OSLog(category: "ErosPodMessageTransport")
+    private let log = OSLog(category: "PodMessageTransport")
     
-    private var state: ErosMessageTransportState {
+    private(set) var state: ErosMessageTransportState {
         didSet {
             self.delegate?.messageTransport(self, didUpdate: state)
         }
@@ -92,7 +92,7 @@ class ErosPodMessageTransport: ErosMessageTransport {
     private var ackAddress: UInt32 // During pairing, PDM acks with address it is assigning to channel
     
     weak var messageLogger: MessageLogger?
-    weak var delegate: ErosMessageTransportDelegate?
+    weak var delegate: MessageTransportDelegate?
 
     init(session: CommandSession, address: UInt32 = 0xffffffff, ackAddress: UInt32? = nil, state: ErosMessageTransportState) {
         self.session = session
@@ -109,11 +109,11 @@ class ErosPodMessageTransport: ErosMessageTransport {
         messageNumber = (messageNumber + count) & 0b1111
     }
     
-    func makeAckPacket() -> Packet {
+    private func makeAckPacket() -> Packet {
         return Packet(address: address, packetType: .ack, sequenceNum: packetNumber, data: Data(bigEndian: ackAddress))
     }
     
-    func ackUntilQuiet() {
+    private func ackUntilQuiet() {
         
         let packetData = makeAckPacket().encoded()
         
@@ -149,7 +149,7 @@ class ErosPodMessageTransport: ErosMessageTransport {
     /// - Throws:
     ///     - PodCommsError.noResponseRL
     ///     - RileyLinkDeviceError
-    func exchangePackets(packet: Packet, repeatCount: Int = 0, packetResponseTimeout: TimeInterval = .milliseconds(333), exchangeTimeout:TimeInterval = .seconds(9), preambleExtension: TimeInterval = .milliseconds(127)) throws -> Packet {
+    private func exchangePackets(packet: Packet, repeatCount: Int = 0, packetResponseTimeout: TimeInterval = .milliseconds(333), exchangeTimeout:TimeInterval = .seconds(9), preambleExtension: TimeInterval = .milliseconds(127)) throws -> Packet {
         let packetData = packet.encoded()
         let radioRetryCount = 9
         

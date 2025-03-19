@@ -64,7 +64,6 @@ class PodComms: CustomDebugStringConvertible {
         }
     }
 
-    // non-RL version
     init(podState: PodState?, myId: UInt32 = 0, podId: UInt32 = 0) {
         self.podState = podState
         self.delegate = nil
@@ -75,13 +74,6 @@ class PodComms: CustomDebugStringConvertible {
         if let podState = podState, let bleIdentifier = podState.bleIdentifier {
             bluetoothManager.connectToDevice(uuidString: bleIdentifier)
         }
-    }
-
-    // RL version
-    init(podState: PodState?) {
-        self.podState = podState
-        self.delegate = nil
-        self.messageLogger = nil
     }
 
     func updateInsulinType(_ insulinType: InsulinType) {
@@ -117,6 +109,7 @@ class PodComms: CustomDebugStringConvertible {
         podStateLock.unlock()
     }
 
+    // BLE pods only
     func connectToNewPod(_ completion: @escaping (Result<Omni, Error>) -> Void) {
         let discoveryStartTime = Date()
 
@@ -160,23 +153,24 @@ class PodComms: CustomDebugStringConvertible {
     }
 
     // Handles all the common work to send and verify the version response for the two pairing pod commands, AssignAddress and SetupPod.
-    private func sendPairMessage(transport: PodMessageTransport, message: Message) throws -> VersionResponse {
+    // BLE pods only
+    private func bleSendPairMessage(blePodMessageTransport: BlePodMessageTransport, message: Message) throws -> VersionResponse {
 
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
 
         defer {
             if self.podState != nil {
-                log.debug("sendPairMessage saving current message transport state %@", String(reflecting: transport))
-                self.podState!.messageTransportState = MessageTransportState(ck: transport.ck, noncePrefix: transport.noncePrefix, msgSeq: transport.msgSeq, nonceSeq: transport.nonceSeq, messageNumber: transport.messageNumber)
+                log.debug("bleSendPairMessage saving current message transport state %@", String(reflecting: blePodMessageTransport))
+                self.podState!.bleMessageTransportState = BleMessageTransportState(ck: blePodMessageTransport.ck, noncePrefix: blePodMessageTransport.noncePrefix, msgSeq: blePodMessageTransport.msgSeq, nonceSeq: blePodMessageTransport.nonceSeq, messageNumber: blePodMessageTransport.messageNumber)
             }
         }
 
-        log.debug("sendPairMessage: attempting to use PodMessageTransport %@ to send message %@", String(reflecting: transport), String(reflecting: message))
-        let podMessageResponse = try transport.sendMessage(message)
+        log.debug("bleSendPairMessage: attempting to use PodMessageTransport %@ to send message %@", String(reflecting: blePodMessageTransport), String(reflecting: message))
+        let podMessageResponse = try blePodMessageTransport.sendMessage(message)
 
         if let fault = podMessageResponse.fault {
-            log.error("sendPairMessage pod fault: %{public}@", String(describing: fault))
+            log.error("bleSendPairMessage pod fault: %{public}@", String(describing: fault))
             if let podState = self.podState, podState.fault == nil {
                 self.podState!.fault = fault
             }
@@ -184,15 +178,16 @@ class PodComms: CustomDebugStringConvertible {
         }
 
         guard let versionResponse = podMessageResponse.messageBlocks[0] as? VersionResponse else {
-            log.error("sendPairMessage unexpected response: %{public}@", String(describing: podMessageResponse))
+            log.error("bleSendPairMessage unexpected response: %{public}@", String(describing: podMessageResponse))
             let responseType = podMessageResponse.messageBlocks[0].blockType
             throw PodCommsError.unexpectedResponse(response: responseType)
         }
 
-        log.debug("sendPairMessage: returning versionResponse %@", String(describing: versionResponse))
+        log.debug("bleSendPairMessage: returning versionResponse %@", String(describing: versionResponse))
         return versionResponse
     }
 
+    // BLE pods only
     private func pairPod(insulinType: InsulinType) throws {
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
@@ -210,27 +205,27 @@ class PodComms: CustomDebugStringConvertible {
         }
 
         log.info("Establish an Eap Session")
-        guard let messageTransportState = try establishSession(ltk: ltk, eapSeq: 1, msgSeq: Int(response.msgSeq)) else {
+        guard let bleMessageTransportState = try establishSession(ltk: ltk, eapSeq: 1, msgSeq: Int(response.msgSeq)) else {
             log.debug("pairPod: failed to create messageTransportState!")
             throw PodCommsError.noPodPaired
         }
  
-        log.info("LTK and encrypted transport now ready, messageTransportState: %@", String(reflecting: messageTransportState))
+        log.info("LTK and encrypted transport now ready, messageTransportState: %@", String(reflecting: bleMessageTransportState))
 
         // If we get here, we have the LTK all set up and we should be able use encrypted pod messages
-        let transport = PodMessageTransport(manager: manager, myId: self.myId, podId: self.podId, state: messageTransportState)
-        transport.messageLogger = messageLogger
+        let blePodMessageTransport = BlePodMessageTransport(manager: manager, myId: self.myId, podId: self.podId, state: bleMessageTransportState)
+        blePodMessageTransport.messageLogger = messageLogger
 
         // For Dash this command is vestigal and doesn't actually assign the address (podId)
         // any more as this is done earlier when the LTK is setup. But this Omnipod comamnd is still
         // needed albiet using 0xffffffff for the address while the Eros sets the 0x1f0xxxxx ID.
         let assignAddress = AssignAddressCommand(address: 0xffffffff)
-        let message = Message(address: 0xffffffff, messageBlocks: [assignAddress], sequenceNum: transport.messageNumber)
+        let message = Message(address: 0xffffffff, messageBlocks: [assignAddress], sequenceNum: blePodMessageTransport.messageNumber)
 
-        let versionResponse = try sendPairMessage(transport: transport, message: message)
+        let versionResponse = try bleSendPairMessage(blePodMessageTransport: blePodMessageTransport, message: message)
 
         // Now create the real PodState using the current transport state and the versionResponse info
-        log.debug("pairPod: creating PodState for versionResponse %{public}@ and transport %{public}@", String(describing: versionResponse), String(describing: transport.state))
+        log.debug("pairPod: creating PodState for versionResponse %{public}@ and transport %{public}@", String(describing: versionResponse), String(describing: blePodMessageTransport.state))
         self.podState = PodState(
             address: self.podId,
             firmwareVersion: String(describing: versionResponse.firmwareVersion),
@@ -239,7 +234,7 @@ class PodComms: CustomDebugStringConvertible {
             lotSeq: versionResponse.tid,
             insulinType: insulinType,
             podType: versionResponse.podType,
-            messageTransportState: transport.state,
+            bleMessageTransportState: blePodMessageTransport.state,
             ltk: ltk,
             bleIdentifier: manager.peripheral.identifier.uuidString
         )
@@ -253,10 +248,11 @@ class PodComms: CustomDebugStringConvertible {
             throw PodCommsError.activationTimeExceeded
         }
 
-        log.debug("pairPod: self.PodState messageTransportState now: %@", String(reflecting: self.podState?.messageTransportState))
+        log.debug("pairPod: self.PodState bleMessageTransportState now: %@", String(reflecting: self.podState?.bleMessageTransportState))
     }
 
-    private func establishSession(ltk: Data, eapSeq: Int, msgSeq: Int = 1)  throws -> MessageTransportState? {
+    // BLE pods only
+    private func establishSession(ltk: Data, eapSeq: Int, msgSeq: Int = 1) throws -> BleMessageTransportState? {
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
 
@@ -271,7 +267,7 @@ class PodComms: CustomDebugStringConvertible {
             if self.podState != nil {
                 let eapSeq = keys.synchronizedEapSqn.toInt()
                 log.debug("Updating EAP SQN to: %d", eapSeq)
-                self.podState!.messageTransportState.eapSeq = eapSeq
+                self.podState!.bleMessageTransportState.eapSeq = eapSeq
             }
             return nil
         case .SessionKeys(let keys):
@@ -280,8 +276,8 @@ class PodComms: CustomDebugStringConvertible {
             log.info("msgSequenceNumber: %@", String(keys.msgSequenceNumber))
             // log.info("NoncePrefix: %@", keys.nonce.prefix.hexadecimalString)
 
-            let omnipodMessageNumber = self.podState?.messageTransportState.messageNumber ?? 0
-            let messageTransportState = MessageTransportState(
+            let omnipodMessageNumber = self.podState?.bleMessageTransportState.messageNumber ?? 0
+            let bleMessageTransportState = BleMessageTransportState(
                 ck: keys.ck,
                 noncePrefix: keys.nonce.prefix,
                 eapSeq: eapSeq,
@@ -290,48 +286,50 @@ class PodComms: CustomDebugStringConvertible {
             )
 
             if self.podState != nil {
-                log.debug("Setting podState transport state to %{public}@", String(describing: messageTransportState))
-                self.podState!.messageTransportState = messageTransportState
+                log.debug("Setting podState transport state to %{public}@", String(describing: bleMessageTransportState))
+                self.podState!.bleMessageTransportState = bleMessageTransportState
             } else {
-                log.debug("Used keys %@ to create messageTransportState: %@", String(reflecting: keys), String(reflecting: messageTransportState))
+                log.debug("Used keys %@ to create bleMessageTransportState: %@", String(reflecting: keys), String(reflecting: bleMessageTransportState))
             }
-            return messageTransportState
+            return bleMessageTransportState
         }
     }
 
+    // BLE pods only
     private func establishNewSession() throws {
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
 
-        guard self.podState != nil, self.podState!.ltk != nil else {
+        guard self.podState != nil, let ltk = self.podState!.ltk else {
             throw PodCommsError.noPodPaired
         }
 
-        let mts = try establishSession(ltk: self.podState!.ltk!, eapSeq: self.podState!.messageTransportState.incrementEapSeq())
+        let mts = try establishSession(ltk: ltk, eapSeq: self.podState!.incrementEapSeq())
         if mts == nil {
-            let mts = try establishSession(ltk: self.podState!.ltk!, eapSeq: self.podState!.messageTransportState.incrementEapSeq())
+            let mts = try establishSession(ltk: ltk, eapSeq: self.podState!.incrementEapSeq())
             if mts == nil {
                 throw PodCommsError.diagnosticMessage(str: "Received resynchronization SQN for the second time")
             }
         }
     }
 
+    // BLE pods only
     private func setupPod(timeZone: TimeZone) throws {
         guard let manager = manager else { throw PodCommsError.podNotConnected }
 
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
 
-        let transport = PodMessageTransport(manager: manager, myId: self.myId, podId: self.podId, state: podState!.messageTransportState)
-        transport.messageLogger = messageLogger
+        let blePodMessageTransport = BlePodMessageTransport(manager: manager, myId: self.myId, podId: self.podId, state: podState!.bleMessageTransportState)
+        blePodMessageTransport.messageLogger = messageLogger
 
         let dateComponents = SetupPodCommand.dateComponents(date: Date(), timeZone: timeZone)
         let setupPod = SetupPodCommand(address: podState!.address, dateComponents: dateComponents, lot: UInt32(podState!.lotNo), tid: podState!.lotSeq)
 
-        let message = Message(address: 0xffffffff, messageBlocks: [setupPod], sequenceNum: transport.messageNumber)
+        let message = Message(address: 0xffffffff, messageBlocks: [setupPod], sequenceNum: blePodMessageTransport.messageNumber)
 
-        log.debug("setupPod: calling sendPairMessage %@ for message %@", String(reflecting: transport), String(describing: message))
-        let versionResponse = try sendPairMessage(transport: transport, message: message)
+        log.debug("setupPod: calling bleSendPairMessage %@ for message %@", String(reflecting: blePodMessageTransport), String(describing: message))
+        let versionResponse = try bleSendPairMessage(blePodMessageTransport: blePodMessageTransport, message: message)
 
         // Verify that the fundemental pod constants returned match the expected constant values in the Pod struct.
         // To actually be able to handle different fundemental values in Loop things would need to be reworked to save
@@ -424,9 +422,9 @@ class PodComms: CustomDebugStringConvertible {
                 }
 
                 // Run a session now for any post-pairing commands
-                let transport = PodMessageTransport(manager: manager, myId: myId, podId: podId, state: self.podState!.messageTransportState)
-                transport.messageLogger = self.messageLogger
-                let podSession = PodCommsSession(podState: self.podState!, dashTransport: transport, delegate: self)
+                let blePodMessageTransport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: self.podState!.bleMessageTransportState)
+                blePodMessageTransport.messageLogger = self.messageLogger
+                let podSession = PodCommsSession(podState: self.podState!, transport: blePodMessageTransport, delegate: self)
 
                 block(.success(session: podSession))
             } catch let error as PodCommsError {
@@ -445,10 +443,10 @@ class PodComms: CustomDebugStringConvertible {
     // Used to serialize a set of Pod Commands for a given session - vectors to correct version
     func runSession(withName name: String, using deviceSelector: @escaping (_ completion: @escaping (_ device: RileyLinkDevice?) -> Void) -> Void, _ block: @escaping (_ result: SessionRunResult) -> Void)
     {
-        if podState?.podType.usesRileyLink == false {
-            return bleRunSession(withName: name, block) // OmniBLE version
-        } else {
+        if podState?.podType.usesRileyLink == true {
             return erosRunSession(withName: name, using: deviceSelector, block) // OmniKit version
+        } else {
+            return bleRunSession(withName: name, block) // OmniBLE version
         }
     }
 
@@ -474,9 +472,9 @@ class PodComms: CustomDebugStringConvertible {
                 return
             }
 
-            let transport = PodMessageTransport(manager: manager, myId: self.myId, podId: self.podId, state: self.podState!.messageTransportState)
-            transport.messageLogger = self.messageLogger
-            let podSession = PodCommsSession(podState: self.podState!, dashTransport: transport, delegate: self)
+            let blePodMessageTransport = BlePodMessageTransport(manager: manager, myId: self.myId, podId: self.podId, state: self.podState!.bleMessageTransportState)
+            blePodMessageTransport.messageLogger = self.messageLogger
+            let podSession = PodCommsSession(podState: self.podState!, transport: blePodMessageTransport, delegate: self)
             block(.success(session: podSession))
         }
     }
@@ -484,14 +482,12 @@ class PodComms: CustomDebugStringConvertible {
     // MARK: - CustomDebugStringConvertible
 
     var debugDescription: String {
-        return [
-            "## PodComms",
-            "* myId: \(String(format: "%08X", myId))",
-            "* podId: \(String(format: "%08X", podId))",
-            "* configuredDevices: \(configuredDevices.value.map { $0.uuidString })",
-            "* delegate: \(String(describing: delegate != nil))",
-            ""
-        ].joined(separator: "\n")
+        var ret = "## PodComms\n"
+        if myId != 0 || podId != 0 {
+            ret += "* myId: \(String(format: "%08X", myId))\n* podId: \(String(format: "%08X", podId))\n"
+        }
+        ret += "* configuredDevices: \(configuredDevices.value.map { $0.uuidString })\n* delegate: \(String(describing: delegate != nil))\n"
+        return ret
     }
 
     
@@ -523,17 +519,17 @@ class PodComms: CustomDebugStringConvertible {
     ///     - MessageError.invalidSequence
     ///     - MessageError.invalidAddress
     ///     - RileyLinkDeviceError
-    private func erosSendPairMessage(address: UInt32, transport: ErosPodMessageTransport, message: Message, insulinType: InsulinType) throws -> VersionResponse {
+    private func erosSendPairMessage(address: UInt32, erosPodMessageTransport: ErosPodMessageTransport, message: Message, insulinType: InsulinType) throws -> VersionResponse {
 
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
 
         defer {
-            log.debug("sendPairMessage saving current transport packet #%d", transport.packetNumber)
+            log.debug("erosSendPairMessage saving current transport packet #%d", erosPodMessageTransport.packetNumber)
             if self.podState != nil {
-                self.podState!.erosMessageTransportState = ErosMessageTransportState(packetNumber: transport.packetNumber, messageNumber: transport.messageNumber)
+                self.podState!.erosMessageTransportState = ErosMessageTransportState(packetNumber: erosPodMessageTransport.packetNumber, messageNumber: erosPodMessageTransport.messageNumber)
             } else {
-                self.startingPacketNumber = transport.packetNumber
+                self.startingPacketNumber = erosPodMessageTransport.packetNumber
             }
         }
 
@@ -543,7 +539,7 @@ class PodComms: CustomDebugStringConvertible {
         while true {
             let response: Message
             do {
-                response = try transport.sendMessage(message)
+                response = try erosPodMessageTransport.sendMessage(message)
             } catch let error {
                 if let podCommsError = error as? PodCommsError {
                     switch podCommsError {
@@ -553,7 +549,7 @@ class PodComms: CustomDebugStringConvertible {
                     case .podAckedInsteadOfReturningResponse, .noResponse, .noResponseRL:
                         if didRetry == false {
                             didRetry = true
-                            log.debug("sendPairMessage to retry using updated packet #%d", transport.packetNumber)
+                            log.debug("erosSendPairMessage to retry using updated packet #%d", erosPodMessageTransport.packetNumber)
                             continue // the transport packet # is already advanced for the retry
                         }
                     default:
@@ -572,13 +568,13 @@ class PodComms: CustomDebugStringConvertible {
             }
 
             guard let config = response.messageBlocks[0] as? VersionResponse else {
-                log.error("sendPairMessage unexpected response: %{public}@", String(describing: response))
+                log.error("erosSendPairMessage unexpected response: %{public}@", String(describing: response))
                 let responseType = response.messageBlocks[0].blockType
                 throw PodCommsError.unexpectedResponse(response: responseType)
             }
 
             guard config.address == address else {
-                log.error("sendPairMessage unexpected address return of %{public}@ instead of expected %{public}@",
+                log.error("erosSendPairMessage unexpected address return of %{public}@ instead of expected %{public}@",
                   String(format: "08X", config.address), String(format: "%08X", address))
                 throw PodCommsError.invalidAddress(address: config.address, expectedAddress: address)
             }
@@ -618,7 +614,7 @@ class PodComms: CustomDebugStringConvertible {
             }
 
             if self.podState == nil {
-                log.default("Creating PodState for address %{public}@ [lot %u tid %u], packet #%d, message #%d", String(format: "%04X", config.address), config.lot, config.tid, transport.packetNumber, transport.messageNumber)
+                log.default("Creating PodState for address %{public}@ [lot %u tid %u], packet #%d, message #%d", String(format: "%04X", config.address), config.lot, config.tid, erosPodMessageTransport.packetNumber, erosPodMessageTransport.messageNumber)
                 self.podState = PodState(
                     address: config.address,
                     firmwareVersion: String(describing: config.firmwareVersion),
@@ -627,8 +623,7 @@ class PodComms: CustomDebugStringConvertible {
                     lotSeq: config.tid,
                     insulinType: insulinType,
                     podType: erosType,
-                    packetNumber: transport.packetNumber,
-                    messageNumber: transport.messageNumber
+                    erosMessageTransportState: erosPodMessageTransport.state
                 )
                 // podState setupProgress state should be addressAssigned
             }
@@ -702,14 +697,14 @@ class PodComms: CustomDebugStringConvertible {
 
         log.debug("Attempting pairing with address %{public}@ using packet #%d", String(format: "%04X", address), packetNumber)
         let messageTransportState = ErosMessageTransportState(packetNumber: packetNumber, messageNumber: messageNumber)
-        let transport = ErosPodMessageTransport(session: commandSession, address: 0xffffffff, ackAddress: address, state: messageTransportState)
-        transport.messageLogger = messageLogger
+        let erosPodMessageTransport = ErosPodMessageTransport(session: commandSession, address: 0xffffffff, ackAddress: address, state: messageTransportState)
+        erosPodMessageTransport.messageLogger = messageLogger
 
         // Create the Assign Address command message
         let assignAddress = AssignAddressCommand(address: address)
-        let message = Message(address: 0xffffffff, messageBlocks: [assignAddress], sequenceNum: transport.messageNumber)
+        let message = Message(address: 0xffffffff, messageBlocks: [assignAddress], sequenceNum: erosPodMessageTransport.messageNumber)
 
-        _ = try erosSendPairMessage(address: address, transport: transport, message: message, insulinType: insulinType)
+        _ = try erosSendPairMessage(address: address, erosPodMessageTransport: erosPodMessageTransport, message: message, insulinType: insulinType)
     }
 
     // Eros only
@@ -719,17 +714,17 @@ class PodComms: CustomDebugStringConvertible {
 
         commandSession.assertOnSessionQueue()
 
-        let transport = ErosPodMessageTransport(session: commandSession, address: 0xffffffff, ackAddress: podState.address, state: podState.erosMessageTransportState)
-        transport.messageLogger = messageLogger
+        let erosTransport = ErosPodMessageTransport(session: commandSession, address: 0xffffffff, ackAddress: podState.address, state: podState.erosMessageTransportState)
+        erosTransport.messageLogger = messageLogger
 
         let dateComponents = SetupPodCommand.dateComponents(date: Date(), timeZone: timeZone)
         let setupPod = SetupPodCommand(address: podState.address, dateComponents: dateComponents, lot: podState.lotNo, tid: podState.lotSeq)
 
-        let message = Message(address: 0xffffffff, messageBlocks: [setupPod], sequenceNum: transport.messageNumber)
+        let message = Message(address: 0xffffffff, messageBlocks: [setupPod], sequenceNum: erosTransport.messageNumber)
 
         let versionResponse: VersionResponse
         do {
-            versionResponse = try erosSendPairMessage(address: podState.address, transport: transport, message: message, insulinType: insulinType)
+            versionResponse = try erosSendPairMessage(address: podState.address, erosPodMessageTransport: erosTransport, message: message, insulinType: insulinType)
         } catch let error {
             if case PodCommsError.podAckedInsteadOfReturningResponse = error {
                 log.default("SetupPod acked instead of returning response.")
@@ -795,9 +790,9 @@ class PodComms: CustomDebugStringConvertible {
                     self.startingPacketNumber = 0
 
                     // Run a session now for any post-pairing commands
-                    let erosTransport = ErosPodMessageTransport(session: commandSession, address: self.podState!.address, state: self.podState!.erosMessageTransportState)
-                    erosTransport.messageLogger = self.messageLogger
-                    let podSession = PodCommsSession(podState: self.podState!, erosTransport: erosTransport, delegate: self)
+                    let erosPodMessageTransport = ErosPodMessageTransport(session: commandSession, address: self.podState!.address, state: self.podState!.erosMessageTransportState)
+                    erosPodMessageTransport.messageLogger = self.messageLogger
+                    let podSession = PodCommsSession(podState: self.podState!, transport: erosPodMessageTransport, delegate: self)
 
                     block(.success(session: podSession))
                 } catch let error as PodCommsError {
@@ -832,9 +827,9 @@ class PodComms: CustomDebugStringConvertible {
                 }
 
                 self.configureDevice(device, with: commandSession)
-                let erosTransport = ErosPodMessageTransport(session: commandSession, address: self.podState!.address, state: self.podState!.erosMessageTransportState)
-                erosTransport.messageLogger = self.messageLogger
-                let podSession = PodCommsSession(podState: self.podState!, erosTransport: erosTransport, delegate: self)
+                let erosPodMessageTransport = ErosPodMessageTransport(session: commandSession, address: self.podState!.address, state: self.podState!.erosMessageTransportState)
+                erosPodMessageTransport.messageLogger = self.messageLogger
+                let podSession = PodCommsSession(podState: self.podState!, transport: erosPodMessageTransport, delegate: self)
                 block(.success(session: podSession))
             }
         }

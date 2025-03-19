@@ -221,7 +221,7 @@ protocol PodCommsSessionDelegate: AnyObject {
     func podCommsSession(_ podCommsSession: PodCommsSession, didChange state: PodState)
 }
 
-class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
+class PodCommsSession: MessageTransportDelegate {
 
     let log = OSLog(category: "PodCommsSession")
 
@@ -233,8 +233,7 @@ class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
     }
 
     private unowned let delegate: PodCommsSessionDelegate
-    private var dashTransport: MessageTransport? = nil
-    private var erosTransport: ErosMessageTransport? = nil
+    private var transport: MessageTransport
 
     // used for testing
     var mockCurrentDate: Date?
@@ -242,26 +241,11 @@ class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
         return mockCurrentDate ?? Date()
     }
 
-    init(podState: PodState, dashTransport: MessageTransport, delegate: PodCommsSessionDelegate) {
+    init(podState: PodState, transport: MessageTransport, delegate: PodCommsSessionDelegate) {
         self.podState = podState
-        self.dashTransport = dashTransport
+        self.transport = transport
         self.delegate = delegate
-        self.dashTransport!.delegate = self
-    }
-
-    init(podState: PodState, erosTransport: ErosMessageTransport, delegate: PodCommsSessionDelegate) {
-        self.podState = podState
-        self.erosTransport = erosTransport
-        self.delegate = delegate
-        self.erosTransport!.delegate = self
-    }
-
-    // ZZZ temp var to return the transport message number
-    private var tranportMessageNumber: Int {
-        if let erosTransport = erosTransport {
-            return erosTransport.messageNumber
-        }
-        return dashTransport!.messageNumber
+        self.transport.delegate = self
     }
 
     // Handles updating PodState on first pod fault seen
@@ -335,7 +319,7 @@ class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
         }
 
         var sentNonce: UInt32?
-        var messageNumber = tranportMessageNumber
+        var messageNumber = transport.messageNumber
         if let getStatusCommand = messageBlocks[0] as? GetStatusCommand,
            getStatusCommand.podInfoType == .noSeqStatus
         {
@@ -360,12 +344,7 @@ class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
             // Clear the lastDeliveryStatusReceived variable which is used to guard against possible 0x31 pod faults
             podState.lastDeliveryStatusReceived = nil
 
-            let response: Message
-            if let erosTransport = erosTransport {
-                response = try erosTransport.sendMessage(message)
-            } else {
-                response = try dashTransport!.sendMessage(message)
-            }
+            let response = try transport.sendMessage(message)
 
             // Simulate fault
             //let podInfoResponse = try PodInfoResponse(encodedData: Data(hexadecimalString: "0216020d0000000000ab6a038403ff03860000285708030d0000")!)
@@ -655,7 +634,7 @@ class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
         
         let bolusExtraCommand = BolusExtraCommand(units: units, timeBetweenPulses: timeBetweenPulses, extendedUnits: extendedUnits, extendedDuration: extendedDuration, acknowledgementBeep: acknowledgementBeep, completionBeep: completionBeep, programReminderInterval: programReminderInterval)
         do {
-            podState.unacknowledgedCommand = PendingCommand.program(.bolus(volume: units, automatic: automatic), tranportMessageNumber, currentDate)
+            podState.unacknowledgedCommand = PendingCommand.program(.bolus(volume: units, automatic: automatic), transport.messageNumber, currentDate)
             let statusResponse: StatusResponse = try send([bolusScheduleCommand, bolusExtraCommand])
             podState.unacknowledgedCommand = nil
             podState.unfinalizedBolus = UnfinalizedDose(bolusAmount: units, startTime: currentDate, scheduledCertainty: .certain, insulinType: podState.insulinType, automatic: automatic)
@@ -691,7 +670,7 @@ class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
         let startTime = currentDate
 
         do {
-            podState.unacknowledgedCommand = PendingCommand.program(.tempBasal(unitsPerHour: rate, duration: duration, isHighTemp: isHighTemp, automatic: automatic), tranportMessageNumber, startTime)
+            podState.unacknowledgedCommand = PendingCommand.program(.tempBasal(unitsPerHour: rate, duration: duration, isHighTemp: isHighTemp, automatic: automatic), transport.messageNumber, startTime)
             let status: StatusResponse = try send([tempBasalCommand, tempBasalExtraCommand])
             podState.unacknowledgedCommand = nil
             podState.unfinalizedTempBasal = UnfinalizedDose(tempBasalRate: rate, startTime: startTime, duration: duration, isHighTemp: isHighTemp, automatic: automatic, scheduledCertainty: .certain, insulinType: podState.insulinType)
@@ -796,7 +775,7 @@ class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
                 commandsToSend += [configureAlerts]
             }
 
-            podState.unacknowledgedCommand = PendingCommand.stopProgram(.all, tranportMessageNumber, currentDate)
+            podState.unacknowledgedCommand = PendingCommand.stopProgram(.all, transport.messageNumber, currentDate)
             let status: StatusResponse = try send(commandsToSend, beepBlock: beepBlock)
             podState.unacknowledgedCommand = nil
             let canceledDose = handleCancelDosing(deliveryType: .all, bolusNotDelivered: status.bolusNotDelivered)
@@ -853,7 +832,7 @@ class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
         }
 
         do {
-            podState.unacknowledgedCommand = PendingCommand.stopProgram(deliveryType, tranportMessageNumber, currentDate)
+            podState.unacknowledgedCommand = PendingCommand.stopProgram(deliveryType, transport.messageNumber, currentDate)
             let cancelDeliveryCommand = CancelDeliveryCommand(nonce: podState.currentNonce, deliveryType: deliveryType, beepType: beepType)
             let status: StatusResponse = try send([cancelDeliveryCommand], beepBlock: beepBlock)
             podState.unacknowledgedCommand = nil
@@ -909,7 +888,7 @@ class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
                     let _: StatusResponse = try send([CancelDeliveryCommand(nonce: podState.currentNonce, deliveryType: .all, beepType: .noBeepCancel)])
                 }
             }
-            podState.unacknowledgedCommand = PendingCommand.program(.basalProgram(schedule: schedule), tranportMessageNumber, currentDate)
+            podState.unacknowledgedCommand = PendingCommand.program(.basalProgram(schedule: schedule), transport.messageNumber, currentDate)
             var status: StatusResponse = try send([basalScheduleCommand, basalExtraCommand])
             podState.unacknowledgedCommand = nil
             let now = currentDate
@@ -1173,20 +1152,18 @@ class PodCommsSession: MessageTransportDelegate, ErosMessageTransportDelegate {
     }
 
     func assertOnSessionQueue() {
-        if let erosTransport = erosTransport {
-            erosTransport.assertOnSessionQueue()
-        } else {
-            dashTransport!.assertOnSessionQueue()
-        }
+        self.transport.assertOnSessionQueue()
     }
 
-    func messageTransport(_ messageTransport: MessageTransport, didUpdate state: MessageTransportState) {
+    func messageTransport(_ messageTransport: any MessageTransport, didUpdate state: any MessageTransportState) {
         messageTransport.assertOnSessionQueue()
-        podState.messageTransportState = state
-    }
 
-    func messageTransport(_ erosMessageTransport: ErosMessageTransport, didUpdate state: ErosMessageTransportState) {
-        erosMessageTransport.assertOnSessionQueue()
-        podState.erosMessageTransportState = state
+        if let bleMessageTransportState = state as? BleMessageTransportState {
+            self.podState.bleMessageTransportState = bleMessageTransportState
+        } else if let erosMessageTransportState = state as? ErosMessageTransportState {
+            self.podState.erosMessageTransportState = erosMessageTransportState
+        } else {
+            assertionFailure("Unsupported state update")
+        }
     }
 }

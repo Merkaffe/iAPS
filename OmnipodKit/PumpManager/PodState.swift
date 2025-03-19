@@ -120,17 +120,15 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     }
 
     // Dash specific variables
+    var bleMessageTransportState: BleMessageTransportState
     var ltk: Data? = nil
     var bleIdentifier: String? = nil
 
     // Eros specific variables
+    var erosMessageTransportState: ErosMessageTransportState
     var nonceState: NonceState? = nil
 
     var lastDeliveryStatusReceived: DeliveryStatus? // this variable is not persistent across app restarts
-
-    // ZZZ maybe will need to define a messageTransportState protocol with an RL or non-RL versions
-    var messageTransportState: MessageTransportState
-    var erosMessageTransportState: ErosMessageTransportState
 
 
     init(
@@ -142,14 +140,13 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         insulinType: InsulinType,
         podType: PodType,
 
-        // Dash specific variables
-        messageTransportState: MessageTransportState? = nil,
+        // BLE specific variables
+        bleMessageTransportState: BleMessageTransportState? = nil,
         ltk: Data? = nil,
         bleIdentifier: String? = nil,
 
         // Eros specific variables
-        packetNumber: Int = 0,
-        messageNumber: Int = 0,
+        erosMessageTransportState: ErosMessageTransportState? = nil,
 
         setupUnitsDelivered: Double = 0.0,
         initialDeliveryStatus: DeliveryStatus? = nil)
@@ -176,17 +173,24 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         self.podTime = 0
 
         if podType == erosType {
-            // Eros specific initializations
-            self.nonceState = NonceState(lot: lotNo, tid: lotSeq)
+            // Eros specific initializations, nonceState will be initialized on initial nonce resync()
+            if let erosMessageTransportState = erosMessageTransportState {
+                self.erosMessageTransportState = erosMessageTransportState
+            } else {
+                self.erosMessageTransportState = ErosMessageTransportState()
+            }
+            self.bleMessageTransportState = BleMessageTransportState()
         } else {
             // BLE specific initializations
             self.ltk = ltk
             self.bleIdentifier = bleIdentifier
+            if let bleMessageTransportState = bleMessageTransportState {
+                self.bleMessageTransportState = bleMessageTransportState
+            } else {
+                self.bleMessageTransportState = BleMessageTransportState()
+            }
+            self.erosMessageTransportState = ErosMessageTransportState()
         }
-
-        // ZZZ need to rework to have a unified messageTransportState
-        self.messageTransportState = messageTransportState ?? MessageTransportState(ck: nil, noncePrefix: nil)
-        self.erosMessageTransportState = ErosMessageTransportState(packetNumber: 0, messageNumber: 0)
     }
 
 
@@ -239,6 +243,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
     mutating func resyncNonce(syncWord: UInt16, sentNonce: UInt32, messageSequenceNum: Int) {
         if self.podType == erosType {
+            // Need to initialize or reseed the pod's nonceState
             let sum = (sentNonce & 0xFFFF) + UInt32(crc16Table[messageSequenceNum]) + (lotNo & 0xFFFF) + (lotSeq & 0xFFFF)
             let seed = UInt16(sum & 0xFFFF) ^ syncWord
             self.nonceState = NonceState(lot: lotNo, tid: lotSeq, seed: seed)
@@ -247,6 +252,11 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
     }
 
+    // BLE specific
+    mutating func incrementEapSeq() -> Int {
+        self.bleMessageTransportState.eapSeq += 1
+        return bleMessageTransportState.eapSeq
+    }
 
     // MARK: - PodState update funcs
 
@@ -565,31 +575,36 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
 
         // Dash specific values
-        if let ltkString = rawValue["ltk"] as? String,
-            let bleIdentifier = rawValue["bleIdentifier"] as? String
-        {
+        if let ltkString = rawValue["ltk"] as? String, let bleIdentifier = rawValue["bleIdentifier"] as? String {
             self.ltk = Data(hexadecimalString: ltkString)
             self.bleIdentifier = bleIdentifier
-        }
-
-        // ZZZ temporary
-        if let messageTransportStateRaw = rawValue["messageTransportState"] as? MessageTransportState.RawValue,
-            let messageTransportState = MessageTransportState(rawValue: messageTransportStateRaw)
-        {
-            self.messageTransportState = messageTransportState
-        } else {
-            self.messageTransportState = MessageTransportState(ck: nil, noncePrefix: nil)
         }
 
         if let erosMessageTransportStateRaw = rawValue["erosMessageTransportState"] as? ErosMessageTransportState.RawValue,
             let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
         {
             self.erosMessageTransportState = erosMessageTransportState
+        } else if let erosMessageTransportStateRaw = rawValue["messageTransportState"] as? ErosMessageTransportState.RawValue,
+            let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
+        {
+            // compatability for the case of PodState having an messageTransportState: Any MessageTransport var
+            self.erosMessageTransportState = erosMessageTransportState
         } else {
-            self.erosMessageTransportState = ErosMessageTransportState(packetNumber: 0, messageNumber: 0)
+            self.erosMessageTransportState = ErosMessageTransportState()
         }
 
-        self.lastDeliveryStatusReceived = nil
+        if let bleMessageTransportStateRaw = rawValue["bleMessageTransportState"] as? BleMessageTransportState.RawValue,
+            let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
+        {
+            self.bleMessageTransportState = bleMessageTransportState
+        } else if let bleMessageTransportStateRaw = rawValue["messageTransportState"] as? BleMessageTransportState.RawValue,
+            let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
+        {
+            // compatability for the case of PodState having an messageTransportState: Any MessageTransport var
+            self.bleMessageTransportState = bleMessageTransportState
+        } else {
+            self.bleMessageTransportState = BleMessageTransportState()
+        }
     }
 
     public var rawValue: RawValue {
@@ -605,9 +620,6 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "alerts": activeAlertSlots.rawValue,
             "setupProgress": setupProgress.rawValue,
             "insulinType": insulinType.rawValue,
-            
-            "messageTransportState": messageTransportState.rawValue,
-            "erosMessageTransportState": erosMessageTransportState.rawValue
         ]
 
         rawValue["podType"] = podType.rawValue
@@ -632,12 +644,16 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             rawValue["configuredAlerts"] = rawConfiguredAlerts
         }
 
-        // Dash specific variables
-        if let bleIdentifier = bleIdentifier {
-            rawValue["bleIdentifier"] = bleIdentifier
-        }
-        if let ltk = ltk {
-            rawValue["ltk"] = ltk.hexadecimalString
+        if podType == erosType {
+            rawValue["erosMessageTransportState"] = erosMessageTransportState.rawValue
+        } else {
+            rawValue["bleMessageTransportState"] = bleMessageTransportState.rawValue
+            if let bleIdentifier = bleIdentifier {
+                rawValue["bleIdentifier"] = bleIdentifier
+            }
+            if let ltk = ltk {
+                rawValue["ltk"] = ltk.hexadecimalString
+            }
         }
 
         return rawValue
@@ -647,9 +663,10 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     // MARK: - CustomDebugStringConvertible
 
     public var debugDescription: String {
-        var retVal = [
+        let retVal = [
             "### PodState",
             "* address: \(String(format: "%08X", address))",
+            "* bleIdentifier: \(optionalString(bleIdentifier))",
             "* activatedAt: \(optionalString(activatedAt))",
             "* expiresAt: \(optionalString(expiresAt))",
             "* podTime: \(podTime.timeIntervalStr)",
@@ -674,29 +691,10 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "* primeFinishTime: \(optionalString(primeFinishTime))",
             "* configuredAlerts: \(configuredAlertsString(configuredAlerts: configuredAlerts))",
             "* insulinType: \(optionalString(insulinType))",
-            "",
-        ].joined(separator: "\n")
-
-        if podType.usesRileyLink {
-            retVal += [
-                "* erosMessageTransportState: \(String(describing: erosMessageTransportState))",
-            ].joined(separator: "\n")
-        } else {
-            retVal += [
-                "* bleIdentifier: \(optionalString(bleIdentifier))",
-                "* ltk: \(ltk == nil ? "nil" : ltk!.hexadecimalString)",
-
-                "* messageTransportState: \(String(describing: messageTransportState))",
-
-            ].joined(separator: "\n")
-        }
-
-        retVal += [
-            "",
+            "* messageTransportState: \(podType.usesRileyLink ? String(describing: erosMessageTransportState) : String(describing: bleMessageTransportState))",
             "* pdmRef: \(optionalString(fault?.pdmRef))",
             "* fault: \(optionalString(fault))",
         ].joined(separator: "\n")
-
         return retVal
     }
 }

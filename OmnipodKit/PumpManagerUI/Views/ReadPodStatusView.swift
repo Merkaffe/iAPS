@@ -9,7 +9,6 @@
 
 import SwiftUI
 import LoopKit
-import OmnipodKit
 
 
 struct ReadPodStatusView: View {
