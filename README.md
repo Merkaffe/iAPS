@@ -33,14 +33,14 @@ Note that OmnipodKit is still an evolving prototype -- use at your own risk!
 
 ## Status
 
-### 2025 March 19
+### 2025 March 20
 
 At this time, there is nothing implementing Omnipod 5 communications.
 
-The O5 selection option is a temporary placeholder. It uses the DASH
-transport with the [rPi DASH simulator](https://github.com/LoopKit/pod) to test having a third pod type. This enables configuring Omnipod 5 UI additions
+> The O5 selection option is a temporary placeholder. It uses the DASH
+transport and will work with both an actual DASH pod and with the [rPi DASH simulator](https://github.com/LoopKit/pod). This enables configuring Omnipod 5 UI additions
 (different text, pod tab color, etc)
-and using an alternate base pod id in the pod comms.
+and using an alternate base pod id in the pod comms, while using the known transport for DASH pods.
 
 For DIY use, the Omnipod 5 pod ids will start with 0x15
 while the DIY DASH pod ids will start with 0x17.
