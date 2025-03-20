@@ -1,16 +1,19 @@
 diff --git a/.gitmodules b/.gitmodules
-index ca2bf7849..77aca89af 100644
+index ca2bf7849..ad5bddc8d 100644
 --- a/.gitmodules
 +++ b/.gitmodules
-@@ -41,3 +41,6 @@
- [submodule "DanaKit"]
- 	path = DanaKit
- 	url = https://github.com/loopandlearn/DanaKit
+@@ -26,6 +26,9 @@
+ 	path = OmniKit
+ 	url = https://github.com/loopandlearn/OmniKit.git
+ 	branch = trio
 +[submodule "OmnipodKit"]
 +	path = OmnipodKit
 +	url = https://github.com/loopandlearn/OmnipodKit.git
+ [submodule "MinimedKit"]
+ 	path = MinimedKit
+ 	url = https://github.com/loopandlearn/MinimedKit.git
 diff --git a/Trio.xcodeproj/xcshareddata/xcschemes/Trio.xcscheme b/Trio.xcodeproj/xcshareddata/xcschemes/Trio.xcscheme
-index 6ad54f7fa..88c9a5fbf 100644
+index 6ad54f7fa..ba2513b66 100644
 --- a/Trio.xcodeproj/xcshareddata/xcschemes/Trio.xcscheme
 +++ b/Trio.xcodeproj/xcshareddata/xcschemes/Trio.xcscheme
 @@ -104,6 +104,20 @@
@@ -34,8 +37,25 @@ index 6ad54f7fa..88c9a5fbf 100644
           <BuildActionEntry
              buildForTesting = "YES"
              buildForRunning = "YES"
+@@ -356,6 +370,16 @@
+                ReferencedContainer = "container:RileyLinkKit/RileyLinkKit.xcodeproj">
+             </BuildableReference>
+          </TestableReference>
++         <TestableReference
++            skipped = "NO">
++            <BuildableReference
++               BuildableIdentifier = "primary"
++               BlueprintIdentifier = "D8D0ED172D74EF41000B0AF4"
++               BuildableName = "OmniTests.xctest"
++               BlueprintName = "OmniTests"
++               ReferencedContainer = "container:OmnipodKit/OmnipodKit.xcodeproj">
++            </BuildableReference>
++         </TestableReference>
+       </Testables>
+    </TestAction>
+    <LaunchAction
 diff --git a/Trio.xcworkspace/contents.xcworkspacedata b/Trio.xcworkspace/contents.xcworkspacedata
-index 8035089c5..2fee50ba6 100644
+index 8035089c5..260f34e0a 100644
 --- a/Trio.xcworkspace/contents.xcworkspacedata
 +++ b/Trio.xcworkspace/contents.xcworkspacedata
 @@ -7,6 +7,9 @@
@@ -49,17 +69,17 @@ index 8035089c5..2fee50ba6 100644
        location = "group:LibreTransmitter/LibreTransmitter.xcodeproj">
     </FileRef>
 diff --git a/Trio/Sources/APS/DeviceDataManager.swift b/Trio/Sources/APS/DeviceDataManager.swift
-index 821bb0baa..b9c7c0160 100644
+index 821bb0baa..5a7f6f4d7 100644
 --- a/Trio/Sources/APS/DeviceDataManager.swift
 +++ b/Trio/Sources/APS/DeviceDataManager.swift
-@@ -8,6 +8,7 @@ import LoopKitUI
- import MinimedKit
+@@ -9,6 +9,7 @@ import MinimedKit
  import MockKit
  import OmniBLE
  import OmniKit
 +import OmnipodKit
  import ShareClient
  import SwiftDate
+ import Swinject
 @@ -35,6 +36,7 @@ private let staticPumpManagers: [PumpManagerUI.Type] = [
      MinimedPumpManager.self,
      OmnipodPumpManager.self,
@@ -145,10 +165,10 @@ index 821bb0baa..b9c7c0160 100644
                  if let error = error {
                      self.alertHistoryStorage.ackAlert(alertIssueDate, error.localizedDescription)
 diff --git a/Trio/Sources/Modules/Home/View/HomeRootView.swift b/Trio/Sources/Modules/Home/View/HomeRootView.swift
-index 3c3f5b9e3..322518ed6 100644
+index e8d8cb392..7b4c60358 100644
 --- a/Trio/Sources/Modules/Home/View/HomeRootView.swift
 +++ b/Trio/Sources/Modules/Home/View/HomeRootView.swift
-@@ -965,6 +965,7 @@ extension Home {
+@@ -935,6 +935,7 @@ extension Home {
              // PUMP RELATED
              .confirmationDialog("Pump Model", isPresented: $showPumpSelection) {
                  Button("Medtronic") { state.addPump(.minimed) }
@@ -189,17 +209,17 @@ index 262224839..5eb6b3cbd 100644
                      Button("Omnipod Dash") { state.addPump(.omnipodBLE) }
                      Button("Dana(RS/-i)") { state.addPump(.dana) }
 diff --git a/Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift b/Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift
-index 3c4c6bb50..84e66acf2 100644
+index 3c4c6bb50..9d5da90c2 100644
 --- a/Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift
 +++ b/Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift
-@@ -6,6 +6,7 @@ import MinimedKitUI
- import MockKit
- import MockKitUI
+@@ -8,6 +8,7 @@ import MockKitUI
  import OmniBLE
  import OmniKit
  import OmniKitUI
 +import OmnipodKit
  import SwiftUI
+ import UIKit
+ 
 @@ -59,6 +60,15 @@ extension PumpConfig {
                      allowDebugFeatures: true,
                      allowedInsulinTypes: [.apidra, .humalog, .novolog, .fiasp, .lyumjev]
@@ -217,7 +237,7 @@ index 3c4c6bb50..84e66acf2 100644
                  setupViewController = DanaKitPumpManager.setupViewController(
                      initialSettings: initialSettings,
 diff --git a/scripts/swiftformat.sh b/scripts/swiftformat.sh
-index 6780ebe96..0c15c242a 100755
+index 6780ebe96..d5e8f076d 100755
 --- a/scripts/swiftformat.sh
 +++ b/scripts/swiftformat.sh
 @@ -97,4 +97,4 @@ trailingClosures \

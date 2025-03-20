@@ -1,12 +1,15 @@
 # OmnipodKit
 
-A universal Omnipod pump manager to (eventually) handle all Insulet Omnipod pod types.
+OmnipodKit is a universal Omnipod pump manager to (eventually) handle all Insulet Omnipod pod types.
+
 A short-term goal of this effort is to replace both the OmniKit and OmniBLE pump managers
-with a single pump manager which to handle all Omnipod pod types
-to simplify future DIY Omnipod code maintenance and to improve the user
-experience when switching between different Omnipod pod types.
-The longer-term goal is that this Omnipod pump manager will be extended
-to provide Omnipod 5 support as a third pod type option for both Loop and Trio.
+with a single pump manager to
+
+* handle all Omnipod pod types
+* simplify future DIY Omnipod code maintenance
+* improve the user experience when switching between different Omnipod pod types
+
+The longer-term goal is that the OmnipodKit pump manager provide Omnipod 5 (O5) support as a third pod type option for both Loop and Trio when, and if, the O5 encryption is understood well enough to enable pairing a DIY app to an O5 pod.
 
 To use this new OmnipodKit pump manager, select "All Omnipod Types" when doing an "Add Pump".
 The actual Omnipod pod type will be selected during the pump manager initialization sequence.
@@ -30,17 +33,18 @@ Note that OmnipodKit is still an evolving prototype -- use at your own risk!
 
 ## Status
 
-### March 17, 2025
+### 2025 March 20
 
-At this time, there is nothing implementing Omnipod 5 communications
-which is still trying to be understood by the DIY community.
-The O5 support is temporary placeholder and verification code using the DASH
-transport to test having a third pod type showing new Omnipod 5 UI additions
+At this time, there is nothing implementing Omnipod 5 communications.
+
+> The O5 selection option is a temporary placeholder. It uses the DASH
+transport and will work with both an actual DASH pod and with the [rPi DASH simulator](https://github.com/LoopKit/pod). This enables configuring Omnipod 5 UI additions
 (different text, pod tab color, etc)
-and using an alternate base pod id in the pod comms.
+and using an alternate base pod id in the pod comms, while using the known transport for DASH pods.
+
 For DIY use, the Omnipod 5 pod ids will start with 0x15
 while the DIY DASH pod ids will start with 0x17.
-Eros addresses (pod ids) for both DIY and PDM use always start with 0x1F.
+Eros addresses (pod ids) start with 0x1F for both DIY and PDM.
 
 The pump settings show the name of the selected pod type.
 Pod Diagnostics -> Pump Manager Details can be used
@@ -56,11 +60,56 @@ update OmnpodKit to actually fully support this pod type!
 
 ## To Add to LoopWorkspace
 
-In the near future that will be a patch which can be run to automatically handle
-the few integration issues of OmnipodKit to a modern LoopWorkspace.
-In the meantime a manual add to LoopWorkspace can be easily performed.
+There is patch to add the OmnipodKit (private repo) pump manager to a fresh clone of LoopWorkspace.
 
-#### To Manually Add to LoopWorkspace
+The commands below should be pasted into Terminal with the path at the top-of-a-buildable LoopWorkspace directory.
+
+If LoopWorkspace is open in Xcode, then before executing these commands:
+
+* select Product, Clean Build Folder
+* select File, Close Workspace
+
+```
+git clone https://github.com/loopandlearn/OmnipodKit.git
+git apply OmnipodKit/patches/add_omnipodkit_to_LoopWorkspace.patch
+xed .
+```
+
+When Xcode opens, if questioned, select use the version on disk.
+
+After building Loop, be sure to select the new "All Omnipod Types"
+when doing an "Add Pump" to use the new OmnipodKit pump manager.
+
+
+## To Add to Trio-dev
+
+There is patch to add the OmnipodKit (private repo) pump manager to a fresh clone of the private Trio-dev repository. This patch does not work with the released version of Trio (0.2.3).
+
+The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio-dev directory. This patch handles all the Trio pump manager integration requirements to add the
+OmnipodKit (private repo) pump manager to the closed-beta Trio-dev (private repo).
+
+If Trio is open in Xcode, then before executing these commands:
+
+* select Product, Clean Build Folder
+* select File, Close Workspace
+
+```
+git clone https://github.com/loopandlearn/OmnipodKit.git
+git apply OmnipodKit/patches/add_omnipodkit_to_Trio-dev.patch
+xed .
+```
+
+When Xcode opens, if questioned, select use the version on disk.
+
+It is expected that the Trio-dev repository will become public before the OmnipodKit repo.
+
+## Manually Add a Plugin to LoopWorkspace
+
+This section is kept for future reference on how to add a new plugin to Loop. **When you use the patch method, above, this section is not required.**
+
+At the current time, Trio requires editing multiple Trio source files to incorporate a Pump Manager,
+and even more edits are required for a successful addition of
+any Omnipod Pump Manager (OmniBLE, OmniKit or OmnipodKit). **You must use the Trio-dev patch method above. This plugin addition is insufficent for Trio.**
 
 ```quote
 $ cd <the-top-of-LoopWorkspace-directory>
@@ -68,39 +117,25 @@ $ git clone https://github.com/loopandlearn/OmnipodKit.git
 $ xed .
 
 In Xcode, select File->'Add Files to "LoopWorkspace"...'
-Scroll down to select and double click to open the "OmnipodKit" directory
-Select the "OmnipodKit.xcodeproj" file and tap the blue (Add) button
-Tap the blue (Finish) button
+
+* Scroll down to select and double click to open the "OmnipodKit" directory
+* Select the "OmnipodKit.xcodeproj" file and tap the blue (Add) button
+* Tap the blue (Finish) button
 
 In Xcode with the LoopWorkspace selected, select Product->Scheme->Edit Scheme...
-Make sure that the Build tab on the top of the left panel is selected
-Click on the "+" in the bottom left corner above the blue (Duplicate Scheme) button
-Scroll down to select "OmnipodKitPlugin" icon (under OmnipodKit) and tap the blue (Add) button
-Drag "OmnipodKitPlugin OmnipodKit" from the bottom of the list up until immediately before "OmniKitPlugin OmniKit"
-Tap (Close)
-```
-After signing and building Loop, be sure to select the new "All Omnipod Types"
-when doing an "Add Pump" to use the new OmnipodKit pump manager.
 
-To add the OmniTests to the LoopWorkspace tests,
-verify that the LoopWorkspace is selected,
-click on the diamond with the check near the top
-of the lefthand panel to display the Test Navigator panel,
-right click on OmniTests under the "Other Tests" section near the end of the panel,
-and then select "Add to LoopWorkspace".
+* Make sure that the Build tab on the top of the left panel is selected
+* Click on the "+" in the bottom left corner above the blue (Duplicate Scheme) button
+* Scroll down to select "OmnipodKitPlugin" icon (under OmnipodKit) and tap the blue (Add) button
+* Drag "OmnipodKitPlugin OmnipodKit" from the bottom of the list up until immediately before "OmniKitPlugin OmniKit"
+* Tap (Close)
 
-## To Add to Trio-dev
+To add the OmniTests to the LoopWorkspace tests in Xcode:
 
-Unfortunately Trio requires editing multiple Trio source files to incorporate a Pump Manager,
-and even more edits are required for a successful addition of
-any Omnipod Pump Manager (OmniBLE, OmniKit or OmnipodKit).
-There is patch to handle all the Trio pump manager integration requirements to add the
-OmnipodKit (private repo) pump manager to the closed-beta Trio-dev (private repo).
+* verify that the LoopWorkspace scheme is selected
+* click on the diamond with the check near the top of the lefthand panel to display the Test Navigator panel
+* right click on OmniTests under the "Other Tests" section near the end of the panel
+* select "Add to LoopWorkspace".
 
-```quote
-$ cd <the-top-of-a-buildable-Trio-dev-directory>
-$ git clone https://github.com/loopandlearn/OmnipodKit.git
-$ git apply OmnipodKit/patch/add_omnipodkit_to_Trio-dev.patch
 ```
 
-It is expected that the Trio-dev repository will become public before the OmnipodKit repo.
