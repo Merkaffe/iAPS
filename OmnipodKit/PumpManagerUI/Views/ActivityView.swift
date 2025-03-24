@@ -36,3 +36,21 @@ fileprivate struct ActivityViewController: UIViewControllerRepresentable {
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: UIViewControllerRepresentableContext<ActivityViewController>) {}
 }
+
+// Initialize a suitiably named temp file with the given text.
+// Returns the temp file URL or an IO error string on failure.
+func initializeTempFile(baseName: String, text: String) -> Any {
+    let dateString = ISO8601DateFormatter.string(from: Date(), timeZone: .current, formatOptions: [.withSpaceBetweenDateAndTime, .withInternetDateTime])
+    let tempFileUrl = FileManager.default.temporaryDirectory.appendingPathComponent("\(baseName) \(dateString).txt")
+
+    // Catch any IO errors and return an error string to prevent possible hangs when sharing
+    do {
+        if FileManager.default.fileExists(atPath: tempFileUrl.path) {
+            try FileManager.default.removeItem(at: tempFileUrl)
+        }
+        try text.write(to: tempFileUrl, atomically: true, encoding: .utf8)
+    } catch let error {
+        return String(format: "Initialization of %@ failed: %@", tempFileUrl.lastPathComponent, String(describing: error))
+    }
+    return tempFileUrl
+}

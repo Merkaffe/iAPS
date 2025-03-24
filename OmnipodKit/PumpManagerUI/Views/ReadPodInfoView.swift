@@ -47,7 +47,8 @@ struct ReadPodInfoView: View {
                     }
                 }
             }.sheet(isPresented: $showActivityView) {
-                ActivityView(isPresented: $showActivityView, activityItems: [self.displayString])
+                let tempFileUrlOrError = initializeTempFile(baseName: self.title, text: self.displayString)
+                ActivityView(isPresented: $showActivityView, activityItems: [tempFileUrlOrError])
             }
             VStack {
                 Button(action: {
