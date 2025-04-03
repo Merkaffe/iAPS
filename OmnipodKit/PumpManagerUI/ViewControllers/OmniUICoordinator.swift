@@ -266,7 +266,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 didRequestDeactivation: { [weak self] in
                     self?.navigateTo(.deactivate)
                 },
-                podTabColor: self.podType.tabColor
+                podTabColor: pumpManager.podType.tabColor
             )
 
             let vc = hostingController(rootView: view.onAppear(perform: {UIApplication.shared.isIdleTimerDisabled = true}), onDisappear: {UIApplication.shared.isIdleTimerDisabled = false})
@@ -388,7 +388,8 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 navigateTo(nextStep)
             }
         } else if pumpManager.podType == unknownOmnipodType {
-            // User had selected switch pod type
+            // User selected switch pod type at bottom of pod settings with
+            // no active pod, so we need to reselect the new pod type now.
             navigateTo(.selectPodType)
         } else {
             completionDelegate?.completionNotifyingDidComplete(self)
@@ -438,6 +439,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
     }
 
     private func determineInitialStep() -> OmniUIScreen {
+        self.podType = pumpManager.podType
         if pumpManager.state.podState?.needsCommsRecovery == true {
             return .pendingCommandRecovery
         } else if pumpManager.podCommState == .activating {

@@ -49,7 +49,7 @@ class PeripheralManager: NSObject {
 
 
     /// The dispatch queue used to serialize operations on the peripheral
-    let queue = DispatchQueue(label: "com.loopkit.PeripheralManager.queue", qos: .unspecified) // ZZZ make unique?
+    let queue = DispatchQueue(label: "com.loopkit.PeripheralManager.queue", qos: .unspecified)
 
     private let sessionQueue: OperationQueue = {
         let queue = OperationQueue()

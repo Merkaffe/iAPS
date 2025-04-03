@@ -167,7 +167,7 @@ class PairPodViewModel: ObservableObject, Identifiable {
         }
         return false
 */
-        // ZZZ For now always disable the back button in OmnipodKit to avoid potential pod type change problems
+        // Always disable the back button to avoid potential pod type change issues in OmnipodKit
         return true
     }
 
