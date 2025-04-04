@@ -12,48 +12,51 @@ index ca2bf7849..ad5bddc8d 100644
  [submodule "MinimedKit"]
  	path = MinimedKit
  	url = https://github.com/loopandlearn/MinimedKit.git
-diff --git a/Trio.xcodeproj/xcshareddata/xcschemes/Trio.xcscheme b/Trio.xcodeproj/xcshareddata/xcschemes/Trio.xcscheme
-index 6ad54f7fa..ba2513b66 100644
---- a/Trio.xcodeproj/xcshareddata/xcschemes/Trio.xcscheme
-+++ b/Trio.xcodeproj/xcshareddata/xcschemes/Trio.xcscheme
-@@ -104,6 +104,20 @@
-                ReferencedContainer = "container:MinimedKit/MinimedKit.xcodeproj">
-             </BuildableReference>
-          </BuildActionEntry>
-+         <BuildActionEntry
-+            buildForTesting = "YES"
-+            buildForRunning = "YES"
-+            buildForProfiling = "YES"
-+            buildForArchiving = "YES"
-+            buildForAnalyzing = "YES">
-+            <BuildableReference
-+               BuildableIdentifier = "primary"
-+               BlueprintIdentifier = "D889B2382D2B4BFE00C8E64C"
-+               BuildableName = "OmnipodKitPlugin.loopplugin"
-+               BlueprintName = "OmnipodKitPlugin"
-+               ReferencedContainer = "container:OmnipodKit/OmnipodKit.xcodeproj">
-+            </BuildableReference>
-+         </BuildActionEntry>
-          <BuildActionEntry
-             buildForTesting = "YES"
-             buildForRunning = "YES"
-@@ -356,6 +370,16 @@
-                ReferencedContainer = "container:RileyLinkKit/RileyLinkKit.xcodeproj">
-             </BuildableReference>
-          </TestableReference>
-+         <TestableReference
-+            skipped = "NO">
-+            <BuildableReference
-+               BuildableIdentifier = "primary"
-+               BlueprintIdentifier = "D8D0ED172D74EF41000B0AF4"
-+               BuildableName = "OmniTests.xctest"
-+               BlueprintName = "OmniTests"
-+               ReferencedContainer = "container:OmnipodKit/OmnipodKit.xcodeproj">
-+            </BuildableReference>
-+         </TestableReference>
-       </Testables>
-    </TestAction>
-    <LaunchAction
+diff --git a/Trio.xcodeproj/project.pbxproj b/Trio.xcodeproj/project.pbxproj
+index c5d56360b..d9751ed4d 100644
+--- a/Trio.xcodeproj/project.pbxproj
++++ b/Trio.xcodeproj/project.pbxproj
+@@ -327,6 +327,8 @@
+ 		98641AF4F92123DA668AB931 /* CarbRatioEditorRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BDC6993C1087310EDFC428 /* CarbRatioEditorRootView.swift */; };
+ 		A33352ED40476125EBAC6EE0 /* CarbRatioEditorDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E22146D3DF4853786C78132 /* CarbRatioEditorDataFlow.swift */; };
+ 		AD3D2CD42CD01B9EB8F26522 /* PumpConfigDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF65DA88F972B56090AD6AC3 /* PumpConfigDataFlow.swift */; };
++		B6DDCC072DA024C300AABBF7 /* OmnipodKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6DDCC062DA024C300AABBF7 /* OmnipodKit.framework */; };
++		B6DDCC082DA024C300AABBF7 /* OmnipodKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B6DDCC062DA024C300AABBF7 /* OmnipodKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+ 		B7C465E9472624D8A2BE2A6A /* (null) in Sources */ = {isa = PBXBuildFile; };
+ 		B958F1B72BA0711600484851 /* MKRingProgressView in Frameworks */ = {isa = PBXBuildFile; productRef = B958F1B62BA0711600484851 /* MKRingProgressView */; };
+ 		BA00D96F7B2FF169A06FB530 /* CGMSettingsStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C018D1680307A31C9ED7120 /* CGMSettingsStateModel.swift */; };
+@@ -732,6 +734,7 @@
+ 				3B4BA78B2D8DC0EC0069D5B8 /* ShareClient.framework in Embed Frameworks */,
+ 				3B4BA7912D8DC0EC0069D5B8 /* TidepoolServiceKitUI.framework in Embed Frameworks */,
+ 				CE95BF602BA7715800DC3DE3 /* MockKit.framework in Embed Frameworks */,
++				B6DDCC082DA024C300AABBF7 /* OmnipodKit.framework in Embed Frameworks */,
+ 				CE95BF5E2BA770C300DC3DE3 /* LoopKitUI.framework in Embed Frameworks */,
+ 			);
+ 			name = "Embed Frameworks";
+@@ -1090,6 +1093,7 @@
+ 		AAFF91130F2FCCC7EBBA11AD /* BasalProfileEditorStateModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BasalProfileEditorStateModel.swift; sourceTree = "<group>"; };
+ 		AF65DA88F972B56090AD6AC3 /* PumpConfigDataFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PumpConfigDataFlow.swift; sourceTree = "<group>"; };
+ 		B5822B15939E719628E9FF7C /* SnoozeRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnoozeRootView.swift; sourceTree = "<group>"; };
++		B6DDCC062DA024C300AABBF7 /* OmnipodKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = OmnipodKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+ 		B9B5C0607505A38F256BF99A /* CGMSettingsDataFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CGMSettingsDataFlow.swift; sourceTree = "<group>"; };
+ 		BA49538D56989D8DA6FCF538 /* TargetsEditorDataFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TargetsEditorDataFlow.swift; sourceTree = "<group>"; };
+ 		BD04ECCD2D299522008C5FEB /* BolusProgressOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BolusProgressOverlay.swift; sourceTree = "<group>"; };
+@@ -1465,6 +1469,7 @@
+ 				CE95BF5F2BA7715800DC3DE3 /* MockKit.framework in Frameworks */,
+ 				3BD9687F2D8DDD8800899469 /* CryptoSwift in Frameworks */,
+ 				38DF1789276FC8C400B3528F /* SwiftMessages in Frameworks */,
++				B6DDCC072DA024C300AABBF7 /* OmnipodKit.framework in Frameworks */,
+ 				3B4BA7802D8DBD690069D5B8 /* OmniKitUI.framework in Frameworks */,
+ 				3B4BA7842D8DBD690069D5B8 /* RileyLinkKit.framework in Frameworks */,
+ 				CE95BF612BA7715900DC3DE3 /* MockKitUI.framework in Frameworks */,
+@@ -2038,6 +2043,7 @@
+ 		3818AA48274C267000843DB3 /* Frameworks */ = {
+ 			isa = PBXGroup;
+ 			children = (
++				B6DDCC062DA024C300AABBF7 /* OmnipodKit.framework */,
+ 				3B4BA7882D8DC0EC0069D5B8 /* TidepoolServiceKit.framework */,
+ 				3B4BA7892D8DC0EC0069D5B8 /* TidepoolServiceKitUI.framework */,
+ 				3B4BA75B2D8DBD690069D5B8 /* CGMBLEKit.framework */,
 diff --git a/Trio.xcworkspace/contents.xcworkspacedata b/Trio.xcworkspace/contents.xcworkspacedata
 index 8035089c5..260f34e0a 100644
 --- a/Trio.xcworkspace/contents.xcworkspacedata
@@ -236,13 +239,3 @@ index 3c4c6bb50..9d5da90c2 100644
              case .dana:
                  setupViewController = DanaKitPumpManager.setupViewController(
                      initialSettings: initialSettings,
-diff --git a/scripts/swiftformat.sh b/scripts/swiftformat.sh
-index 6780ebe96..d5e8f076d 100755
---- a/scripts/swiftformat.sh
-+++ b/scripts/swiftformat.sh
-@@ -97,4 +97,4 @@ trailingClosures \
- --typeattributes same-line \
- --varattributes same-line \
- --wrapcollections before-first \
----exclude Pods,Generated,R.generated.swift,fastlane/swift,Dependencies, LoopKit, LibreTransmitter,G7SensorKit,OmniKit, dexcom-share-client-swift,CGMBLEKit,RileyLinkKit,OmniBLE,MinimedKit,TidepoolService
-+--exclude Pods,Generated,R.generated.swift,fastlane/swift,Dependencies, LoopKit, LibreTransmitter,G7SensorKit,OmniKit, OmnipodKit, dexcom-share-client-swift,CGMBLEKit,RileyLinkKit,OmniBLE,MinimedKit,TidepoolService
