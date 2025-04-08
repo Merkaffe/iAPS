@@ -37,9 +37,14 @@ struct PodInfoTriggeredAlerts: PodInfo {
     }
 }
 
-private func triggeredAlerts(podInfoTriggeredAlerts: PodInfoTriggeredAlerts, startOffset: Int, sepString: String, printAll: Bool) -> String {
+private func triggeredAlerts(podInfoTriggeredAlerts: PodInfoTriggeredAlerts, sepString: String, printZeroVals: Bool) -> String {
     var result: [String] = []
 
+    // N.B. The starting offset depends on the project name length
+    // Optional(OmnipodKit.AlertSlot.slot0AutoOff)
+    // 0123456789012345678901234567890
+    // 0         1         2         3
+    let startOffset = 30
     for index in podInfoTriggeredAlerts.alertActivations.indices {
         // extract the alert slot debug description for a more helpful display
         let description = AlertSlot(rawValue: UInt8(index)).debugDescription
@@ -48,7 +53,7 @@ private func triggeredAlerts(podInfoTriggeredAlerts: PodInfoTriggeredAlerts, sta
         let range = start..<end
 
         let triggeredTimeStr: String
-        if printAll || podInfoTriggeredAlerts.alertActivations[index] != 0 {
+        if printZeroVals || podInfoTriggeredAlerts.alertActivations[index] != 0 {
             triggeredTimeStr = podInfoTriggeredAlerts.alertActivations[index].timeIntervalStr
         } else {
             triggeredTimeStr = ""
@@ -60,11 +65,11 @@ private func triggeredAlerts(podInfoTriggeredAlerts: PodInfoTriggeredAlerts, sta
 }
 
 func triggeredAlertsString(podInfoTriggeredAlerts: PodInfoTriggeredAlerts) -> String {
-    return triggeredAlerts(podInfoTriggeredAlerts: podInfoTriggeredAlerts, startOffset: 27, sepString: "\n", printAll: false)
+    return triggeredAlerts(podInfoTriggeredAlerts: podInfoTriggeredAlerts, sepString: "\n", printZeroVals: false)
 }
 
 extension PodInfoTriggeredAlerts: CustomDebugStringConvertible {
     var debugDescription: String {
-        return triggeredAlerts(podInfoTriggeredAlerts: self, startOffset: 33, sepString: ", ", printAll: true)
+        return triggeredAlerts(podInfoTriggeredAlerts: self, sepString: ", ", printZeroVals: true)
     }
 }
