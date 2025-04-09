@@ -107,9 +107,7 @@ It is expected that the Trio-dev repository will become public before the Omnipo
 
 This section is kept for future reference on how to add a new plugin to Loop. **When you use the patch method, above, this section is not required.**
 
-At the current time, Trio requires editing multiple Trio source files to incorporate a Pump Manager,
-and even more edits are required for a successful addition of
-any Omnipod Pump Manager (OmniBLE, OmniKit or OmnipodKit). **You must use the Trio-dev patch method above. This plugin addition is insufficent for Trio.**
+**This plugin addition is not used for Trio.**
 
 ```quote
 $ cd <the-top-of-LoopWorkspace-directory>
@@ -138,4 +136,49 @@ To add the OmniTests to the LoopWorkspace tests in Xcode:
 * select "Add to LoopWorkspace".
 
 ```
+
+## Manually Add a Pump Manager to Trio
+
+This section is kept for future reference on how to add a new pump manager to Trio. **When you use the patch method, above, this section is not required.**
+
+Trio does not use the plugin features used by Loop. 
+
+In addition, Trio requires editing multiple Trio source files to incorporate a Pump Manager,
+and even more edits are required for a successful addition of
+any Omnipod Pump Manager (OmniBLE, OmniKit or OmnipodKit). **Review the patch for Trio edits.**
+
+```quote
+$ cd <the-top-of-Trio-directory>
+$ git clone https://github.com/loopandlearn/OmnipodKit.git
+$ xed .
+
+In Xcode, select File->'Add Files to "Trio"...'
+
+* Scroll down to select and double click to open the "OmnipodKit" directory
+* Select the "OmnipodKit.xcodeproj" file and tap the blue (Add) button
+* Tap the blue (Finish) button
+
+Now the framework for OmnipodKit must be added explicitly
+ (this is instead of the plugin steps from LoopWorkspace above).
+
+In Xcode, tap on the Trio Target
+
+* Make sure the General Tab is open
+* Scroll to Frameworks, Libraries, and Embedded Content
+* At the bottom of the list, tap on + and select OmnipodKit.framework
+* Clean the build folder, Close and Open workspace
+
+At the current time, do not add the OmniTests to the Trio tests in Xcode; this will be dealt with at a later time.
+
+```
+
+The following files must be edited for Trio to work with the new pump manager. 
+Examine the `add_omnipodkit_to_Trio-dev.patch` to view the required changes.
+
+* Trio/Sources/APS/DeviceDataManager.swift
+* Trio/Sources/Modules/Home/View/HomeRootView.swift
+* Trio/Sources/Modules/PumpConfig/PumpConfigDataFlow.swift
+* Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift
+* Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift
+
 
