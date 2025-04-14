@@ -84,9 +84,16 @@ struct VersionResponse : MessageBlock {
             podProgressStatus = progressStatus
             lot = encodedData[10...].toBigEndian(UInt32.self)
             tid = encodedData[14...].toBigEndian(UInt32.self)
-            gain = (encodedData[18] & 0xc0) >> 6
-            rssi = encodedData[18] & 0x3f
             address = encodedData[19...].toBigEndian(UInt32.self)
+
+            // The gain and RSSI fields are only valid for Eros pods in the shorter 0x15 VersionResponse
+            if podType == erosType {
+                gain = (encodedData[18] & 0xc0) >> 6
+                rssi = encodedData[18] & 0x3f
+            } else {
+                gain = nil
+                rssi = nil
+            }
 
             // These values only included in the longer 0x1B VersionResponse for the 03 SetupPod command.
             pulseSize = nil
@@ -156,6 +163,26 @@ struct VersionResponse : MessageBlock {
 
 extension VersionResponse: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "VersionResponse(lot:\(lot), tid:\(tid), address:\(Data(bigEndian: address).hexadecimalString), firmwareVersion:\(firmwareVersion), iFirmwareVersion:\(iFirmwareVersion), podType.:\(podType.localizedDescription), podProgressStatus:\(podProgressStatus), gain:\(gain?.description ?? "NA"), rssi:\(rssi?.description ?? "NA"), pulseSize:\(pulseSize?.description ?? "NA"), secondsPerBolusPulse:\(secondsPerBolusPulse?.description ?? "NA"), secondsPerPrimePulse:\(secondsPerPrimePulse?.description ?? "NA"), primeUnits:\(primeUnits?.description ?? "NA"), cannulaInsertionUnits:\(cannulaInsertionUnits?.description ?? "NA"), serviceDuration:\(serviceDuration?.description ?? "NA"), )"
+
+        // Common fields valid in both types of VersionResponses
+        var retVal = "VersionResponse(lot:\(lot), tid:\(tid), address:\(Data(bigEndian: address).hexadecimalString), firmwareVersion:\(firmwareVersion), iFirmwareVersion:\(iFirmwareVersion), podType:\(podType.localizedDescription), podProgressStatus:\(podProgressStatus)"
+
+        // The optional gain and RSSI fields are only valid for Eros pods in the shorter AssignAddress VersionResponse
+        if let gain = gain, let rssi = rssi {
+            retVal += ", gain:\(gain.description), rssi:\(rssi.description)"
+        }
+
+        // Optional fields from the longer SetupPod VersionResponses
+        if let pulseSize = pulseSize,
+           let secondsPerBolusPulse = secondsPerBolusPulse,
+           let secondsPerPrimePulse = secondsPerPrimePulse,
+           let primeUnits = primeUnits,
+           let cannulaInsertionUnits = cannulaInsertionUnits,
+           let serviceDuration = serviceDuration
+        {
+            retVal += ", pulseSize:\(pulseSize.description), secondsPerBolusPulse:\(secondsPerBolusPulse.description), secondsPerPrimePulse:\(secondsPerPrimePulse.description), primeUnits:\(primeUnits.description), cannulaInsertionUnits:\(cannulaInsertionUnits.description), serviceDuration:\(serviceDuration.timeIntervalStr)"
+        }
+
+        return retVal + ")"
     }
 }
