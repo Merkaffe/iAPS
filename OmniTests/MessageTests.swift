@@ -109,8 +109,8 @@ class MessageTests: XCTestCase {
             XCTAssertEqual(0xFFFFFFFF, config.address)
             XCTAssertEqual(dashType, config.podType)
             XCTAssertEqual(.reminderInitialized, config.podProgressStatus)
-            XCTAssertEqual(0, config.gain)
-            XCTAssertEqual(0, config.rssi)
+            XCTAssertNil(config.gain) // NA for non-Eros pods and now no longer returned
+            XCTAssertNil(config.rssi) // NA for non-Eros pods and now no longer returned
             XCTAssertNil(config.pulseSize)
             XCTAssertNil(config.secondsPerBolusPulse)
             XCTAssertNil(config.secondsPerPrimePulse)
