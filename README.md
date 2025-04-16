@@ -70,6 +70,7 @@ If LoopWorkspace is open in Xcode, then before executing these commands:
 * select File, Close Workspace
 
 ```
+git switch -c add_omnipodkit
 git submodule add https://github.com/loopandlearn/OmnipodKit
 git apply OmnipodKit/patches/add_omnipodkit_to_LoopWorkspace.patch
 git add .
@@ -96,6 +97,7 @@ If Trio is open in Xcode, then before executing these commands:
 * select File, Close Workspace
 
 ```
+git switch -c add_omnipodkit
 git submodule add https://github.com/loopandlearn/OmnipodKit
 git apply OmnipodKit/patches/add_omnipodkit_to_Trio-dev.patch
 git add .
