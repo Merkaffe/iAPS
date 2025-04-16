@@ -1,17 +1,3 @@
-diff --git a/.gitmodules b/.gitmodules
-index ca2bf7849..ad5bddc8d 100644
---- a/.gitmodules
-+++ b/.gitmodules
-@@ -26,6 +26,9 @@
- 	path = OmniKit
- 	url = https://github.com/loopandlearn/OmniKit.git
- 	branch = trio
-+[submodule "OmnipodKit"]
-+	path = OmnipodKit
-+	url = https://github.com/loopandlearn/OmnipodKit.git
- [submodule "MinimedKit"]
- 	path = MinimedKit
- 	url = https://github.com/loopandlearn/MinimedKit.git
 diff --git a/Trio.xcodeproj/project.pbxproj b/Trio.xcodeproj/project.pbxproj
 index c5d56360b..d9751ed4d 100644
 --- a/Trio.xcodeproj/project.pbxproj

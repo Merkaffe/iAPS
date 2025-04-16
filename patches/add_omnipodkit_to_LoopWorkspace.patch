@@ -1,17 +1,3 @@
-diff --git a/.gitmodules b/.gitmodules
-index 1308e60..f704302 100644
---- a/.gitmodules
-+++ b/.gitmodules
-@@ -49,6 +49,9 @@
- [submodule "OmniKit"]
- 	path = OmniKit
- 	url = https://github.com/LoopKit/OmniKit.git
-+[submodule "OmnipodKit"]
-+	path = OmnipodKit
-+	url = https://github.com/loopandlearn/OmnipodKit.git
- [submodule "MinimedKit"]
- 	path = MinimedKit
- 	url = https://github.com/LoopKit/MinimedKit.git
 diff --git a/LoopWorkspace.xcworkspace/contents.xcworkspacedata b/LoopWorkspace.xcworkspace/contents.xcworkspacedata
 index b1d1574..3adddff 100644
 --- a/LoopWorkspace.xcworkspace/contents.xcworkspacedata

@@ -70,8 +70,10 @@ If LoopWorkspace is open in Xcode, then before executing these commands:
 * select File, Close Workspace
 
 ```
-git clone https://github.com/loopandlearn/OmnipodKit.git
+git submodule add https://github.com/loopandlearn/OmnipodKit
 git apply OmnipodKit/patches/add_omnipodkit_to_LoopWorkspace.patch
+git add .
+git commit -am "add submodule OmnipodKit"
 xed .
 ```
 
@@ -94,8 +96,10 @@ If Trio is open in Xcode, then before executing these commands:
 * select File, Close Workspace
 
 ```
-git clone https://github.com/loopandlearn/OmnipodKit.git
+git submodule add https://github.com/loopandlearn/OmnipodKit
 git apply OmnipodKit/patches/add_omnipodkit_to_Trio-dev.patch
+git add .
+git commit -am "add submodule OmnipodKit"
 xed .
 ```
 
@@ -111,7 +115,7 @@ This section is kept for future reference on how to add a new plugin to Loop. **
 
 ```quote
 $ cd <the-top-of-LoopWorkspace-directory>
-$ git clone https://github.com/loopandlearn/OmnipodKit.git
+$ git submodule add https://github.com/loopandlearn/OmnipodKit
 $ xed .
 
 In Xcode, select File->'Add Files to "LoopWorkspace"...'
@@ -149,7 +153,7 @@ any Omnipod Pump Manager (OmniBLE, OmniKit or OmnipodKit). **Review the patch fo
 
 ```quote
 $ cd <the-top-of-Trio-directory>
-$ git clone https://github.com/loopandlearn/OmnipodKit.git
+$ git submodule add https://github.com/loopandlearn/OmnipodKit
 $ xed .
 
 In Xcode, select File->'Add Files to "Trio"...'
