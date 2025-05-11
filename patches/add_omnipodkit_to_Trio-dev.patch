@@ -163,7 +163,7 @@ index e8d8cb392..7b4c60358 100644
                  Button("Medtronic") { state.addPump(.minimed) }
 +                Button("All Omnipod Types") { state.addPump(.omni) }
                  Button("Omnipod Eros") { state.addPump(.omnipod) }
-                 Button("Omnipod Dash") { state.addPump(.omnipodBLE) }
+                 Button("Omnipod DASH") { state.addPump(.omnipodBLE) }
                  Button("Dana(RS/-i)") { state.addPump(.dana) }
 diff --git a/Trio/Sources/Modules/PumpConfig/PumpConfigDataFlow.swift b/Trio/Sources/Modules/PumpConfig/PumpConfigDataFlow.swift
 index 68b921400..3a5114bd8 100644
@@ -187,7 +187,7 @@ index 262224839..5eb6b3cbd 100644
                                      Text("• Medtronic")
 +                                    Text("• All Omnipod Types")
                                      Text("• Omnipod Eros")
-                                     Text("• Omnipod Dash")
+                                     Text("• Omnipod DASH")
                                      Text("• Dana (RS/-i)")
 @@ -124,6 +125,7 @@ extension PumpConfig {
                  }
@@ -195,7 +195,7 @@ index 262224839..5eb6b3cbd 100644
                      Button("Medtronic") { state.addPump(.minimed) }
 +                    Button("All Omnipod Types") { state.addPump(.omni) }
                      Button("Omnipod Eros") { state.addPump(.omnipod) }
-                     Button("Omnipod Dash") { state.addPump(.omnipodBLE) }
+                     Button("Omnipod DASH") { state.addPump(.omnipodBLE) }
                      Button("Dana(RS/-i)") { state.addPump(.dana) }
 diff --git a/Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift b/Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift
 index 3c4c6bb50..9d5da90c2 100644
