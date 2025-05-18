@@ -97,7 +97,17 @@ public class OmniPumpManager: RileyLinkPumpManager {
 
     init(state: OmniPumpManagerState, rileyLinkDeviceProvider: RileyLinkDeviceProvider, dateGenerator: @escaping () -> Date = Date.init) {
         self.lockedState = Locked(state)
-        let podComms = PodComms(podState: state.podState, myId: state.controllerId, podId: state.podId)
+        let podComms: PodComms
+        switch state.podType {
+        case erosType:
+            let erosPodComms = ErosPodComms.init(podState: state.podState, myId: state.controllerId, podId: state.podId)
+            podComms = erosPodComms
+        case dashType, omnipod5Type:
+            let blePodComms = BlePodComms.init(podState: state.podState, myId: state.controllerId, podId: state.podId)
+            podComms = blePodComms
+        default:
+            podComms = PodComms(podState: state.podState, myId: state.controllerId, podId: state.podId)
+        }
         self.lockedPodComms = Locked(podComms)
         self.dateGenerator = dateGenerator
         super.init(rileyLinkDeviceProvider: rileyLinkDeviceProvider)
@@ -125,11 +135,6 @@ public class OmniPumpManager: RileyLinkPumpManager {
         deviceProvider.delegate = self
     }
 
-    // non-RL only
-    var deviceBLEName: String? {
-        return self.podComms.manager?.peripheral.name
-    }
-
     private var podComms: PodComms {
         get {
             return lockedPodComms.value
@@ -138,9 +143,16 @@ public class OmniPumpManager: RileyLinkPumpManager {
             lockedPodComms.value = newValue
         }
     }
-    private let lockedPodComms: Locked<PodComms>
+
+    private var lockedPodComms: Locked<PodComms>
 
     private let podStateObservers = WeakSynchronizedSet<PodStateObserver>()
+
+    private let pumpDelegate = WeakSynchronizedDelegate<PumpManagerDelegate>()
+
+    let log = OSLog(category: "OmniPumpManager")
+
+    private var lastLoopRecommendation: Date?
 
     // Primarily used for testing
     let dateGenerator: () -> Date
@@ -260,7 +272,27 @@ public class OmniPumpManager: RileyLinkPumpManager {
         }
     }
 
-    // OmniBLE specific func's and var's
+
+    // MARK: - BLE specific vars and funcs
+
+    var deviceBLEName: String? {
+        if let blePodComms = self.podComms as? BlePodComms {
+            return blePodComms.manager?.peripheral.name
+        }
+        return nil
+    }
+
+    var provideHeartbeat: Bool = false  // Not persisted
+
+    private var lastHeartbeat: Date = .distantPast
+
+    var isConnected: Bool {
+        guard let blePodComms = self.podComms as? BlePodComms else {
+            return false
+        }
+        return blePodComms.manager?.peripheral.state == .connected
+    }
+
     private func issueHeartbeatIfNeeded() {
         if self.provideHeartbeat, dateGenerator().timeIntervalSince(lastHeartbeat) > .minutes(2) {
             self.pumpDelegate.notify { (delegate) in
@@ -269,11 +301,6 @@ public class OmniPumpManager: RileyLinkPumpManager {
             self.lastHeartbeat = Date()
         }
     }
-
-    // Not persisted
-    var provideHeartbeat: Bool = false
-
-    private var lastHeartbeat: Date = .distantPast
 
     func omnipodPeripheralDidConnect(manager: PeripheralManager) {
         logDeviceCommunication("Pod connected \(manager.peripheral.identifier.uuidString)", type: .connection)
@@ -300,18 +327,8 @@ public class OmniPumpManager: RileyLinkPumpManager {
         }
     }
 
-    var isConnected: Bool {
-        return podComms.manager?.peripheral.state == .connected
-    }
-    // end OmniBLE specific func's and var's
 
-    private let pumpDelegate = WeakSynchronizedDelegate<PumpManagerDelegate>()
-
-    let log = OSLog(category: "OmniPumpManager")
-
-    private var lastLoopRecommendation: Date?
-
-    // MARK: - RileyLink Updates
+    // MARK: - RileyLink specific vars and funcs
 
     var rileyLinkBatteryAlertLevel: Int? {
         get {
@@ -805,20 +822,40 @@ extension OmniPumpManager {
     var podType: PodType {
         set {
             assert(state.podState == nil) // switching pod type only allowed with no pod
+
+            if state.podType == unknownOmnipodType {
+                log.info("setting state podType to %{public}@", newValue.briefName)
+            } else if state.podType != newValue {
+                log.info("changing state podType from %{public}@ to %{public}@", state.podType.briefName, newValue.briefName)
+            } else {
+                log.info("state podType remains %{public}@", newValue.briefName)
+                return
+            }
+
+            let podComms: PodComms
+            switch newValue {
+            case erosType:
+                let erosPodComms = ErosPodComms.init(podState: state.podState, myId: state.controllerId, podId: state.podId)
+                podComms = erosPodComms
+            case dashType, omnipod5Type:
+                let blePodComms = BlePodComms.init(podState: state.podState, myId: state.controllerId, podId: state.podId)
+                podComms = blePodComms
+            default:
+                podComms = PodComms(podState: state.podState, myId: state.controllerId, podId: state.podId)
+            }
+
             setState { (state) in
-                // Changing pod type, reset the Id's as appropriate
-                if newValue == erosType {
-                    state.controllerId = 0
-                    state.podId = 0
-                } else {
-                    let topIdByte = newValue.topIdByte
-                    state.controllerId = createControllerId(topIdByte: topIdByte)
-                    state.podId = state.controllerId + 1
-                }
                 state.podType = newValue
             }
-            self.localizedTitle = newValue.localizedDescription // update the displayed Insulin Pump name in Settings
-            self.podComms.prepForNewPod(myId: state.controllerId, podId: state.podId)
+
+            // Rewrite the formerly let value
+            self.lockedPodComms = Locked(podComms)
+
+            self.podComms.delegate = self
+            self.podComms.messageLogger = self
+            self.localizedTitle = newValue.localizedDescription
+
+            self.prepForNewPod() // reset the Id's as appropriate for the new pod type
         }
         get {
             state.podType
@@ -859,16 +896,8 @@ extension OmniPumpManager {
 
             if usesRileyLink {
                 // RL case
-
-                // Shouldn't be needed now with self.podComms.prepForNewPod()
-                // self.podCOmms = PodComms(podState: nil)
-                // self.podComms.delegate = self
-                // self.podComms.messageLogger = self
-
-                // This is now handled when podComms.prepForNewPod() sets podState to nil and the PodCommsDelegate
-                // is called for a nil PodComms PodState which will then invoke updatePodStateFromPodComms(nil)
-                // state.updatePodStateFromPodComms(nil)
-
+                // The call to podComms.prepForNewPod() below will set the PodCOmms podState to nil and the PodCommDelegate
+                // will be called with a nil PodComms PodState which will then invoke updatePodStateFromPodComms(nil).
                 state.controllerId = 0
                 state.podId = 0
             } else {
@@ -928,10 +957,22 @@ extension OmniPumpManager {
         let fault = mockFault ? try? DetailedStatus(encodedData: Data(hexadecimalString: "020f0000000900345c000103ff0001000005ae056029")!) : nil
         podState.fault = fault
 
-        self.podComms = PodComms(podState: podState, myId: state.controllerId, podId: state.podId)
+        let podComms: PodComms
+        switch state.podType {
+        case erosType:
+            let erosPodComms = ErosPodComms.init(podState: podState, myId: state.controllerId, podId: state.podId)
+            podComms = erosPodComms
+        case dashType, omnipod5Type:
+            let blePodComms = BlePodComms.init(podState: podState, myId: state.controllerId, podId: state.podId)
+            podComms = blePodComms
+        default:
+            podComms = PodComms(podState: podState, myId: state.controllerId, podId: state.podId)
+        }
+        self.lockedPodComms = Locked(podComms)
 
         self.podComms.delegate = self
         self.podComms.messageLogger = self
+        self.localizedTitle = state.podType.localizedDescription
 
         self.resetPerPodPumpManagerState()
 
@@ -944,17 +985,6 @@ extension OmniPumpManager {
 
 
     // MARK: - Pairing
-
-    func connectToNewPod(completion: @escaping (Result<Omni, Error>) -> Void) {
-        podComms.connectToNewPod { result in
-            if case .success = result {
-                self.pumpDelegate.notify { (delegate) in
-                    delegate?.pumpManagerPumpWasReplaced(self)
-                }
-            }
-            completion(result)
-        }
-    }
 
     // Called on the main thread
      func pairAndPrime(completion: @escaping (PumpManagerResult<TimeInterval>) -> Void) {
@@ -976,9 +1006,6 @@ extension OmniPumpManager {
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + .seconds(2)) {
             if self.state.podType.usesRileyLink {
                 self.jumpStartPod(address: 0x1f0b3557, lotNo: 40505, lotSeq: 6439, mockFault: mockFaultDuringPairing)
-                self.podComms.mockPodStateChanges { podState in
-                    podState.setupProgress = .priming
-                }
             } else {
                 let address: UInt32 = self.state.podState?.address ?? 0x17171717
                 self.jumpStartPod(address: address, lotNo: 135601809, lotSeq: 0800525, mockFault: mockFaultDuringPairing)
@@ -999,7 +1026,6 @@ extension OmniPumpManager {
             }
         }
         #else
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
         let primeSession = { (result: PodComms.SessionRunResult) in
             switch result {
             case .success(let session):
@@ -1032,15 +1058,13 @@ extension OmniPumpManager {
                 return true // Needs pairing
             }
 
-            // N.B. OmniBLE's needsPairing test is based solely on whether there is a podState
-            // while Eros has to test the setupProgress as it can be partially through pairing.
+            // N.B. Eros has to test the setupProgress as it can be partially through pairing.
             if state.podType.usesRileyLink {
-
                 // Return true if not yet paired
                 return podState.setupProgress.isPaired == false
             }
 
-            return false // OmniBLE we have podState so pairing is all done
+            return false // non-Eros, if we have podState the pairing is all done
         })
 
         // For a restart in the middle of pod setup, the pod can only continue
@@ -1052,7 +1076,7 @@ extension OmniPumpManager {
 
             self.log.default("Pairing pod before priming")
 
-            if state.podType.usesRileyLink {
+            if let erosPodComms = self.podComms as? ErosPodComms {
                 // Create random address with 20 bits to match PDM, could easily use 24 bits instead.
                 // This value is stashed the the OmnipodPumpManagerState as this value cannot vary
                 // on consecutive Eros pairing attempts to avoid losing the pod in some situations.
@@ -1062,12 +1086,13 @@ extension OmniPumpManager {
                     }
                 }
 
-                self.podComms.assignAddressAndSetupPod(
+                let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
+                erosPodComms.erosAssignAddressAndSetupPod(
                     address: self.state.pairingAttemptAddress!,
                     using: rileyLinkSelector,
                     timeZone: .currentFixed,
-                    messageLogger: self,
-                    insulinType: insulinType)
+                    insulinType: insulinType,
+                    messageLogger: self)
                 { (result) in
 
                     if case .success = result {
@@ -1079,27 +1104,35 @@ extension OmniPumpManager {
                     // Have new podState, reset all the per pod pump manager state
                     self.resetPerPodPumpManagerState()
 
+                    self.pumpDelegate.notify { (delegate) in
+                        delegate?.pumpManagerPumpWasReplaced(self)
+                    }
+
                     // Calls completion
                     primeSession(result)
                 }
-            } else {
-                // OmniBLE non-RL pod type
-                connectToNewPod(completion: { result in
+            } else if let blePodComms = self.podComms as? BlePodComms {
+                blePodComms.connectToNewPod { result in
                     switch result {
                     case .failure(let error):
                         completion(.failure(.communication(error as? LocalizedError)))
                     case .success:
-                        self.podComms.pairAndSetupPod(timeZone: .currentFixed, insulinType: insulinType, messageLogger: self)
-                        { (result) in
+                        blePodComms.blePairAndSetupPod(timeZone: .currentFixed, insulinType: insulinType, messageLogger: self) { (result) in
 
                             // Have new podState, reset all the per pod pump manager state
                             self.resetPerPodPumpManagerState()
+
+                            self.pumpDelegate.notify { (delegate) in
+                                delegate?.pumpManagerPumpWasReplaced(self)
+                            }
 
                             // Calls completion
                             primeSession(result)
                         }
                     }
-                })
+                }
+            } else {
+                completion(.failure(.configuration(OmniPumpManagerError.podTypeNotConfigured)))
             }
         } else {
             self.log.default("Pod already paired. Continuing.")
@@ -1107,7 +1140,7 @@ extension OmniPumpManager {
             // Resuming the pod setup, try to ensure pod comms will work right away
             self.resumingPodSetup()
 
-            self.podComms.runSession(withName: "Prime pod", using: rileyLinkSelector) { (result) in
+            self.runSession(withName: "Prime pod") { (result) in
                 // Calls completion
                 primeSession(result)
             }
@@ -1163,8 +1196,7 @@ extension OmniPumpManager {
 
         let timeZone = self.state.timeZone
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Insert cannula", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Insert cannula") { (result) in
             switch result {
             case .success(let session):
                 if self.state.podState?.setupProgress.cannulaInsertionSuccessfullyStarted == true {
@@ -1203,8 +1235,7 @@ extension OmniPumpManager {
 #if targetEnvironment(simulator)
         completion(nil)
 #else
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Check cannula insertion finished", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Check cannula insertion finished") { (result) in
             switch result {
             case .success(let session):
                 do {
@@ -1232,8 +1263,7 @@ extension OmniPumpManager {
             sleep(sleepTime)
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        podComms.runSession(withName: "Resuming pod setup", using: rileyLinkSelector) { (result) in
+         self.runSession(withName: "Resuming pod setup") { (result) in
             switch result {
             case .success(let session):
                 let status = try? session.getStatus(noSeqGetStatus: true)
@@ -1269,6 +1299,17 @@ extension OmniPumpManager {
         }
     }
 
+    // Used to serialize a set of Pod Commands for a given session - vectors to correct version
+    private func runSession(withName name: String, _ block: @escaping (_ result: PodComms.SessionRunResult) -> Void) {
+        if let blePodComms = self.podComms as? BlePodComms {
+            blePodComms.bleRunSession(withName: name, block)
+        } else if let erosPodComms = self.podComms as? ErosPodComms {
+            let device = self.rileyLinkDeviceProvider.firstConnectedDevice
+            erosPodComms.erosRunSession(withName: name, using: device, block)
+        } else {
+            block(.failure(.diagnosticMessage(str: OmniPumpManagerError.podTypeNotConfigured.localizedDescription)))
+        }
+    }
 
     // MARK: - Pump Commands
 
@@ -1278,8 +1319,7 @@ extension OmniPumpManager {
             return
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        podComms.runSession(withName: "Get pod status", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Get pod status") { (result) in
             do {
                 switch result {
                 case .success(let session):
@@ -1307,9 +1347,8 @@ extension OmniPumpManager {
             throw PumpManagerError.configuration(OmniPumpManagerError.noPodPaired)
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
         return try await withCheckedThrowingContinuation { continuation in
-            podComms.runSession(withName: "Get detailed status", using: rileyLinkSelector) { (result) in
+            self.runSession(withName: "Get detailed status") { (result) in
                 do {
                     switch result {
                     case .success(let session):
@@ -1336,8 +1375,7 @@ extension OmniPumpManager {
             return
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Acknowledge Alerts", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Acknowledge Alerts") { (result) in
             let session: PodCommsSession
             switch result {
             case .success(let s):
@@ -1386,8 +1424,7 @@ extension OmniPumpManager {
             return
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Set time zone", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Set time zone") { (result) in
             switch result {
             case .success(let session):
                 do {
@@ -1440,8 +1477,7 @@ extension OmniPumpManager {
 
         let timeZone = self.state.timeZone
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Save Basal Profile", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Save Basal Profile") { (result) in
             do {
                 switch result {
                 case .success(let session):
@@ -1492,8 +1528,7 @@ extension OmniPumpManager {
             return
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Deactivate pod", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Deactivate pod") { (result) in
             switch result {
             case .success(let session):
                 do {
@@ -1518,9 +1553,8 @@ extension OmniPumpManager {
             throw PodCommsError.unfinalizedBolus
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
         try await withCheckedThrowingContinuation { continuation in
-            self.podComms.runSession(withName: "Play Test Beeps", using: rileyLinkSelector) { (result) in
+            self.runSession(withName: "Play Test Beeps") { (result) in
                 switch result {
                 case .success(let session):
                     // preserve the pod's completion beep state which gets reset playing beeps
@@ -1556,9 +1590,8 @@ extension OmniPumpManager {
             throw PodCommsError.unfinalizedBolus
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
         return try await withCheckedThrowingContinuation { continuation in
-            self.podComms.runSession(withName: "Read Pulse Log", using: rileyLinkSelector) { (result) in
+            self.runSession(withName: "Read Pulse Log") { (result) in
                 switch result {
                 case .success(let session):
                     do {
@@ -1593,9 +1626,8 @@ extension OmniPumpManager {
             throw PodCommsError.unfinalizedBolus
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
         return try await withCheckedThrowingContinuation { continuation in
-            podComms.runSession(withName: "Read Pulse Log Plus", using: rileyLinkSelector) { (result) in
+            self.runSession(withName: "Read Pulse Log Plus") { (result) in
                 do {
                     switch result {
                     case .success(let session):
@@ -1623,9 +1655,8 @@ extension OmniPumpManager {
             throw OmniPumpManagerError.noPodPaired
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
         return try await withCheckedThrowingContinuation { continuation in
-            podComms.runSession(withName: "Read Activation Time", using: rileyLinkSelector) { (result) in
+            self.runSession(withName: "Read Activation Time") { (result) in
                 do {
                     switch result {
                     case .success(let session):
@@ -1653,9 +1684,8 @@ extension OmniPumpManager {
             throw OmniPumpManagerError.noPodPaired
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
         return try await withCheckedThrowingContinuation { continuation in
-            podComms.runSession(withName: "Read Triggered Alerts", using: rileyLinkSelector) { (result) in
+            self.runSession(withName: "Read Triggered Alerts") { (result) in
                 do {
                     switch result {
                     case .success(let session):
@@ -1696,8 +1726,7 @@ extension OmniPumpManager {
             return
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: name, using: rileyLinkSelector) { (result) in
+        self.runSession(withName: name) { (result) in
             switch result {
             case .success(let session):
                 if let error = self.tryToValidateComms(session: session) {
@@ -1750,8 +1779,7 @@ extension OmniPumpManager {
             return
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: name, using: rileyLinkSelector) { (result) in
+        self.runSession(withName: name) { (result) in
 
             let session: PodCommsSession
             switch result {
@@ -1962,8 +1990,7 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Suspend", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Suspend") { (result) in
 
             let session: PodCommsSession
             switch result {
@@ -2013,8 +2040,7 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Resume", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Resume") { (result) in
 
             let session: PodCommsSession
             switch result {
@@ -2103,7 +2129,7 @@ extension OmniPumpManager: PumpManager {
         }
     }
 
-    // Eros only
+    // RL only
     private func checkRileyLinkBattery() {
         if state.podType.usesRileyLink {
             rileyLinkDeviceProvider.getDevices { devices in
@@ -2135,8 +2161,7 @@ extension OmniPumpManager: PumpManager {
             completionBeep = beepPreference.shouldBeepForManualCommand && !activationType.isAutomatic
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Bolus", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Bolus") { (result) in
             let session: PodCommsSession
             switch result {
             case .success(let s):
@@ -2205,8 +2230,7 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Cancel Bolus", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Cancel Bolus") { (result) in
 
             let session: PodCommsSession
             switch result {
@@ -2293,8 +2317,7 @@ extension OmniPumpManager: PumpManager {
             completionBeep = beepPreference.shouldBeepForManualCommand && !automatic
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Enact Temp Basal", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Enact Temp Basal") { (result) in
             self.log.info("Enact temp basal %.03fU/hr for %ds", rate, Int(duration))
             let session: PodCommsSession
             switch result {
@@ -2462,8 +2485,7 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Update Expiration Reminder", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Update Expiration Reminder") { (result) in
 
             let session: PodCommsSession
             switch result {
@@ -2554,8 +2576,7 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        self.podComms.runSession(withName: "Program Low Reservoir Reminder", using: rileyLinkSelector) { (result) in
+        self.runSession(withName: "Program Low Reservoir Reminder") { (result) in
 
             let session: PodCommsSession
             switch result {
@@ -2668,8 +2689,7 @@ extension OmniPumpManager: PumpManager {
         // Only attempt to clear one per cycle (more than one should be rare)
         if let alert = state.alertsWithPendingAcknowledgment.first {
             if let slot = alert.triggeringSlot {
-                let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-                self.podComms.runSession(withName: "Silence already acknowledged alert", using: rileyLinkSelector) { (result) in
+                self.runSession(withName: "Silence already acknowledged alert") { (result) in
                     switch result {
                     case .success(let session):
                         do {
@@ -2764,11 +2784,9 @@ extension OmniPumpManager: MessageLogger {
 
 extension OmniPumpManager: PodCommsDelegate {
 
-    // non-Eros only
+    // Not used for Eros pods
     func podCommsDidEstablishSession(_ podComms: PodComms) {
-
-        let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-        podComms.runSession(withName: "Post-connect status fetch", using: rileyLinkSelector) { result in
+        self.runSession(withName: "Post-connect status fetch") { result in
             switch result {
             case .success(let session):
                 let _ = try? session.getStatus(noSeqGetStatus: true)
@@ -2860,8 +2878,7 @@ extension OmniPumpManager {
                         completion(nil)
                         return
                     }
-                    let rileyLinkSelector = self.rileyLinkDeviceProvider.firstConnectedDevice
-                    self.podComms.runSession(withName: "Acknowledge Alert", using: rileyLinkSelector) { (result) in
+                    self.runSession(withName: "Acknowledge Alert") { (result) in
                         switch result {
                         case .success(let session):
                             do {
