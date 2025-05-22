@@ -33,6 +33,11 @@ Note that OmnipodKit is still an evolving prototype -- use at your own risk!
 
 ## Status
 
+### 2025 May 22
+
+Update the README file after the open beta testing for Trio 0.5.x was made available 2025 May 17. 
+No other changes are needed to OmnipodKit.
+
 ### 2025 March 20
 
 At this time, there is nothing implementing Omnipod 5 communications.
@@ -60,7 +65,9 @@ update OmnpodKit to actually fully support this pod type!
 
 ## To Add to LoopWorkspace
 
-There is patch to add the OmnipodKit (private repo) pump manager to a fresh clone of LoopWorkspace.
+Included in the OmnipodKit repository is the patch to add the OmnipodKit (private repo) pump manager to a fresh clone of [LoopWorkspace](https://github.com/LoopKit/LoopWorkspace/).
+
+* This patch is valid for either `main` or `dev` branches for LoopWorkspace.
 
 The commands below should be pasted into Terminal with the path at the top-of-a-buildable LoopWorkspace directory.
 
@@ -84,12 +91,16 @@ After building Loop, be sure to select the new "All Omnipod Types"
 when doing an "Add Pump" to use the new OmnipodKit pump manager.
 
 
-## To Add to Trio-dev
+## To Add to Trio
 
-There is patch to add the OmnipodKit (private repo) pump manager to a fresh clone of the private Trio-dev repository. This patch does not work with the released version of Trio (0.2.3).
+Included in the OmnipodKit repository is the patch to add OmnipodKit to a fresh clone of [Trio](https://github.com/nightscout/Trio/).
 
-The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio-dev directory. This patch handles all the Trio pump manager integration requirements to add the
-OmnipodKit (private repo) pump manager to the closed-beta Trio-dev (private repo).
+* This patch only works with the open beta, Trio 0.5.x, `dev` branch
+* This patch does not work with the released version of Trio (0.2.x). `main` branch.
+
+The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio directory. 
+This patch handles all the Trio pump manager integration requirements to add the
+OmnipodKit (private repo) pump manager to the open-beta Trio, `dev` branch.
 
 If Trio is open in Xcode, then before executing these commands:
 
@@ -107,7 +118,7 @@ xed .
 
 When Xcode opens, if questioned, select use the version on disk.
 
-It is expected that the Trio-dev repository will become public before the OmnipodKit repo.
+After building with Xcode, this file will be modified as well: `Trio/Sources/Localizations/Main/Localizable.xcstrings`
 
 ## Manually Add a Plugin to LoopWorkspace
 
@@ -186,5 +197,10 @@ Examine the `add_omnipodkit_to_Trio-dev.patch` to view the required changes.
 * Trio/Sources/Modules/PumpConfig/PumpConfigDataFlow.swift
 * Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift
 * Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift
+* scripts/swiftformat.sh
+
+The change in `scripts/swiftformat.sh` prevents the application of Trio linting rules to the OmnipodKit submodule.
+
+Edit `scripts/swiftformat.sh` and append `, OmnipodKit` to the final line (the `--exclude` line).
 
 
