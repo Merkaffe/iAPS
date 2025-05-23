@@ -219,7 +219,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 self?.navigateTo(screen)
             }
             let rileyLinkListDataSource = RileyLinkListDataSource(rileyLinkPumpManager: pumpManager)
-                
+
             let handleRileyLinkSelection = { [weak self] (device: RileyLinkDevice) in
                 if let self = self {
                     let vc = RileyLinkDeviceTableViewController(
@@ -443,23 +443,23 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
         if pumpManager.state.podState?.needsCommsRecovery == true {
             return .pendingCommandRecovery
         } else if pumpManager.podCommState == .activating {
-            if pumpManager.podAttachmentConfirmed {
+            if pumpManager.state.podState?.readyForCannulaInsertion == true && pumpManager.podAttachmentConfirmed {
                 return .insertCannula
             } else {
-                assert(pumpManager.podType != unknownOmnipodType)
+                assert(self.podType != unknownOmnipodType)
                 return .pairAndPrime // need to finish the priming
             }
         } else if !pumpManager.isOnboarded {
             if !pumpManager.initialConfigurationCompleted {
                 return .firstRunScreen
             }
-            if pumpManager.podType == unknownOmnipodType {
-                return .selectPodType // need to select a pod type
+            if self.podType == unknownOmnipodType {
+                return .selectPodType // need to first select a pod type
             }
             return .pairAndPrime // pair and prime a new pod
         } else {
-            if pumpManager.podType == unknownOmnipodType {
-                return .selectPodType
+            if self.podType == unknownOmnipodType {
+                return .selectPodType // need to first select a pod type
             }
             return .settings
         }

@@ -13,6 +13,7 @@ import RileyLinkKit
 import RileyLinkBLEKit
 import CoreBluetooth
 import UserNotifications
+import Combine
 import os.log
 
 protocol PodStateObserver: AnyObject {
@@ -90,32 +91,51 @@ public class OmniPumpManager: RileyLinkPumpManager {
     // This string should match the PumpManagerIdentifier string.
     public static let pluginIdentifier: String = "Omni"
 
-    // This string is the displayed Insulin Pump name in Loop Settings.
-    public var localizedTitle = LocalizedString("Omnipod", comment: "Generic title for the Omnipod pump manager")
+    // The displayed Insulin Pump name in Loop Settings and in the Pump Settings view
+    public var localizedTitle: String
 
     static let podAlarmNotificationIdentifier = "Omni:\(LoopNotificationCategory.pumpFault.rawValue)"
+
+    private lazy var cancellables = Set<AnyCancellable>()
+
+    private var rileylinkConnected: Bool = false
 
     init(state: OmniPumpManagerState, rileyLinkDeviceProvider: RileyLinkDeviceProvider, dateGenerator: @escaping () -> Date = Date.init) {
         self.lockedState = Locked(state)
         let podComms: PodComms
         switch state.podType {
         case erosType:
-            let erosPodComms = ErosPodComms.init(podState: state.podState, myId: state.controllerId, podId: state.podId)
+            let erosPodComms = ErosPodComms.init(podState: state.podState)
             podComms = erosPodComms
         case dashType, omnipod5Type:
             let blePodComms = BlePodComms.init(podState: state.podState, myId: state.controllerId, podId: state.podId)
             podComms = blePodComms
         default:
-            podComms = PodComms(podState: state.podState, myId: state.controllerId, podId: state.podId)
+            podComms = PodComms(podState: state.podState)
         }
         self.lockedPodComms = Locked(podComms)
         self.dateGenerator = dateGenerator
+        self.localizedTitle = state.podType.localizedDescription
+
         super.init(rileyLinkDeviceProvider: rileyLinkDeviceProvider)
 
+        finishInit(podType: state.podType)
+    }
+
+    // Common initialization used after all mandatory fields are initialized
+    fileprivate func finishInit(podType: PodType)
+    {
         self.podComms.delegate = self
         self.podComms.messageLogger = self
 
-        self.localizedTitle = state.podType.localizedDescription // update the displayed Insulin Pump name in Settings
+        // If Eros, register for RileyLink device notifications
+        if podType == erosType {
+            NotificationCenter.default.publisher(for: .DeviceConnectionStateDidChange)
+                .sink { [weak self] _ in
+                    self?.updateRLConnectionStatus()
+                }
+                .store(in: &cancellables)
+        }
     }
 
     public required convenience init?(rawState: PumpManager.RawStateValue) {
@@ -272,6 +292,24 @@ public class OmniPumpManager: RileyLinkPumpManager {
         }
     }
 
+    // The hasConnection var can be used to check the current connection status for all pod types.
+    // For BLE pods, replaces the isConnected var which was true if the pod is currently connected.
+    // For Eros pods, replaces the rileylinkConnected var in OmniKitUI/ViewModels/OmnpodSettingsViewModel
+    // which was true if at least one RileyLink device is currently connected independent of pod availability.
+    var hasConnection: Bool {
+        if let blePodComms = self.podComms as? BlePodComms {
+            // Return if the BLE pod is currently connected.
+            return blePodComms.manager?.peripheral.state == .connected
+        }
+        if self.podComms is ErosPodComms {
+            // Return if there is a currently connected RileyLink device.
+            // N.B. This doesn't depend on whether there is even a paired pod.
+            return self.rileylinkConnected
+        }
+        log.info("hasConnection: %@", OmniPumpManagerError.podTypeNotConfigured.localizedDescription)
+        return false
+    }
+
 
     // MARK: - BLE specific vars and funcs
 
@@ -285,13 +323,6 @@ public class OmniPumpManager: RileyLinkPumpManager {
     var provideHeartbeat: Bool = false  // Not persisted
 
     private var lastHeartbeat: Date = .distantPast
-
-    var isConnected: Bool {
-        guard let blePodComms = self.podComms as? BlePodComms else {
-            return false
-        }
-        return blePodComms.manager?.peripheral.state == .connected
-    }
 
     private func issueHeartbeatIfNeeded() {
         if self.provideHeartbeat, dateGenerator().timeIntervalSince(lastHeartbeat) > .minutes(2) {
@@ -329,6 +360,24 @@ public class OmniPumpManager: RileyLinkPumpManager {
 
 
     // MARK: - RileyLink specific vars and funcs
+
+    // Adapted from OmniKit/OmniKitUI/ViewModel/OmnipodSettingsViewModel:updateConnectionStatus().
+    // Maintains the private rileyLinkConnected variable and notifies about RL connection updates.
+    func updateRLConnectionStatus() {
+        guard self.podComms is ErosPodComms else {
+            return
+        }
+
+        rileyLinkDeviceProvider.getDevices { (devices) in
+            DispatchQueue.main.async { [self] in
+                let isRLConnected = devices.firstConnected != nil
+                // Update our private local state variable formerly in OmnnipodSettingsViewModel
+                self.rileylinkConnected = isRLConnected
+                // Notify UI about a connection change using the updated RL connection state
+                self.notifyPodConnectionStateDidChange(isConnected: isRLConnected)
+            }
+        }
+    }
 
     var rileyLinkBatteryAlertLevel: Int? {
         get {
@@ -385,14 +434,12 @@ public class OmniPumpManager: RileyLinkPumpManager {
         if state.podType.usesRileyLink {
             retVal += super.debugDescription
         } else {
-            retVal += [
-                "* provideHeartbeat: \(provideHeartbeat)",
-                "* connected: \(isConnected)",
-            ].joined(separator: "\n")
+            retVal += "* provideHeartbeat: \(provideHeartbeat)\n"
         }
         retVal += [
             "",
             "* podComms: \(String(reflecting: podComms))",
+            "* connected: \(hasConnection)",
             "* statusObservers.count: \(statusObservers.cleanupDeallocatedElements().count)",
             "* status: \(String(describing: status))",
             "",
@@ -697,7 +744,7 @@ extension OmniPumpManager {
         return state.podState?.expiresAt
     }
 
-     func buildPumpStatusHighlight(for state: OmniPumpManagerState, andDate date: Date = Date()) -> PumpStatusHighlight? {
+    func buildPumpStatusHighlight(for state: OmniPumpManagerState, andDate date: Date = Date()) -> PumpStatusHighlight? {
         if state.podState?.needsCommsRecovery == true {
             return PumpStatusHighlight(
                 localizedMessage: LocalizedString("Comms Issue", comment: "Status highlight that delivery is uncertain."),
@@ -835,25 +882,23 @@ extension OmniPumpManager {
             let podComms: PodComms
             switch newValue {
             case erosType:
-                let erosPodComms = ErosPodComms.init(podState: state.podState, myId: state.controllerId, podId: state.podId)
+                let erosPodComms = ErosPodComms.init(podState: state.podState)
                 podComms = erosPodComms
             case dashType, omnipod5Type:
                 let blePodComms = BlePodComms.init(podState: state.podState, myId: state.controllerId, podId: state.podId)
                 podComms = blePodComms
             default:
-                podComms = PodComms(podState: state.podState, myId: state.controllerId, podId: state.podId)
+                podComms = PodComms(podState: state.podState)
             }
+
+            self.lockedPodComms = Locked(podComms)
+            self.localizedTitle = newValue.localizedDescription
 
             setState { (state) in
                 state.podType = newValue
             }
 
-            // Rewrite the formerly let value
-            self.lockedPodComms = Locked(podComms)
-
-            self.podComms.delegate = self
-            self.podComms.messageLogger = self
-            self.localizedTitle = newValue.localizedDescription
+            finishInit(podType: newValue)
 
             self.prepForNewPod() // reset the Id's as appropriate for the new pod type
         }
@@ -896,7 +941,7 @@ extension OmniPumpManager {
 
             if usesRileyLink {
                 // RL case
-                // The call to podComms.prepForNewPod() below will set the PodCOmms podState to nil and the PodCommDelegate
+                // The call to podComms.prepForNewPod() below will set the PodComms podState to nil and the PodCommDelegate
                 // will be called with a nil PodComms PodState which will then invoke updatePodStateFromPodComms(nil).
                 state.controllerId = 0
                 state.podId = 0
@@ -948,7 +993,7 @@ extension OmniPumpManager {
     private func jumpStartPod(address: UInt32, lotNo: UInt32, lotSeq: UInt32, fault: DetailedStatus? = nil, startDate: Date? = nil, mockFault: Bool) {
         let start = startDate ?? Date()
         let fakeLtk = Data(hexadecimalString: "fedcba98765432100123456789abcdef")!
-        var podState = PodState(address: address, firmwareVersion: "jumpstarted", iFirmwareVersion: "jumpstarted", lotNo: lotNo, lotSeq: lotSeq, insulinType: insulinType ?? .novolog, podType: state.podType, ltk: fakeLtk, bleIdentifier: "0000-0000", setupUnitsDelivered: 2.6)
+        var podState = PodState(address: address, firmwareVersion: "jumpstarted", iFirmwareVersion: "jumpstarted", lotNo: lotNo, lotSeq: lotSeq, insulinType: insulinType ?? .novolog, podType: state.podType, ltk: fakeLtk, bleIdentifier: "0000-0000", setupUnitsDelivered: Pod.primeUnits)
 
         podState.setupProgress = .podPaired
         podState.activatedAt = start
@@ -958,21 +1003,18 @@ extension OmniPumpManager {
         podState.fault = fault
 
         let podComms: PodComms
-        switch state.podType {
-        case erosType:
-            let erosPodComms = ErosPodComms.init(podState: podState, myId: state.controllerId, podId: state.podId)
+        if state.podType.usesRileyLink {
+            let erosPodComms = ErosPodComms.init(podState: podState)
             podComms = erosPodComms
-        case dashType, omnipod5Type:
+        } else {
             let blePodComms = BlePodComms.init(podState: podState, myId: state.controllerId, podId: state.podId)
             podComms = blePodComms
-        default:
-            podComms = PodComms(podState: podState, myId: state.controllerId, podId: state.podId)
         }
-        self.lockedPodComms = Locked(podComms)
 
-        self.podComms.delegate = self
-        self.podComms.messageLogger = self
+        self.lockedPodComms = Locked(podComms)
         self.localizedTitle = state.podType.localizedDescription
+
+        finishInit(podType: state.podType)
 
         self.resetPerPodPumpManagerState()
 
@@ -1258,7 +1300,7 @@ extension OmniPumpManager {
      func resumingPodSetup() {
         let sleepTime:UInt32 = 2
 
-        if state.podType.usesRileyLink == false && !isConnected {
+        if !hasConnection {
             self.log.debug("### Pod setup resume pod not connected, sleeping %d seconds", sleepTime)
             sleep(sleepTime)
         }

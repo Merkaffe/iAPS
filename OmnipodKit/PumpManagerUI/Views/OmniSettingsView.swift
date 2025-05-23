@@ -278,11 +278,11 @@ struct OmniSettingsView: View  {
                     }) {
                         Image(systemName: "speaker.wave.2.circle")
                             .imageScale(.large)
-                            .foregroundColor((viewModel.podConnected || viewModel.rileylinkConnected) ? .accentColor : .secondary)
+                            .foregroundColor(viewModel.hasConnection ? .accentColor : .secondary)
                             .padding(.top,5)
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .disabled((!viewModel.podConnected && !viewModel.rileylinkConnected) || sendingTestBeepsCommand)
+                    .disabled(!viewModel.hasConnection || sendingTestBeepsCommand)
 
                     headerImage
 

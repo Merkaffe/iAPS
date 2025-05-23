@@ -44,9 +44,7 @@ class OmniSettingsViewModel: ObservableObject {
 
     @Published var silencePodPreference: SilencePodPreference
 
-    @Published var podConnected: Bool
-
-    @Published var rileylinkConnected: Bool
+    @Published var hasConnection: Bool // replaces both rileylinkConnected and isConnected
 
     var activatedAtString: String {
         if let activatedAt = activatedAt {
@@ -224,8 +222,6 @@ class OmniSettingsViewModel: ObservableObject {
 
     private let pumpManager: OmniPumpManager
 
-    private lazy var cancellables = Set<AnyCancellable>()
-
     init(pumpManager: OmniPumpManager) {
         self.pumpManager = pumpManager
         
@@ -233,42 +229,27 @@ class OmniSettingsViewModel: ObservableObject {
         activatedAt = pumpManager.podActivatedAt
         expiresAt = pumpManager.expiresAt
         basalDeliveryState = pumpManager.status.basalDeliveryState
-        //basalDeliveryRate = self.pumpManager.basalDeliveryRate
-        reservoirLevel = self.pumpManager.reservoirLevel
-        reservoirLevelHighlightState = self.pumpManager.reservoirLevelHighlightState
-        expirationReminderDate = self.pumpManager.scheduledExpirationReminder
-        expirationReminderDefault = Int(self.pumpManager.defaultExpirationReminderOffset.hours)
-        lowReservoirAlertValue = Int(self.pumpManager.state.lowReservoirReminderValue)
-        podCommState = self.pumpManager.podCommState
-        beepPreference = self.pumpManager.beepPreference
-        silencePodPreference = self.pumpManager.silencePod ? .enabled : .disabled
-        podConnected = self.pumpManager.isConnected
-        insulinType = self.pumpManager.insulinType
-        podDetails = self.pumpManager.podDetails
-        previousPodDetails = self.pumpManager.previousPodDetails
-        rileylinkConnected = false
+        reservoirLevel = pumpManager.reservoirLevel
+        reservoirLevelHighlightState = pumpManager.reservoirLevelHighlightState
+        expirationReminderDate = pumpManager.scheduledExpirationReminder
+        expirationReminderDefault = Int(pumpManager.defaultExpirationReminderOffset.hours)
+        lowReservoirAlertValue = Int(pumpManager.state.lowReservoirReminderValue)
+        podCommState = pumpManager.podCommState
+        beepPreference = pumpManager.beepPreference
+        silencePodPreference = pumpManager.silencePod ? .enabled : .disabled
+        hasConnection = pumpManager.hasConnection
+        insulinType = pumpManager.insulinType
+        podDetails = pumpManager.podDetails
+        previousPodDetails = pumpManager.previousPodDetails
 
         pumpManager.addPodStateObserver(self, queue: DispatchQueue.main)
         pumpManager.addStatusObserver(self, queue: DispatchQueue.main)
 
-        // Register for device notifications (RL specific)
-        NotificationCenter.default.publisher(for: .DeviceConnectionStateDidChange)
-            .sink { [weak self] _ in
-                self?.updateConnectionStatus()
-            }
-            .store(in: &cancellables)
-
         // Trigger refresh
         pumpManager.getPodStatus() { _ in }
-        updateConnectionStatus()
-    }
 
-    // RL specific
-    func updateConnectionStatus() {
-        pumpManager.rileyLinkDeviceProvider.getDevices { (devices) in
-            DispatchQueue.main.async { [weak self] in
-                self?.rileylinkConnected = devices.firstConnected != nil
-            }
+        if pumpManager.podType == erosType {
+            pumpManager.updateRLConnectionStatus()
         }
     }
 
@@ -537,7 +518,7 @@ extension OmniSettingsViewModel: PodStateObserver {
     }
  
     func podConnectionStateDidChange(isConnected: Bool) {
-        self.podConnected = isConnected
+        self.hasConnection = isConnected
     }
  }
  

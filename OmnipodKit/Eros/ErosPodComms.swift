@@ -19,13 +19,6 @@ class ErosPodComms: PodComms {
     private let configuredDevices: Locked<Set<UUID>> = Locked(Set())
     private var startingPacketNumber = 0
 
-    // MARK: - CustomDebugStringConvertible
-
-    override var debugDescription: String {
-        let ret = super.debugDescription
-        return ret + "\n* configuredDevices: \(configuredDevices.value.map { $0.uuidString })\n* delegate: \(String(describing: delegate != nil))\n"
-    }
-
     /// Handles all the common work to send and verify the version response for the two pairing commands, AssignAddress and SetupPod.
     ///  Has side effects of creating pod state, assigning startingPacketNumber, and updating pod state.
     ///
@@ -402,6 +395,13 @@ class ErosPodComms: PodComms {
         _ = configuredDevices.mutate { (value) in
             value.remove(device.peripheralIdentifier)
         }
+    }
+
+    // MARK: - CustomDebugStringConvertible
+
+    override var debugDescription: String {
+        return super.debugDescription +
+            "* configuredDevices: \(configuredDevices.value.map { $0.uuidString })\n* delegate: \(String(describing: delegate != nil))\n"
     }
 }
 
