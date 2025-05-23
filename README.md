@@ -200,7 +200,3 @@ Examine the `add_omnipodkit_to_Trio-dev.patch` to view the required changes.
 * scripts/swiftformat.sh
 
 The change in `scripts/swiftformat.sh` prevents the application of Trio linting rules to the OmnipodKit submodule.
-
-Edit `scripts/swiftformat.sh` and append `, OmnipodKit` to the final line (the `--exclude` line).
-
-
