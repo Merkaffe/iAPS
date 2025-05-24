@@ -401,7 +401,7 @@ class ErosPodComms: PodComms {
 
     override var debugDescription: String {
         return super.debugDescription +
-            "* configuredDevices: \(configuredDevices.value.map { $0.uuidString })\n* delegate: \(String(describing: delegate != nil))\n"
+            "* configuredDevices: \(configuredDevices.value.map { $0.uuidString })\n"
     }
 }
 

@@ -80,6 +80,7 @@ class PodComms: CustomDebugStringConvertible {
         if myId != 0 || podId != 0 {
             ret += "* myId: \(String(format: "%08X", myId))\n* podId: \(String(format: "%08X", podId))\n"
         }
+        ret += "* delegate: \(String(describing: delegate != nil))\n"
         return ret
     }
 }

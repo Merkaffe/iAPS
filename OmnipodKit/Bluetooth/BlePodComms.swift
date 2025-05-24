@@ -391,6 +391,14 @@ class BlePodComms: PodComms {
             block(.success(session: podSession))
         }
     }
+
+
+    // MARK: - CustomDebugStringConvertible
+
+    override var debugDescription: String {
+        return super.debugDescription +
+            "* peripheral.name: \(optionalString(manager?.peripheral.name))\n"
+    }
 }
 
 
