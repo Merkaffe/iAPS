@@ -92,6 +92,7 @@ class BlePodMessageTransport: MessageTransport {
     private var nonce: Nonce?
     private var enDecrypt: EnDecrypt?
 
+    // Keep this non-implementation specific to not break parsers looking for this particular Category
     private let log = OSLog(category: "PodMessageTransport")
 
     private(set) var state: BleMessageTransportState {

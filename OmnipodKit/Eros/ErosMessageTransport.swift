@@ -62,6 +62,7 @@ class ErosPodMessageTransport: MessageTransport {
     
     private let session: CommandSession
     
+    // Keep this non-implementation specific to not break parsers looking for this particular Category
     private let log = OSLog(category: "PodMessageTransport")
     
     private(set) var state: ErosMessageTransportState {

@@ -10,6 +10,9 @@
 
 import Foundation
 
+// See OmnipodKit/Eros/ErosMessageTransport.swift and OmnipodKit/Bluetooth/BleMessageTransport.swift
+// for specific implementations of MesasgerTransportState and MessageTransport
+
 protocol MessageTransportState: Equatable, RawRepresentable {
 
     var messageNumber: Int { get }
@@ -32,6 +35,6 @@ protocol MessageTransport {
 
     func sendMessage(_ message: Message) throws -> Message
 
-    /// Asserts that the caller is currently on the session's queue
+    // Asserts that the caller is currently on the session's queue
     func assertOnSessionQueue()
 }
