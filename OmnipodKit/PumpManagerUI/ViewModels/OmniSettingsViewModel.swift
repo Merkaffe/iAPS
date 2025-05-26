@@ -591,6 +591,8 @@ extension OmniPumpManager {
 
     private func podDetails(fromPodState podState: PodState, andDeviceName deviceName: String?) -> PodDetails {
         return PodDetails(
+            podType: podState.podType,
+            address: podState.address,
             lotNumber: podState.lotNo,
             sequenceNumber: podState.lotSeq,
             firmwareVersion: podState.firmwareVersion,

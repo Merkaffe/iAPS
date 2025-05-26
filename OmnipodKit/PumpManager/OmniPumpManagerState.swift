@@ -77,12 +77,12 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
     var podType: PodType
 
     // Eros only state
-    var rileyLinkConnectionManagerState: RileyLinkConnectionState?
+    var rileyLinkConnectionManagerState: RileyLinkConnectionState? = nil
     var pairingAttemptAddress: UInt32? = nil
     var rileyLinkBatteryAlertLevel: Int? = nil
     var lastRileyLinkBatteryAlertDate: Date = .distantPast
 
-    // DASH only state
+    // BLE only state
     var controllerId: UInt32 = 0
     var podId: UInt32 = 0
 
@@ -140,12 +140,14 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             self.rileyLinkConnectionManagerState = rileyLinkConnectionManagerState
             self.controllerId = 0
             self.podId = 0
-        } else if controllerId != nil && podId != nil {
-            self.rileyLinkConnectionManagerState = nil
-            self.controllerId = controllerId!
-            self.podId = podId!
+        } else if let controllerId = controllerId, let podId = podId {
+            self.controllerId = controllerId
+            self.podId = podId
+        } else if podType == unknownOmnipodType {
+            // Will be initialized later when podType is set
+            self.controllerId = 0
+            self.podId = 0
         } else {
-            self.rileyLinkConnectionManagerState = nil
             let myId = createControllerId(topIdByte: podType.topIdByte)
             self.controllerId = myId
             self.podId = myId + 1

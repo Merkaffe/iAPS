@@ -12,6 +12,8 @@ import LoopKitUI
 
 
 struct PodDetails {
+    var podType: PodType
+    var address: UInt32
     var lotNumber: UInt32
     var sequenceNumber: UInt32
     var firmwareVersion: String
@@ -90,9 +92,11 @@ struct PodDetailsView: View {
     
     var body: some View {
         List {
+            row(LocalizedString("Pod Type", comment: "description label for pod type pod details row"), value: String(describing: podDetails.podType.localizedDescription))
             if let deviceName = podDetails.deviceName {
                 row(LocalizedString("Device Name", comment: "description label for device name pod details row"), value: deviceName)
             }
+            row(LocalizedString("Address", comment: "description label for address pod details row"), value: String(format: "%08X", podDetails.address))
             row(LocalizedString("Lot Number", comment: "description label for lot number pod details row"), value: String(describing: podDetails.lotNumber))
             row(LocalizedString("Sequence Number", comment: "description label for sequence number pod details row"), value: String(format: "%07d", podDetails.sequenceNumber))
             row(LocalizedString("Firmware Version", comment: "description label for firmware version pod details row"), value: podDetails.firmwareVersion)
@@ -126,6 +130,6 @@ struct PodDetailsView: View {
 
 struct PodDetailsView_Previews: PreviewProvider {
     static var previews: some View {
-        PodDetailsView(podDetails: PodDetails(lotNumber: 123456789, sequenceNumber: 1234567, firmwareVersion: "4.3.2", bleFirmwareVersion: "1.2.3", deviceName: "DashPreviewPod", totalDelivery: 99, lastStatus: Date(), fault: FaultEventCode(rawValue: 064), activatedAt: Date().addingTimeInterval(.days(2)), pdmRef: "19-02448-09951-064"), title: "Pod Details")
+        PodDetailsView(podDetails: PodDetails(podType: dashType, address: 0x17012345, lotNumber: 123456789, sequenceNumber: 1234567, firmwareVersion: "4.3.2", bleFirmwareVersion: "1.2.3", deviceName: "DashPreviewPod", totalDelivery: 99, lastStatus: Date(), fault: FaultEventCode(rawValue: 064), activatedAt: Date().addingTimeInterval(.days(2)), pdmRef: "19-02448-09951-064"), title: "Pod Details")
     }
 }
