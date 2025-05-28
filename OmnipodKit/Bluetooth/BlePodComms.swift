@@ -167,7 +167,9 @@ class BlePodComms: PodComms {
             lotNo: versionResponse.lot,
             lotSeq: versionResponse.tid,
             insulinType: insulinType,
-            podType: versionResponse.podType,
+            //podType: versionResponse.podType,
+            // XXX temporary hack for fake Omnipod 5 pod support using DASH pods
+            podType: self.podId >> 24 == omnipod5Type.topIdByte ? omnipod5Type : versionResponse.podType,
             bleMessageTransportState: blePodMessageTransport.state,
             ltk: ltk,
             bleIdentifier: manager.peripheral.identifier.uuidString

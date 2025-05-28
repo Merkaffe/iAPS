@@ -148,7 +148,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         // Eros specific variables
         erosMessageTransportState: ErosMessageTransportState? = nil,
 
-        setupUnitsDelivered: Double = 0.0,
+        setupUnitsDelivered: Double? = nil,
         initialDeliveryStatus: DeliveryStatus? = nil)
     {
         self.address = address

@@ -932,35 +932,44 @@ extension OmniPumpManager {
 
     private func prepForNewPod() {
 
-        let topIdByte = self.state.podType.topIdByte
-        let usesRileyLink = state.podState?.podType.usesRileyLink == true
-
+        let podType = state.podType
         setState { state in
+            // Don't wipe out the previous PodState when switching pod types
+            if let podState = state.podState {
+                state.previousPodState = podState
+            }
 
-            state.previousPodState = state.podState
-
-            if usesRileyLink {
-                // RL case
-                // The call to podComms.prepForNewPod() below will set the PodComms podState to nil and the PodCommDelegate
-                // will be called with a nil PodComms PodState which will then invoke updatePodStateFromPodComms(nil).
+            switch podType {
+            case erosType:
+                // Eros doesn't use these id's
                 state.controllerId = 0
                 state.podId = 0
-            } else {
-                // non-RL case
-                if state.controllerId == CONTROLLER_ID {
-                    // Switch from using the common fixed controllerId to a created semi-unique one
-                    state.controllerId = createControllerId(topIdByte: topIdByte)
+                self.log.info("Resetting controllerId and podId for Eros pod")
+
+            case dashType, omnipod5Type:
+                if state.controllerId == 0 || state.controllerId == CONTROLLER_ID {
+                    // Create a semi-unique controllerId and an initial podId of controllerId + 1.
+                    // The podId will cycle thru values 'sof +1, +2, +3, +1... until podType is changed.
+                    state.controllerId = createControllerId(topIdByte: podType.topIdByte)
                     state.podId = state.controllerId + 1
-                    self.log.info("Switched controllerId from %x to %x", CONTROLLER_ID, state.controllerId)
+                    self.log.info("Created initial BLE controllerId %08X and podId %08X", state.controllerId, state.podId)
                 } else {
-                    // Already have a created controllerId, just need to advance podId for the next pod
+                    // Already created a controllerId, so just advance podId to the next one in sequence.
                     let lastPodId = state.podId
                     state.podId = nextPodId(lastPodId: lastPodId)
-                    self.log.info("Advanced podId from %x to %x", lastPodId, state.podId)
+                    self.log.info("Advanced podId from %08X to %08X", lastPodId, state.podId)
                 }
+
+            default:
+                // Reset the id's so they will be reinitialized when a BLE pod type is selected.
+                state.controllerId = 0
+                state.podId = 0
+                self.log.info("Resetting controllerId and podId")
             }
         }
 
+        // This call will set the PodComms podState to nil and the PodCommDelegate will then be called from there with a
+        // nil PodComms PodState which will then invoke updatePodStateFromPodComms(nil) to set self.state.podState to nil.
         self.podComms.prepForNewPod(myId: self.state.controllerId, podId: self.state.podId)
     }
 
