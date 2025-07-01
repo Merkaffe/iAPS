@@ -2398,11 +2398,12 @@ extension OmniPumpManager: PumpManager {
             // A resume scheduled basal delivery request is denoted by a 0 duration that cancels any existing temp basal.
             let resumingScheduledBasal = duration < .ulpOfOne
 
-            // If a bolus is not finished, fail if not resuming the scheduled basal
-            guard podState.unfinalizedBolus?.isFinished() != false || resumingScheduledBasal else {
-                self.log.info("Not enacting temp basal because podState indicates unfinalized bolus in progress.")
-                completion(.deviceState(PodCommsError.unfinalizedBolus))
-                return
+            if podState.unfinalizedBolus?.isFinished() == false && !resumingScheduledBasal {
+                // The PDM would not start a new TB with a bolus in progress becuase of the UI.
+                // OmniKit and OmniBLE roughly maintained this model by just using the bolus timing
+                // without a strict enforcement which would involve adding some getstatus calls
+                // For now, attempt to remove this restriction wasn't never strictly needed.
+                self.log.info("Enacting temp basal with podState indicating an unfinalizedBolus bolus")
             }
 
             // Do the safe cancel TB command when resuming scheduled basal delivery OR if unfinalizedTempBasal indicates a
