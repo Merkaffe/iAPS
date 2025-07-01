@@ -1449,15 +1449,16 @@ extension OmniPumpManager {
 
     func setTime(completion: @escaping (OmniPumpManagerError?) -> Void) {
 
-        #if targetEnvironment(simulator)
-        let justUpdateState = true
-        #else
-        // Just update the pump manager state if there is no active Pod
-        let justUpdateState = !self.hasActivePod
-        #endif
-
         let timeZone = TimeZone.currentFixed
-        if justUpdateState {
+#if targetEnvironment(simulator)
+        // Just update the pump manager state
+        self.setState { (state) in
+            state.timeZone = timeZone
+        }
+        completion(nil)
+#else
+        // Just update the pump manager state if there is no active Pod
+        guard self.hasActivePod else {
             self.setState { (state) in
                 state.timeZone = timeZone
             }
@@ -1494,6 +1495,7 @@ extension OmniPumpManager {
                 completion(.communication(error))
             }
         }
+#endif
     }
 
     func setBasalSchedule(_ schedule: BasalSchedule, completion: @escaping (Error?) -> Void) {
