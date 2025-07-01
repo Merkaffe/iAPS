@@ -9,7 +9,6 @@
 
 import Foundation
 
-let CONTROLLER_ID: UInt32 = 0x1092 // fixed AAPS controller Id #
 let POD_ID_NOT_ACTIVATED = Data(hexadecimalString: "FFFFFFFE")!
 
 class Ids {

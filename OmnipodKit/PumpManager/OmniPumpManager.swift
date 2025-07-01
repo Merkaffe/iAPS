@@ -947,9 +947,10 @@ extension OmniPumpManager {
                 self.log.info("Resetting controllerId and podId for Eros pod")
 
             case dashType, omnipod5Type:
-                if state.controllerId == 0 || state.controllerId == CONTROLLER_ID {
+                // If controllerId doesn't have its lower 3 bits clear, reset it for the new 7 cycle podId
+                if state.controllerId == 0 || (state.controllerId & 0b111) != 0 {
                     // Create a semi-unique controllerId and an initial podId of controllerId + 1.
-                    // The podId will cycle thru values 'sof +1, +2, +3, +1... until podType is changed.
+                    // The podId cycles thru values of +1, ... +7, +1... until podType is changed.
                     state.controllerId = createControllerId(topIdByte: podType.topIdByte)
                     state.podId = state.controllerId + 1
                     self.log.info("Created initial BLE controllerId %08X and podId %08X", state.controllerId, state.podId)

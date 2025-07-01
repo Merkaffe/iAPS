@@ -48,15 +48,17 @@ class Id: Equatable {
 
 // The Dash PDM uses the PDM's SN << 2 for the bottom 5 nibbles and some
 // unknown values for the top 3 nibbles of its fixed 32-bit controller ID.
+// OmniBLE also does this, but OmnipodKit now shifts one more bit for 7 podId's.
 func createControllerId(topIdByte: UInt8) -> UInt32 {
-    return (UInt32(topIdByte) << 24) | ((arc4random() & 0x003FFFFF) << 2)
+    return (UInt32(topIdByte) << 24) | ((arc4random() & 0x001FFFFF) << 3)
 }
 
-// podId's cycle between 3 #'s of controllerId+1, +2, +3, +1, ...
+// Dash & OmniBLE podId's cycle between 3 #'s of controllerId+1, +2, +3, +1, ...
+// OmnipodKit podId's now cycle between 7 #'s of controllerId+1, +2, ... +7, +1, ...
 func nextPodId(lastPodId: UInt32) -> UInt32 {
-    if (lastPodId & 0b11) == 0b11 {
+    if (lastPodId & 0b111) == 0b111 {
         // start over at controllerId + 1
-        return (lastPodId & ~0b11) + 1
+        return (lastPodId & ~0b111) + 1
     }
     // return the next sequential podId #
     return lastPodId + 1
