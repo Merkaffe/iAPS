@@ -2427,13 +2427,6 @@ extension OmniPumpManager: PumpManager {
                     status = cancelTempStatus
                 }
 
-                // If pod is bolusing, fail if not resuming the scheduled basal
-                guard !status.deliveryStatus.bolusing || resumingScheduledBasal else {
-                    self.log.info("Canceling temp basal because status return indicates bolus in progress.")
-                    completion(.communication(PodCommsError.unfinalizedBolus))
-                    return
-                }
-
                 guard !status.deliveryStatus.suspended else {
                     self.log.info("Canceling temp basal because status return indicates pod is suspended!")
                     completion(.communication(PodCommsError.podSuspended))

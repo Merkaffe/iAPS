@@ -671,10 +671,6 @@ class PodCommsSession: MessageTransportDelegate {
         let tempBasalCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, tempBasalRate: rate, duration: duration)
         let tempBasalExtraCommand = TempBasalExtraCommand(rate: rate, duration: duration, acknowledgementBeep: acknowledgementBeep, completionBeep: completionBeep, programReminderInterval: programReminderInterval, podType: podState.podType)
 
-        guard podState.unfinalizedBolus?.isFinished() != false else {
-            return DeliveryCommandResult.certainFailure(error: .unfinalizedBolus)
-        }
-
         let startTime = currentDate
 
         do {
