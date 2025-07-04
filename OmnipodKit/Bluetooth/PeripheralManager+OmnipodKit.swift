@@ -40,14 +40,16 @@ extension PeripheralManager {
         try setNotifyValue(true, for: dataChar, timeout: .seconds(2))
     }
         
-    func sendMessagePacket(_ message: MessagePacket, _ forEncryption: Bool = false) -> SendMessageResult {
+    func sendMessagePacket(_ message: MessagePacket, _ forEncryption: Bool = false, doRTS: Bool = true) -> SendMessageResult {
         dispatchPrecondition(condition: .onQueue(queue))
         
         var didSend = false
 
         do {
-            try requestToSend()
-            try waitForCommand(PodCommand.CTS, timeout: 5)
+            if doRTS {
+                try requestToSend()
+                try waitForCommand(PodCommand.CTS, timeout: 5)
+            }
 
             let splitter = PayloadSplitter(payload: message.asData(forEncryption: forEncryption))
             let packets = splitter.splitInPackets()
@@ -63,8 +65,7 @@ extension PeripheralManager {
             }
 
             try waitForCommand(PodCommand.SUCCESS, timeout: 5)
-        }
-        catch {
+        } catch {
             if didSend {
                 return .sentWithError(error)
             } else {
@@ -75,14 +76,16 @@ extension PeripheralManager {
     }
     
     /// - Throws: PeripheralManagerError
-    func readMessagePacket() throws -> MessagePacket? {
+    func readMessagePacket(doRTS: Bool = true) throws -> MessagePacket? {
         dispatchPrecondition(condition: .onQueue(queue))
 
         var packet: MessagePacket?
 
         do {
-            try waitForCommand(PodCommand.RTS)
-            try sendCommandType(PodCommand.CTS)
+            if doRTS {
+                try waitForCommand(PodCommand.RTS)
+                try sendCommandType(PodCommand.CTS)
+            }
 
             var expected: UInt8 = 0
 
@@ -95,7 +98,7 @@ extension PeripheralManager {
                 let packet = try waitForData(sequence: expected, timeout: 5)
                 try joiner.accumulate(packet: packet)
             }
-            if (joiner.oneExtraPacket) {
+            if joiner.oneExtraPacket {
                 expected += 1
                 let packet = try waitForData(sequence: expected, timeout: 5)
                 try joiner.accumulate(packet: packet)

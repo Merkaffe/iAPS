@@ -30,8 +30,9 @@ class BlePodComms: PodComms {
 
     private let bluetoothManager = BluetoothManager()
 
-    override init(podState: PodState?, myId: UInt32 = 0, podId: UInt32 = 0) {
-        super.init(podState: podState, myId: myId, podId: podId)
+    override init(podState: PodState?, podType: PodType, myId: UInt32 = 0, podId: UInt32 = 0) {
+        super.init(podState: podState, podType: podType, myId: myId, podId: podId)
+        bluetoothManager.podType = podType
         bluetoothManager.connectionDelegate = self
         if let podState = podState, let bleIdentifier = podState.bleIdentifier {
             bluetoothManager.connectToDevice(uuidString: bleIdentifier)
@@ -49,6 +50,7 @@ class BlePodComms: PodComms {
     func connectToNewPod(_ completion: @escaping (Result<Omni, Error>) -> Void) {
         let discoveryStartTime = Date()
 
+        setServicePodType(podType: self.podType)
         bluetoothManager.discoverPods { error in
             if let error = error {
                 completion(.failure(error))
@@ -129,9 +131,20 @@ class BlePodComms: PodComms {
         guard let manager = manager else { throw PodCommsError.podNotConnected }
         let ids = Ids(myId: self.myId, podId: self.podId)
 
-        let ltkExchanger = LTKExchanger(manager: manager, ids: ids)
-        let response = try ltkExchanger.negotiateLTK()
-        let ltk = response.ltk
+        let response: PairResult
+        let ltk: Data
+        switch self.podType {
+        case dashType:
+            let ltkExchanger = LTKExchanger(manager: manager, ids: ids)
+            response = try ltkExchanger.negotiateLTK()
+            ltk = response.ltk
+        case omnipod5Type:
+            let o5LTKExchanger = O5LTKExchanger(manager: manager, ids: ids)
+            response = try o5LTKExchanger.o5negotiateLTK()
+            ltk = response.ltk
+        default:
+            throw OmniPumpManagerError.podTypeNotConfigured
+        }
 
         guard podId == response.address else {
             log.debug("podId 0x%x doesn't match response value!: %{public}@", podId, String(describing: response))
@@ -160,6 +173,16 @@ class BlePodComms: PodComms {
 
         // Now create the real PodState using the current transport state and the versionResponse info
         log.debug("pairPod: creating PodState for versionResponse %{public}@ and transport %{public}@", String(describing: versionResponse), String(describing: blePodMessageTransport.state))
+
+        // JJJ temporary hack for fake Omnipod 5 pod support using DASH pods
+        let podType: PodType
+        if self.podId >> 24 != dashType.topIdByte && fakeO5Pairing {
+            podType = omnipod5Type
+        } else {
+            // JJJ will need to check real O5 podType and make sure five pod sim returns the same value!
+            podType = versionResponse.podType
+        }
+
         self.podState = PodState(
             address: self.podId,
             firmwareVersion: String(describing: versionResponse.firmwareVersion),
@@ -167,9 +190,7 @@ class BlePodComms: PodComms {
             lotNo: versionResponse.lot,
             lotSeq: versionResponse.tid,
             insulinType: insulinType,
-            //podType: versionResponse.podType,
-            // XXX temporary hack for fake Omnipod 5 pod support using DASH pods
-            podType: self.podId >> 24 == omnipod5Type.topIdByte ? omnipod5Type : versionResponse.podType,
+            podType: podType, // will eventualy be versionResponse.podType,
             bleMessageTransportState: blePodMessageTransport.state,
             ltk: ltk,
             bleIdentifier: manager.peripheral.identifier.uuidString
