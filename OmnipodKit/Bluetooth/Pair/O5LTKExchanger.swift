@@ -60,7 +60,7 @@ class O5LTKExchanger {
         try o5throwOnSendError(sps0.message, O5LTKExchanger.SPS0)
 
         log.debug("Reading sps0")
-        guard let podSps0 = try manager.readMessagePacket() else {
+        guard let podSps0 = try manager.readMessagePacket(doRTS: false) else {
             throw PodProtocolError.pairingException("Could not read SPS0")
         }
         try validateO5sps0(podSps0)
@@ -78,7 +78,7 @@ class O5LTKExchanger {
         )
         try o5throwOnSendError(sps1.message, O5LTKExchanger.SPS1)
 
-        guard let podSps1 = try manager.readMessagePacket() else {
+        guard let podSps1 = try manager.readMessagePacket(doRTS: false) else {
             throw PodProtocolError.pairingException("Could not read SPS1")
         }
         try o5validatePodSps1(podSps1)
@@ -97,13 +97,13 @@ class O5LTKExchanger {
             keys: [O5LTKExchanger.SP0GP0],
             payloads: [Data()]
         )
-        let result = manager.sendMessagePacket(sp0gp0.message)
+        let result = manager.sendMessagePacket(sp0gp0.message, doRTS: false)
         guard case .sentWithAcknowledgment = result else {
             throw PodProtocolError.pairingException("Error sending SP0GP0: \(result)")
         }
 
         // read and validate 1 byte P0
-        guard let p0 = try manager.readMessagePacket() else {
+        guard let p0 = try manager.readMessagePacket(doRTS: false) else {
             throw PodProtocolError.pairingException("Could not read P0")
         }
         try o5validateP0(p0)
@@ -120,7 +120,7 @@ class O5LTKExchanger {
     }
 
     private func o5throwOnSendError(_ msg: MessagePacket, _ msgType: String) throws {
-        let result = manager.sendMessagePacket(msg)
+        let result = manager.sendMessagePacket(msg, doRTS: false)
         guard case .sentWithAcknowledgment = result else {
             throw PodProtocolError.pairingException("Send failure: \(result)")
         }
@@ -164,7 +164,7 @@ class O5LTKExchanger {
     // The third is a number that specifies the encryption algorithm
     // Bytes 4 and 5 are CRC-16/XMODEM checksum
     private func o5sps0() -> Data {
-        let fixedO5SPS0 = "0000099129" // XXX define values and calculate the CRC-16
+        let fixedO5SPS0 = "000109a218" // XXX define values and calculate the CRC-16
         log.debug("Using fixed SPS0 value of %@", fixedO5SPS0)
         return Data(hex: fixedO5SPS0)
     }
@@ -178,9 +178,9 @@ class O5LTKExchanger {
         log.debug("Received SPS0 from pod: %@", msg.payload.hexadecimalString)
 
         let payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS0], msg.payload)[0]
-        let fixedO5SPS0Return = "000109a218"  // XXX define values and calculate the CRC-16
+        let fixedO5SPS0Return = "0000099129"  // XXX define values and calculate the CRC-16
         if payload != Data(hex: fixedO5SPS0Return) {
-            throw PodProtocolError.pairingException("Reveived unexpected SPS0 payload: \(payload)")
+            throw PodProtocolError.pairingException("Received unexpected SPS0 payload: \(payload)")
         }
     }
 
