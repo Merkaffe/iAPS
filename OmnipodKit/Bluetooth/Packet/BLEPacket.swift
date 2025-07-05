@@ -74,9 +74,9 @@ struct FirstBlePacket: BlePacket {
         guard (fullFragments <= BlePacket_MAX_FRAGMENTS) else {
             throw PodProtocolError.messageIOException(String(format: "Received more than %d fragments", BlePacket_MAX_FRAGMENTS))
         }
-        guard (fullFragments > 0) else {
-            throw PodProtocolError.messageIOException("Invalid message with 0 fragments")
-        }
+//        guard (fullFragments > 0) else {
+//            throw PodProtocolError.messageIOException("Invalid message with 0 fragments")
+//        }
 
         guard payload.count >= BleFirstPacket_HEADER_SIZE_WITHOUT_MIDDLE_PACKETS else {
             throw PodProtocolError.messageIOException("Wrong packet size")

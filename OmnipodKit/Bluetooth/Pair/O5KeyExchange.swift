@@ -13,7 +13,7 @@ import CryptoSwift
 class O5KeyExchange {
     static let CMAC_SIZE = 16
 
-    static let PUBLIC_KEY_SIZE = 32
+    static let PUBLIC_KEY_SIZE = 64
     static let NONCE_SIZE = 16
 
     private let INTERMEDIARY_KEY_MAGIC_STRING = "TWIt".data(using: .utf8)
@@ -28,6 +28,7 @@ class O5KeyExchange {
     var podConf: Data
     var pdmConf: Data
     var ltk: Data
+    var sharedSecret: Data?
 
     private let keyGenerator: PrivateKeyGenerator
     let randomByteGenerator: RandomByteGenerator
@@ -65,14 +66,14 @@ class O5KeyExchange {
     }
 
     private func o5generateKeys() throws {
-        let curveLTK = try keyGenerator.computeSharedSecret(pdmPrivate, podPublic)
+        sharedSecret = try keyGenerator.computeSharedSecret(pdmPrivate, podPublic)
 
         let firstKey = podPublic.subdata(in: podPublic.count - 4..<podPublic.count) +
             pdmPublic.subdata(in: pdmPublic.count - 4..<pdmPublic.count) +
             podNonce.subdata(in: podNonce.count - 4..<podNonce.count) +
             pdmNonce.subdata(in: pdmNonce.count - 4..<pdmNonce.count)
 
-        let intermediateKey = try o5aesCmac(firstKey, curveLTK)
+        let intermediateKey = try o5aesCmac(firstKey, sharedSecret!)
 
         let ltkData = Data([0x02]) +
             INTERMEDIARY_KEY_MAGIC_STRING! +
@@ -103,5 +104,14 @@ class O5KeyExchange {
     private func o5aesCmac(_ key: Data, _ data: Data) throws -> Data {
         let mac = try CMAC(key: key.bytes)
         return try Data(mac.authenticate(data.bytes))
+    }
+    
+    func updatePodPublicData(_ payload: Data) throws {
+        if (payload.count != O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE) {
+            throw PodProtocolError.messageIOException("Invalid payload size")
+        }
+        podPublic = payload.subdata(in: 0..<O5KeyExchange.PUBLIC_KEY_SIZE)
+        podNonce = payload.subdata(in: O5KeyExchange.PUBLIC_KEY_SIZE..<O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE)
+        try o5generateKeys()
     }
 }

@@ -93,10 +93,12 @@ extension PeripheralManager {
 
             let joiner = try PayloadJoiner(firstPacket: firstPacket)
 
-            for _ in 1...joiner.fullFragments {
-                expected += 1
-                let packet = try waitForData(sequence: expected, timeout: 5)
-                try joiner.accumulate(packet: packet)
+            if joiner.fullFragments > 0 {
+                for _ in 1...joiner.fullFragments {
+                    expected += 1
+                    let packet = try waitForData(sequence: expected, timeout: 5)
+                    try joiner.accumulate(packet: packet)
+                }
             }
             if joiner.oneExtraPacket {
                 expected += 1
@@ -196,10 +198,13 @@ extension PeripheralManager {
         dispatchPrecondition(condition: .onQueue(queue))
         
         guard let characteristic = peripheral.getDataCharacteristic() else {
+            log.error("Unable to get characteristic... peripheral status:", peripheral.state.description)
+            log.error("peripheral services: %@", peripheral.services!)
             throw PeripheralManagerError.notReady
         }
+        log.info("Sending to characteristic: %@", characteristic)
         
-        try writeValue(value, for: characteristic, type: .withResponse, timeout: timeout)
+        try writeValue(value, for: characteristic, type: .withoutResponse, timeout: timeout)
     }
 
     /// - Throws: PeripheralManagerError

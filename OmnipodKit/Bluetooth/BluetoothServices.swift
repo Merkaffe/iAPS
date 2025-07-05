@@ -143,7 +143,7 @@ func setServicePodType(podType: PodType) {
     if podType == dashType {
         BlePacket_MAX_SIZE = 20
     } else {
-        BlePacket_MAX_SIZE = 256
+        BlePacket_MAX_SIZE = 244
     }
 
     FirstBlePacket_CAPACITY_WITHOUT_MIDDLE_PACKETS = BlePacket_MAX_SIZE - BleFirstPacket_HEADER_SIZE_WITHOUT_MIDDLE_PACKETS
