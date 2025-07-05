@@ -51,11 +51,11 @@ class O5KeyExchange {
     }
 
     func o5updatePodPublicData(_ payload: Data) throws {
-        if (payload.count != KeyExchange.PUBLIC_KEY_SIZE + KeyExchange.NONCE_SIZE) {
+        if (payload.count != O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE) {
             throw PodProtocolError.messageIOException("Invalid payload size")
         }
-        podPublic = payload.subdata(in: 0..<KeyExchange.PUBLIC_KEY_SIZE)
-        podNonce = payload.subdata(in: KeyExchange.PUBLIC_KEY_SIZE..<KeyExchange.PUBLIC_KEY_SIZE + KeyExchange.NONCE_SIZE)
+        podPublic = payload.subdata(in: 0..<O5KeyExchange.PUBLIC_KEY_SIZE)
+        podNonce = payload.subdata(in: O5KeyExchange.PUBLIC_KEY_SIZE..<O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE)
         try o5generateKeys()
     }
 
@@ -73,7 +73,10 @@ class O5KeyExchange {
             podNonce.subdata(in: podNonce.count - 4..<podNonce.count) +
             pdmNonce.subdata(in: pdmNonce.count - 4..<pdmNonce.count)
 
-        let intermediateKey = try o5aesCmac(firstKey, sharedSecret!)
+        guard let sharedSecret = self.sharedSecret else {
+            throw PodProtocolError.pairingException("Shared Secret is nil, even though we just created it above, this should never happen")
+        }
+        let intermediateKey = try o5aesCmac(firstKey, sharedSecret)
 
         let ltkData = Data([0x02]) +
             INTERMEDIARY_KEY_MAGIC_STRING! +
@@ -104,14 +107,5 @@ class O5KeyExchange {
     private func o5aesCmac(_ key: Data, _ data: Data) throws -> Data {
         let mac = try CMAC(key: key.bytes)
         return try Data(mac.authenticate(data.bytes))
-    }
-    
-    func updatePodPublicData(_ payload: Data) throws {
-        if (payload.count != O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE) {
-            throw PodProtocolError.messageIOException("Invalid payload size")
-        }
-        podPublic = payload.subdata(in: 0..<O5KeyExchange.PUBLIC_KEY_SIZE)
-        podNonce = payload.subdata(in: O5KeyExchange.PUBLIC_KEY_SIZE..<O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE)
-        try o5generateKeys()
     }
 }

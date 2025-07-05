@@ -48,7 +48,7 @@ class O5LTKExchanger {
             source: ids.myId,
             destination: podAddress,
             keys: [O5LTKExchanger.SP1, O5LTKExchanger.SP2],
-            payloads: [ids.podId.address, ids.podId.address + Data([0x00, 0x03, 0x0e, 0x01, 0x00, 0x02, 0x45])] // 4-byte and 11-byte payloads
+            payloads: [ids.podId.address, o5sp2(podId: ids.podId)] // 4-byte and 11-byte payloads
         )
         try o5throwOnSendError(sp1sp2.message, O5LTKExchanger.SP1 + O5LTKExchanger.SP2)
 
@@ -143,21 +143,13 @@ class O5LTKExchanger {
         }
     }
 
-    private func o5processSps0FromPod(_ msg: MessagePacket) throws {
-        log.debug("Received SPS0 from pod: %@", msg.payload.hexadecimalString)
-
-        let payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS0], msg.payload)[0]
-        log.debug("SPS0 payload from pod: %@", payload.hexadecimalString)
-        try keyExchange.updatePodPublicData(payload)
-    }
-
     private func o5validatePodSps1(_ msg: MessagePacket) throws {
         log.debug("Received SPS1 from pod: %@", msg.payload.hexadecimalString)
 
         let payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS1], msg.payload)[0]
         log.debug("SPS1 payload from pod: %@", payload.hexadecimalString)
         
-        try keyExchange.updatePodPublicData(payload)
+        try keyExchange.o5updatePodPublicData(payload)
     }
     
     private func o5validatePodSps2_1(_ msg: MessagePacket) throws {

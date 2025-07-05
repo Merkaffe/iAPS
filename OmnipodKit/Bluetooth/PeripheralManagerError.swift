@@ -17,6 +17,7 @@ enum PeripheralManagerError: Error {
     case emptyValue
     case unknownCharacteristic
     case nack
+    case unknownPodType
 }
 
 extension PeripheralManagerError: LocalizedError {
@@ -36,6 +37,8 @@ extension PeripheralManagerError: LocalizedError {
             return LocalizedString("Unknown Characteristic", comment: "Error message description for PeripheralManagerError.unknownCharacteristic")
         case .nack:
             return LocalizedString("Nack", comment: "Error message description for PeripheralManagerError.nack")
+        case .unknownPodType:
+            return LocalizedString("Unknown Pod Type", comment: "Error message description for PeripheralManagerError.unknownPodType")
         }
     }
 }

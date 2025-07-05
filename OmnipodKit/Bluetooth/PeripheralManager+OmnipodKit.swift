@@ -7,6 +7,8 @@
 //  Copyright © 2021 LoopKit Authors. All rights reserved.
 //
 
+import CoreBluetooth
+
 
 enum SendMessageResult {
     case sentWithAcknowledgment
@@ -198,13 +200,22 @@ extension PeripheralManager {
         dispatchPrecondition(condition: .onQueue(queue))
         
         guard let characteristic = peripheral.getDataCharacteristic() else {
-            log.error("Unable to get characteristic... peripheral status:", peripheral.state.description)
-            log.error("peripheral services: %@", peripheral.services!)
+            log.error("Unable to get characteristic... peripheral status: %@", peripheral.state.description)
             throw PeripheralManagerError.notReady
         }
         log.info("Sending to characteristic: %@", characteristic)
         
-        try writeValue(value, for: characteristic, type: .withoutResponse, timeout: timeout)
+        var type: CBCharacteristicWriteType
+        switch self.podType {
+        case omnipod5Type:
+            type = .withoutResponse
+        case dashType:
+            type = .withResponse
+        default:
+            throw PeripheralManagerError.unknownPodType
+        }
+
+        try writeValue(value, for: characteristic, type: type, timeout: timeout)
     }
 
     /// - Throws: PeripheralManagerError

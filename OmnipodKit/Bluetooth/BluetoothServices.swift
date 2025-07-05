@@ -143,6 +143,7 @@ func setServicePodType(podType: PodType) {
     if podType == dashType {
         BlePacket_MAX_SIZE = 20
     } else {
+        // The max BLE Packet size is 256, but there is a 12 byte header that is invisible to us, so for our purposes the max is 256-12=244.
         BlePacket_MAX_SIZE = 244
     }
 

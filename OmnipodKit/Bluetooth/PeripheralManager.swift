@@ -74,7 +74,7 @@ class PeripheralManager: NSObject {
     // Confined to `queue`
     private var needsConfiguration = true
 
-    private let podType: PodType
+    let podType: PodType
 
     weak var delegate: PeripheralManagerDelegate?
 
