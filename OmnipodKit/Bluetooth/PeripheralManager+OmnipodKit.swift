@@ -200,10 +200,9 @@ extension PeripheralManager {
         dispatchPrecondition(condition: .onQueue(queue))
         
         guard let characteristic = peripheral.getDataCharacteristic() else {
-            log.error("Unable to get characteristic... peripheral status: %@", peripheral.state.description)
+            log.error("Unable to get characteristic... peripheral status: %{PUBLIC}@", peripheral.state.description)
             throw PeripheralManagerError.notReady
         }
-        log.info("Sending to characteristic: %@", characteristic)
         
         var type: CBCharacteristicWriteType
         switch self.podType {

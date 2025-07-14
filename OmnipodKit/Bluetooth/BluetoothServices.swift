@@ -141,19 +141,19 @@ func setServicePodType(podType: PodType) {
     // JJJ figure out a cleaner way to do manage this and
     // other such constants which vary between DASH and O5.
     if podType == dashType {
-        BlePacket_MAX_SIZE = 20
+        BlePacket_MAX_PAYLOAD_SIZE = 20
     } else {
         // The max BLE Packet size is 256, but there is a 12 byte header that is invisible to us, so for our purposes the max is 256-12=244.
-        BlePacket_MAX_SIZE = 244
+        BlePacket_MAX_PAYLOAD_SIZE = 244
     }
 
-    FirstBlePacket_CAPACITY_WITHOUT_MIDDLE_PACKETS = BlePacket_MAX_SIZE - BleFirstPacket_HEADER_SIZE_WITHOUT_MIDDLE_PACKETS
-    FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS = BlePacket_MAX_SIZE - BleFirstPacket_HEADER_SIZE_WITH_MIDDLE_PACKETS
+    FirstBlePacket_CAPACITY_WITHOUT_MIDDLE_PACKETS = BlePacket_MAX_PAYLOAD_SIZE - BleFirstPacket_HEADER_SIZE_WITHOUT_MIDDLE_PACKETS
+    FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS = BlePacket_MAX_PAYLOAD_SIZE - BleFirstPacket_HEADER_SIZE_WITH_MIDDLE_PACKETS
     FirstBlePacket_CAPACITY_WITH_THE_OPTIONAL_PLUS_ONE_PACKET = FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS
 
-    MiddleBlePacket_CAPACITY = BlePacket_MAX_SIZE - 1
+    MiddleBlePacket_CAPACITY = BlePacket_MAX_PAYLOAD_SIZE - 1
 
-    LastBlePacket_CAPACITY = BlePacket_MAX_SIZE - LastBlePacket_HEADER_SIZE
+    LastBlePacket_CAPACITY = BlePacket_MAX_PAYLOAD_SIZE - LastBlePacket_HEADER_SIZE
 }
 
 var OmnipodServiceUUID_advertisement_cbUUID: CBUUID {

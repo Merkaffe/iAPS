@@ -11,7 +11,7 @@ import Foundation
 
 // JJJ need to review all these former constants in this file for O5
 // and find a better way to handle per pod type BLE differences.
-var BlePacket_MAX_SIZE = 20 // 20 for DASH and 256 for O5
+var BlePacket_MAX_PAYLOAD_SIZE = 20 // 20 for DASH and 256 for O5
 var BlePacket_MAX_FRAGMENTS = 15 // 15 for DASH (15*20=300 bytes), ?? for O5
 
 var BleFirstPacket_HEADER_SIZE_WITHOUT_MIDDLE_PACKETS = 7 // 7 for DASH, same for O5? // using all fields
@@ -45,7 +45,7 @@ struct FirstBlePacket: BlePacket {
     var oneExtraPacket: Bool = false
 
     func toData() -> Data {
-        var bb = Data(capacity: BlePacket_MAX_SIZE)
+        var bb = Data(capacity: BlePacket_MAX_PAYLOAD_SIZE)
         bb.append(UInt8(0)) // index
         bb.append(UInt8(fullFragments)) // # of fragments except FirstBlePacket and LastOptionalPlusOneBlePacket
 
@@ -74,9 +74,6 @@ struct FirstBlePacket: BlePacket {
         guard (fullFragments <= BlePacket_MAX_FRAGMENTS) else {
             throw PodProtocolError.messageIOException(String(format: "Received more than %d fragments", BlePacket_MAX_FRAGMENTS))
         }
-//        guard (fullFragments > 0) else {
-//            throw PodProtocolError.messageIOException("Invalid message with 0 fragments")
-//        }
 
         guard payload.count >= BleFirstPacket_HEADER_SIZE_WITHOUT_MIDDLE_PACKETS else {
             throw PodProtocolError.messageIOException("Wrong packet size")
@@ -96,12 +93,12 @@ struct FirstBlePacket: BlePacket {
                 crc32: payload.subdata(in: 2..<6),
                 oneExtraPacket:  Int(rest) + BleFirstPacket_HEADER_SIZE_WITHOUT_MIDDLE_PACKETS > end
             )
-        } else if (payload.count < BlePacket_MAX_SIZE) {
+        } else if (payload.count < BlePacket_MAX_PAYLOAD_SIZE) {
             throw PodProtocolError.incorrectPacketException(payload, 0)
         }
         return FirstBlePacket(
             fullFragments: fullFragments,
-            payload: payload.subdata(in: BleFirstPacket_HEADER_SIZE_WITH_MIDDLE_PACKETS..<BlePacket_MAX_SIZE)
+            payload: payload.subdata(in: BleFirstPacket_HEADER_SIZE_WITH_MIDDLE_PACKETS..<BlePacket_MAX_PAYLOAD_SIZE)
         )
     }
 }
@@ -115,10 +112,10 @@ struct MiddleBlePacket: BlePacket {
     }
     
     static func parse(payload: Data) throws -> MiddleBlePacket {
-        guard payload.count >= BlePacket_MAX_SIZE else { throw PodProtocolError.messageIOException("Wrong packet size") }
+        guard payload.count >= BlePacket_MAX_PAYLOAD_SIZE else { throw PodProtocolError.messageIOException("Wrong packet size") }
         return MiddleBlePacket(
             index: payload[0],
-            payload: payload.subdata(in: 1..<BlePacket_MAX_SIZE)
+            payload: payload.subdata(in: 1..<BlePacket_MAX_PAYLOAD_SIZE)
         )
     }
 }
@@ -131,12 +128,12 @@ struct LastBlePacket: BlePacket {
     var oneExtraPacket: Bool = false
 
     func toData() -> Data {
-        var bb = Data(capacity: BlePacket_MAX_SIZE)
+        var bb = Data(capacity: BlePacket_MAX_PAYLOAD_SIZE)
         bb.append(index)
         bb.append(size)
         bb.append(crc32)
         bb.append(payload)
-        bb.append(Data(count: BlePacket_MAX_SIZE - payload.count - LastBlePacket_HEADER_SIZE))
+        bb.append(Data(count: BlePacket_MAX_PAYLOAD_SIZE - payload.count - LastBlePacket_HEADER_SIZE))
         return bb
     }
     
@@ -165,7 +162,7 @@ struct LastOptionalPlusOneBlePacket: BlePacket {
     let size: UInt8
 
     func toData() -> Data {
-        return Data([index, size]) + payload + Data(count: BlePacket_MAX_SIZE - payload.count - 2)
+        return Data([index, size]) + payload + Data(count: BlePacket_MAX_PAYLOAD_SIZE - payload.count - 2)
     }
 
     static func parse(payload: Data) throws -> LastOptionalPlusOneBlePacket {

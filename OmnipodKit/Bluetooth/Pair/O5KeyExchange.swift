@@ -10,6 +10,11 @@
 import Foundation
 import CryptoSwift
 
+enum Direction {
+    case write
+    case read
+}
+
 class O5KeyExchange {
     static let CMAC_SIZE = 16
 
@@ -20,15 +25,13 @@ class O5KeyExchange {
     private let PDM_CONF_MAGIC_PREFIX = "KC_2_U".data(using: .utf8)
     private let POD_CONF_MAGIC_PREFIX = "KC_2_V".data(using: .utf8)
 
-    let pdmNonce: Data
+    var pdmNonce: Data
     let pdmPrivate: Data
     let pdmPublic: Data
     var podPublic: Data
     var podNonce: Data
-    var podConf: Data
-    var pdmConf: Data
+    var conf: Data
     var ltk: Data
-    var sharedSecret: Data?
 
     private let keyGenerator: PrivateKeyGenerator
     let randomByteGenerator: RandomByteGenerator
@@ -37,17 +40,16 @@ class O5KeyExchange {
         self.keyGenerator = keyGenerator
         self.randomByteGenerator = randomByteGenerator
 
-        pdmNonce = randomByteGenerator.nextBytes(length: KeyExchange.NONCE_SIZE)
+        pdmNonce = randomByteGenerator.nextBytes(length: O5KeyExchange.NONCE_SIZE)
         pdmPrivate = keyGenerator.generatePrivateKey()
         pdmPublic = try keyGenerator.publicFromPrivate(pdmPrivate)
 
-        podPublic = Data(capacity: KeyExchange.PUBLIC_KEY_SIZE)
-        podNonce = Data(capacity: KeyExchange.NONCE_SIZE)
+        podPublic = Data(capacity: O5KeyExchange.PUBLIC_KEY_SIZE)
+        podNonce = Data(capacity: O5KeyExchange.NONCE_SIZE)
 
-        podConf = Data(capacity: KeyExchange.CMAC_SIZE)
-        pdmConf = Data(capacity: KeyExchange.CMAC_SIZE)
+        conf = Data(capacity: O5KeyExchange.CMAC_SIZE)
 
-        ltk = Data(capacity: KeyExchange.CMAC_SIZE)
+        ltk = Data(capacity: O5KeyExchange.CMAC_SIZE)
     }
 
     func o5updatePodPublicData(_ payload: Data) throws {
@@ -59,49 +61,51 @@ class O5KeyExchange {
         try o5generateKeys()
     }
 
-    func o5validatePodConf(_ payload: Data) throws {
-        if (podConf != payload) {
-            throw PodProtocolError.messageIOException("Invalid podConf value received")
-        }
-    }
-
     private func o5generateKeys() throws {
-        sharedSecret = try keyGenerator.computeSharedSecret(pdmPrivate, podPublic)
-
-        let firstKey = podPublic.subdata(in: podPublic.count - 4..<podPublic.count) +
-            pdmPublic.subdata(in: pdmPublic.count - 4..<pdmPublic.count) +
-            podNonce.subdata(in: podNonce.count - 4..<podNonce.count) +
-            pdmNonce.subdata(in: pdmNonce.count - 4..<pdmNonce.count)
-
-        guard let sharedSecret = self.sharedSecret else {
-            throw PodProtocolError.pairingException("Shared Secret is nil, even though we just created it above, this should never happen")
+        let sharedSecret = try keyGenerator.computeSharedSecret(pdmPrivate, podPublic)
+        var data = Data()
+        data.append(withUnsafeBytes(of: UInt64(O5LTKExchanger.FIRMWARE_ID.count).bigEndian, {Data($0)}))
+        data.append(O5LTKExchanger.FIRMWARE_ID)
+        let controllerID = Data([0x00, 0x00, 0x00, 0x00])
+        data.append(withUnsafeBytes(of: UInt64(controllerID.count).bigEndian, {Data($0)}))
+        data.append(controllerID)
+        data.append(withUnsafeBytes(of: UInt64(self.pdmPublic.count).bigEndian, {Data($0)}))
+        data.append(self.pdmPublic)
+        data.append(withUnsafeBytes(of: UInt64(self.podPublic.count).bigEndian, {Data($0)}))
+        data.append(self.podPublic)
+        data.append(withUnsafeBytes(of: UInt64(sharedSecret.count).bigEndian, {Data($0)}))
+        data.append(sharedSecret)
+        let derivedKey = data.sha256()
+        self.conf = derivedKey.subdata(in: 0..<16)
+        self.ltk = derivedKey.subdata(in: 16..<derivedKey.count)
+    }
+    
+    public func getSPSNonce(direction: Direction) -> Data {
+        var nonce = Data()
+        switch direction {
+        case .write:
+            nonce.append(contentsOf: [0x01])
+            nonce.append(pdmNonce.subdata(in: 0..<6))
+            nonce.append(podNonce.subdata(in: 0..<6))
+            break
+        case .read:
+            nonce.append(contentsOf: [0x02])
+            nonce.append(podNonce.subdata(in: 0..<6))
+            nonce.append(pdmNonce.subdata(in: 0..<6))
+            break
         }
-        let intermediateKey = try o5aesCmac(firstKey, sharedSecret)
-
-        let ltkData = Data([0x02]) +
-            INTERMEDIARY_KEY_MAGIC_STRING! +
-            podNonce +
-            pdmNonce +
-            Data([0x00, 0x01])
-
-        ltk = try o5aesCmac(intermediateKey, ltkData)
-
-        let confData = Data([0x01]) +
-            INTERMEDIARY_KEY_MAGIC_STRING! +
-            podNonce +
-            pdmNonce +
-            Data([0x00, 0x01])
-        let confKey = try o5aesCmac(intermediateKey, confData)
-
-        let pdmConfData = PDM_CONF_MAGIC_PREFIX! +
-            pdmNonce +
-            podNonce
-        pdmConf = try o5aesCmac(confKey, pdmConfData)
-
-        let podConfData = POD_CONF_MAGIC_PREFIX! +
-            podNonce +
-            pdmNonce
-        podConf = try o5aesCmac(confKey, podConfData)
+        return nonce
+    }
+    
+    public func incrementNonce(direction: Direction) {
+        switch direction {
+        case .write:
+            self.pdmNonce = Data(pdmNonce.to(UInt64.self) + 1)
+            break
+        case .read:
+            self.podNonce = Data(podNonce.to(UInt64.self) + 1)
+            break
+        }
     }
 
     private func o5aesCmac(_ key: Data, _ data: Data) throws -> Data {

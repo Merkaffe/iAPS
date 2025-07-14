@@ -30,7 +30,7 @@ class O5LTKExchanger {
     private let manager: PeripheralManager
     private let ids: Ids
     private let podAddress = Ids.notActivated()
-    private let keyExchange = try! O5KeyExchange(P256sKeyGenerator(), OmniRandomByteGenerator())
+    private let keyExchange = try! O5KeyExchange(P256KeyGenerator(), OmniRandomByteGenerator())
     private var seq: UInt8 = 1
 
     private let log = OSLog(category: "O5LTKExchanger")
@@ -153,48 +153,33 @@ class O5LTKExchanger {
     }
     
     private func o5validatePodSps2_1(_ msg: MessagePacket) throws {
-        log.debug("Received SPS2.1 from pod: %@", msg.payload.hexadecimalString)
-        log.debug("PDM Private: %@", keyExchange.pdmPrivate.hexadecimalString)
-        log.debug("PDM Public: %@", keyExchange.pdmPublic.hexadecimalString)
-        log.debug("PDM Nonce: %@", keyExchange.pdmNonce.hexadecimalString)
-        log.debug("Pod Public: %@", keyExchange.podPublic.hexadecimalString)
-        log.debug("Pod Nonce: %@", keyExchange.podNonce.hexadecimalString)
-        
+        log.debug("Received SPS2.1 from pod: %{PRIVATE}@", msg.payload.hexadecimalString)
         let payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS2_1], msg.payload)[0]
-        log.debug("SPS2.1 payload from pod: %@", payload.hexadecimalString)
+        log.debug("PDM Private: %{PRIVATE}@", keyExchange.pdmPrivate.hexadecimalString)
+        log.debug("PDM Public: %{PRIVATE}@", keyExchange.pdmPublic.hexadecimalString)
+        log.debug("PDM Nonce: %{PRIVATE}@", keyExchange.pdmNonce.hexadecimalString)
+        log.debug("Pod Public: %{PRIVATE}@", keyExchange.podPublic.hexadecimalString)
+        log.debug("Pod Nonce: %{PRIVATE}@", keyExchange.podNonce.hexadecimalString)
+        let nonce = keyExchange.getSPSNonce(direction: .read)
+        let key = keyExchange.conf
+        log.info("Key for SPS2.1: %{PRIVATE}@", key.toHexString())
+        let ccm = CCM(iv: nonce.bytes, tagLength: 8, messageLength: payload.count - 8)
+        let aes = try AES(key: key.bytes, blockMode: ccm, padding: .noPadding)
+        let decryptedPayload = try aes.decrypt(payload.bytes)
+        log.info("Decrypted SPS2.1 payload from pod: %{PRIVATE}@", decryptedPayload.toHexString())
+        keyExchange.incrementNonce(direction: .read)
     }
     
-    private func getSps2_1Key() throws -> Data {
-        var data = Data()
-        data.append(withUnsafeBytes(of: UInt64(O5LTKExchanger.FIRMWARE_ID.count).bigEndian, {Data($0)}))
-        data.append(O5LTKExchanger.FIRMWARE_ID)
-        let controllerID = Data([0x00, 0x00, 0x00, 0x00])
-        data.append(withUnsafeBytes(of: UInt64(controllerID.count).bigEndian, {Data($0)}))
-        data.append(controllerID)
-        data.append(withUnsafeBytes(of: UInt64(keyExchange.pdmPublic.count).bigEndian, {Data($0)}))
-        data.append(keyExchange.pdmPublic)
-        data.append(withUnsafeBytes(of: UInt64(keyExchange.podPublic.count).bigEndian, {Data($0)}))
-        data.append(keyExchange.podPublic)
-        guard let sharedSecret = keyExchange.sharedSecret else {
-            throw PodProtocolError.pairingException("Somehow got to SPS2.1 without a shared secret")
-        }
-        data.append(withUnsafeBytes(of: UInt64(sharedSecret.count).bigEndian, {Data($0)}))
-        data.append(sharedSecret)
-        log.info("Using %@ as hash data", data.bytes.toHexString())
-        return data.sha256().subdata(in: 0..<16)
-    }
     
     private func o5sps2_1() throws -> Data {
         let rawCert = Data(hex: "/*DECRYPTED CERT FROM PDM */")
-        log.info("PDM Nonce: %@", keyExchange.pdmNonce.bytes.toHexString())
-        log.info("Pod Nonce: %@", keyExchange.podNonce.bytes.toHexString())
-        let nonce = Data([0x01] + keyExchange.pdmNonce.subdata(in: 0..<6) + keyExchange.podNonce.subdata(in: 0..<6))
-        let key = try getSps2_1Key()
-        log.info("Encrypting with key %@ and nonce %@", key.bytes.toHexString(), nonce.bytes.toHexString())
+        let nonce = keyExchange.getSPSNonce(direction: .write)
+        let key =  keyExchange.conf
+        log.info("Encrypting with key %{PRIVATE}@ and nonce %{PRIVATE}@", key.bytes.toHexString(), nonce.bytes.toHexString())
         let ccm = CCM(iv: nonce.bytes, tagLength: 8, messageLength: rawCert.count)
         let aes = try AES(key: key.bytes, blockMode: ccm, padding: .noPadding)
         let payload = try aes.encrypt(rawCert.bytes)
-        log.info("Encrypted payload: %@", payload.toHexString())
+        keyExchange.incrementNonce(direction: .write)
         return Data(payload)
     }
 

@@ -9,7 +9,7 @@
 import CryptoKit
 import Foundation
 
-struct P256sKeyGenerator: PrivateKeyGenerator {
+struct P256KeyGenerator: PrivateKeyGenerator {
     func generatePrivateKey() -> Data {
         let key = P256.KeyAgreement.PrivateKey()
         return key.rawRepresentation
