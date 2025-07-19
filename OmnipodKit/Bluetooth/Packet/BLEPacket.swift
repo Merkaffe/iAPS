@@ -11,10 +11,10 @@ import Foundation
 
 // JJJ need to review all these former constants in this file for O5
 // and find a better way to handle per pod type BLE differences.
-var BlePacket_MAX_PAYLOAD_SIZE = 20 // 20 for DASH and 256 for O5
+var BlePacket_MAX_PAYLOAD_SIZE = 20 // 20 for DASH and 244 for O5
 var BlePacket_MAX_FRAGMENTS = 15 // 15 for DASH (15*20=300 bytes), ?? for O5
 
-var BleFirstPacket_HEADER_SIZE_WITHOUT_MIDDLE_PACKETS = 7 // 7 for DASH, same for O5? // using all fields
+var BleFirstPacket_HEADER_SIZE_WITHOUT_MIDDLE_PACKETS = 7 // using all fields
 var BleFirstPacket_HEADER_SIZE_WITH_MIDDLE_PACKETS = 2 // 2 for DASH, same for O5? // not using crc32 or size
 
 // FirstBlePacket.CAPACITY_WITHOUT_MIDDLE_PACKETS was MAX_SIZE - HEADER_SIZE_WITHOUT_MIDDLE_PACKETS
