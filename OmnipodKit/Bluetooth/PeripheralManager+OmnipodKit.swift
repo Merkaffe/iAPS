@@ -7,6 +7,8 @@
 //  Copyright © 2021 LoopKit Authors. All rights reserved.
 //
 
+import CoreBluetooth
+
 
 enum SendMessageResult {
     case sentWithAcknowledgment
@@ -93,10 +95,12 @@ extension PeripheralManager {
 
             let joiner = try PayloadJoiner(firstPacket: firstPacket)
 
-            for _ in 1...joiner.fullFragments {
-                expected += 1
-                let packet = try waitForData(sequence: expected, timeout: 5)
-                try joiner.accumulate(packet: packet)
+            if joiner.fullFragments > 0 {
+                for _ in 1...joiner.fullFragments {
+                    expected += 1
+                    let packet = try waitForData(sequence: expected, timeout: 5)
+                    try joiner.accumulate(packet: packet)
+                }
             }
             if joiner.oneExtraPacket {
                 expected += 1
@@ -196,10 +200,21 @@ extension PeripheralManager {
         dispatchPrecondition(condition: .onQueue(queue))
         
         guard let characteristic = peripheral.getDataCharacteristic() else {
+            log.error("Unable to get characteristic... peripheral status: %{PUBLIC}@", peripheral.state.description)
             throw PeripheralManagerError.notReady
         }
         
-        try writeValue(value, for: characteristic, type: .withResponse, timeout: timeout)
+        var type: CBCharacteristicWriteType
+        switch self.podType {
+        case omnipod5Type:
+            type = .withoutResponse
+        case dashType:
+            type = .withResponse
+        default:
+            throw PeripheralManagerError.unknownPodType
+        }
+
+        try writeValue(value, for: characteristic, type: type, timeout: timeout)
     }
 
     /// - Throws: PeripheralManagerError
