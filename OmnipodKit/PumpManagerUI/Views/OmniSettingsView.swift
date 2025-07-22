@@ -271,11 +271,14 @@ struct OmniSettingsView: View  {
                         sendingTestBeepsCommand = true
                         Task { @MainActor in
                             defer {
+                                // Executed after playTestBeeps() returns or throws
                                 sendingTestBeepsCommand = false
+                            }
+                            do {
+                                try await viewModel.playTestBeeps()
                             }
                             // No errors are displayed when using the sound icon to play test beeps.
                             // Pod Diagnostics->Play Test Beeps will play beeps & display any errors.
-                            try await viewModel.playTestBeeps()
                         }
                     }) {
                         Image(systemName: "speaker.wave.2.circle")
