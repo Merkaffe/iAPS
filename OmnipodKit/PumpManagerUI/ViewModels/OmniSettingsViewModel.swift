@@ -229,6 +229,7 @@ class OmniSettingsViewModel: ObservableObject {
         activatedAt = pumpManager.podActivatedAt
         expiresAt = pumpManager.expiresAt
         basalDeliveryState = pumpManager.status.basalDeliveryState
+        basalDeliveryRate = pumpManager.basalDeliveryRate
         reservoirLevel = pumpManager.reservoirLevel
         reservoirLevelHighlightState = pumpManager.reservoirLevelHighlightState
         expirationReminderDate = pumpManager.scheduledExpirationReminder
