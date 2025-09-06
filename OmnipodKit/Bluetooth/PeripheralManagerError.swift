@@ -35,7 +35,7 @@ extension PeripheralManagerError: LocalizedError {
         case .unknownCharacteristic:
             return LocalizedString("Unknown Characteristic", comment: "Error message description for PeripheralManagerError.unknownCharacteristic")
         case .nack:
-            return LocalizedString("Nack", comment: "Error message description for PeripheralManagerError.nack")
+            return String("Nack")
         }
     }
 }
