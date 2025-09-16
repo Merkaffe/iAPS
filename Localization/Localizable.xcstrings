@@ -1,0 +1,3952 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    "\n\n⚠️ Critical Pod Fault %1$03d (0x%2$02X)" : {
+      "comment" : "The format string for fault code in decimal and hex: (1: fault code for decimal display) (2: fault code for hex display)"
+    },
+    "\n  Immediate Bolus In Progress: %1$@" : {
+      "comment" : "The format string for immediate bolus in progress: (1: immediate bolus in progress)"
+    },
+    "\n  Insulin State Table Corrupted: %@" : {
+      "comment" : "The format string for insulin state table corrupted: (1: insulin state corrupted)"
+    },
+    "\n  Occlusion Type: %1$@" : {
+      "comment" : "The format string for occlusion type: (1: occlusion type)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\n  Type d'occlusion : %1$@"
+          }
+        }
+      }
+    },
+    "\n  Previous Pod Progress: %1$@" : {
+      "comment" : "The format string for previous pod progress: (1: previous pod progress string)"
+    },
+    "\nAlerts: %1$@" : {
+      "comment" : "The format string for Alerts: (1: the alerts string)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\nAlertes: %1$@"
+          }
+        }
+      }
+    },
+    "\nBolus Not Delivered: %1$@ U" : {
+      "comment" : "The format string for Bolus Not Delivered: (1: bolus not delivered string)"
+    },
+    "\nDelivery Status: %1$@" : {
+      "comment" : "The format string for Delivery Status: (1: delivery status string)"
+    },
+    "\nFault Event Info: %1$03d (0x%2$02X)," : {
+      "comment" : "The format string for fault event info: (1: fault event info)"
+    },
+    "\nFault Time: %1$@" : {
+      "comment" : "The format string for fault time: (1: fault time string)"
+    },
+    "\nLast Programming Seq Num: %1$@" : {
+      "comment" : "The format string for last programming sequence number: (1: last programming sequence number)"
+    },
+    "\nPod Progress: %1$@" : {
+      "comment" : "The format string for Pod Progress: (1: pod progress string)"
+    },
+    "\nPulse Count: %1$d" : {
+      "comment" : "The format string for Pulse Count (1: pulse count)"
+    },
+    "\nReceiver Low Gain: %1$@" : {
+      "comment" : "The format string for receiverLowGain: (1: receiverLowGain)"
+    },
+    "\nRef: %@" : {
+      "comment" : "The Ref format string (1: pdm ref string)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\nRef : %@"
+          }
+        }
+      }
+    },
+    "\nReservoir Level: %1$@ U" : {
+      "comment" : "The format string for Reservoir Level: (1: reservoir level string)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\nNiveau du réservoir : %1$@ U"
+          }
+        }
+      }
+    },
+    "\nRSSI: %1$@" : {
+      "comment" : "The format string for RSSI: (1: RSSI value)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\nRSSI : %1$@"
+          }
+        }
+      }
+    },
+    " (inactive)" : {
+      "comment" : "Description for an inactive alert modifier",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " (inactif)"
+          }
+        }
+      }
+    },
+    " or select a different RileyLink; power the RileyLink device off and on" : {
+      "comment" : "delivery uncertainty recovery phrase when using a RileyLink"
+    },
+    "—" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "—"
+          }
+        }
+      }
+    },
+    "\"%1$@\" has a low battery" : {
+      "comment" : "Format string for low battery alert body for RileyLink. (1: device name)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\"%1$@\" a un niveau de batterie bas"
+          }
+        }
+      }
+    },
+    "%@ ago" : {
+      "comment" : "Format string for last status date on pod details screen",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il y a %@"
+          }
+        }
+      }
+    },
+    "%@+ U" : {
+      "comment" : "Format string for reservoir volume when above maximum reading. (1: The maximum reading)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@+ U"
+          }
+        }
+      }
+    },
+    "%@U" : {
+      "comment" : "Format string for reservoir volume. (1: The localized volume)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@U"
+          }
+        }
+      }
+    },
+    "%1$@ for %2$@" : {
+      "comment" : "Summary string for temporary basal rate configuration page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ pendant %2$@"
+          }
+        }
+      }
+    },
+    "%1$@ has been unable to communicate with the pod on your body since %2$@.\n\nDo not Discard Pod without scrolling to read this entire screen.\n\nCommunication was interrupted at a critical time. Information about active insulin / pod temp basal rate is uncertain.\n\nYou can tap on Access Omnipod Screen to attempt pod Diagnostic commands to reconnect to the pod%3$@; or use iPhone settings to toggle phone Bluetooth off and on, and/or quit and restart the app. (Wait up to 30 seconds for recovery.)\n\nIf you decide to give up because communication cannot be restored, tap the Discard Pod button, follow the steps and start a new pod. Monitor your glucose closely for the next 6 hours, as there may or may not be insulin actively working in your body that %4$@ cannot display." : {
+      "comment" : "Format string for main text of delivery uncertainty recovery page. (1: app name)(2: date of command)(3: localized pod type dependent recovery actions)(4: app name)"
+    },
+    "%1$@ has recovered communication with the pod on your body.\n\nInsulin delivery records have been updated and should match what has actually been delivered.\n\nYou may continue to use %2$@ normally now." : {
+      "comment" : "Text body for page showing insulin uncertainty has been recovered (1: appName) (2: appName)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La communication de %1$@ avec le pod sur votre corps a été rétablie.\n\nLes enregistrements d'administration d'insuline ont été mis à jour et devraient correspondre à ce qui a été effectivement administré.\n\nVous pouvez continuer à utiliser %2$@ normalement maintenant."
+          }
+        }
+      }
+    },
+    "%1$@ insulin or less remaining in Pod. Change Pod soon." : {
+      "comment" : "Format string for alert content body for lowReservoir pod alert. (1: reminder value)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ insuline ou moins restant dans le Pod. Remplacer le Pod bientôt."
+          }
+        }
+      }
+    },
+    "%1$@ minutes" : {
+      "comment" : "The format string for minutes (1: number of minutes string)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ minutes"
+          }
+        }
+      }
+    },
+    "%1$@ units remaining at %2$@" : {
+      "comment" : "Accessibility format string for (1: localized volume)(2: time)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ unités restantes à %2$@"
+          }
+        }
+      }
+    },
+    "%1$@+ %2$@" : {
+      "comment" : "Format string for reservoir level above max measurable threshold. (1: measurable reservoir threshold) (2: units)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@+ %2$@"
+          }
+        }
+      }
+    },
+    "%g U" : {
+      "comment" : "Format string for total delivery on pod details screen",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%g U"
+          }
+        }
+      }
+    },
+    "⚠️ Insulin delivery stopped. Change Pod now." : {
+      "comment" : "The action string on pod status page when pod faulted",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ L'administration d'insuline s'est arrêtée. Changez de Pod maintenant."
+          }
+        }
+      }
+    },
+    "1 hour" : {
+      "comment" : "Button text for 1 hour suspend duration",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 heure"
+          }
+        }
+      }
+    },
+    "1 hour 30 minutes" : {
+      "comment" : "Button text for 1 hour 30 minute suspend duration",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 heure 30 minutes"
+          }
+        }
+      }
+    },
+    "2 hours" : {
+      "comment" : "Button text for 2 hour suspend duration",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 heures"
+          }
+        }
+      }
+    },
+    "30 minutes" : {
+      "comment" : "Button text for 30 minute suspend duration",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 minutes"
+          }
+        }
+      }
+    },
+    "A reminder is configured during Pod setup to notify you in advance of Pod expiration. Set the number of hours advance notice you would like to configure by default when pairing a new Pod." : {
+      "comment" : "Footer text for omnipod reminders section"
+    },
+    "Abort" : {
+
+    },
+    "Access Omnipod Screen" : {
+      "comment" : "Button title to access Omnipod screen if waiting for recovery from uncertain comms"
+    },
+    "Activation time exceeded" : {
+      "comment" : "Format string for activation time exceeded\nPod state when activation not completed in the time allowed",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Délai d'activation dépassé"
+          }
+        }
+      }
+    },
+    "Active Time" : {
+      "comment" : "description label for active time pod details row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heure d’activation"
+          }
+        }
+      }
+    },
+    "Activity" : {
+      "comment" : "Section header for activity section",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activité"
+          }
+        }
+      }
+    },
+    "Address" : {
+      "comment" : "description label for address pod details row"
+    },
+    "Adjusting Pump Time..." : {
+      "comment" : "Text indicating ongoing pump time synchronization",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustement de l'horloge de la pompe..."
+          }
+        }
+      }
+    },
+    "All Pod alerts use no beeps and confirmation reminder beeps are suppressed. The Pod will only beep for fatal Pod faults and when playing test beeps.\n\n⚠️Warning - If your phone is out of range of the pod while this feature is enabled, you will not receive any in-app notifications; and the pod will not beep to alert you." : {
+      "comment" : "Description for SilencePodPreference.enabled",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les alertes du Pod n'utilisent aucun bip et les bips de rappel de confirmation sont désactivés. Le Pod émettra un bip uniquement en cas de défaut fatal du Pod et lors des bips de test.\n\n⚠️Avertissement - Si votre téléphone est hors de portée du Pod pendant que cette fonctionnalité est activée, vous ne recevrez aucune notification dans l'application ; et le Pod ne bipera pas pour vous alerter."
+          }
+        }
+      }
+    },
+    "Are you sure you want to cancel Pod setup?" : {
+      "comment" : "Alert title for cancel pairing modal",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voulez-vous vraiment annuler la configuration du Pod?"
+          }
+        }
+      }
+    },
+    "Are you sure you want to skip Omnipod Onboarding?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voulez-vous vraiment sauter l'intégration Omnipod?"
+          }
+        }
+      }
+    },
+    "Attach Pod" : {
+      "comment" : "Title for Attach Pod screen\nnavigation bar title attach pod",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appliquer le Pod"
+          }
+        }
+      }
+    },
+    "Attemping to re-establish communication" : {
+      "comment" : "Description string above progress indicator while attempting to re-establish communication from an unacknowledged command",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tenter de rétablir la communication"
+          }
+        }
+      }
+    },
+    "Auto-off" : {
+      "comment" : "Description for auto-off alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêt automatique"
+          }
+        }
+      }
+    },
+    "Back" : {
+      "comment" : "Back button text on DeliveryUncertaintyRecoveryView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour"
+          }
+        }
+      }
+    },
+    "Basal initialized" : {
+      "comment" : "Pod state when basal initialized",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basal initialisé"
+          }
+        }
+      }
+    },
+    "BLE Firmware Version" : {
+      "comment" : "description label for ble firmware version pod details row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version du micrologiciel BLE"
+          }
+        }
+      }
+    },
+    "Bluetooth is powered off" : {
+      "comment" : "Error description for BluetoothManagerError.bluetoothNotAvailable(.poweredOff)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bluetooth désactivé"
+          }
+        }
+      }
+    },
+    "Bluetooth is resetting" : {
+      "comment" : "Error description for BluetoothManagerError.bluetoothNotAvailable(.resetting)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le Bluetooth se réinitialise"
+          }
+        }
+      }
+    },
+    "Bluetooth is unavailable for an unknown reason." : {
+      "comment" : "Error description for BluetoothManagerError.bluetoothNotAvailable(.unknown)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bluetooth n’est pas disponible pour une raison inconnue."
+          }
+        }
+      }
+    },
+    "Bluetooth is unavailable: %1$@" : {
+      "comment" : "The format string for BluetoothManagerError.bluetoothNotAvailable for unknown state (1: the unknown state)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bluetooth n’est pas disponible : %1$@"
+          }
+        }
+      }
+    },
+    "Bluetooth use is unauthorized" : {
+      "comment" : "Error description for BluetoothManagerError.bluetoothNotAvailable(.unauthorized)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’utilisation de Bluetooth n’est pas autorisée"
+          }
+        }
+      }
+    },
+    "Bluetooth use unsupported on this device" : {
+      "comment" : "Error description for BluetoothManagerError.bluetoothNotAvailable(.unsupported)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'utilisation de Bluetooth n'est pas prise en charge sur cet appareil"
+          }
+        }
+      }
+    },
+    "Bolus" : {
+      "comment" : "Pump Event title for UnfinalizedDose with doseType of .bolus",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bolus"
+          }
+        }
+      }
+    },
+    "Bolus in progress" : {
+      "comment" : "Error message shown when operation could not be completed due to existing bolus in progress",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bolus en cours"
+          }
+        }
+      }
+    },
+    "Bolus: %1$@U %2$@ %3$@ %4$@" : {
+      "comment" : "The format string describing a bolus. (1: The amount delivered)(2: Start time of the dose)(3: duration)(4: scheduled certainty)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bolus: %1$@U %2$@ %3$@ %4$@"
+          }
+        }
+      }
+    },
+    "Bolusing" : {
+      "comment" : "Delivery status when bolusing",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bolus en cours"
+          }
+        }
+      }
+    },
+    "Bolusing with temp basal" : {
+      "comment" : "Delivery status when bolusing and temp basal is running",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bolus en cours avec basal temporaire"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "comment" : "Button title for cancelling confidence reminders edit\nButton title for cancelling low reservoir reminder edit\nButton title for cancelling scheduled reminder date edit\nButton title for cancelling silence pod edit\nCancel button text in navigation bar on insert cannula screen\nCancel button text in navigation bar on pair pod UI\nCancel button title\nPairing interface navigation bar button text for cancel action",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "Cancel Manual Basal" : {
+      "comment" : "Button title to cancel manual basal",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulation du débit basal manuel"
+          }
+        }
+      }
+    },
+    "Cannula inserted successfully. Continue." : {
+      "comment" : "Insert cannula action button accessibility label when cannula insertion succeeded",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La canule a été insérée correctement. Continuez"
+          }
+        }
+      }
+    },
+    "Certain" : {
+      "comment" : "String describing a dose that was certainly scheduled",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certain"
+          }
+        }
+      }
+    },
+    "Change Pod now. Insulin delivery will stop 8 hours after the Pod has expired or when no more insulin remains." : {
+      "comment" : "The action string on pod status page when pod expired",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer le pod maintenant. L'administration d'insuline s'arrêtera 8 heures après l'expiration du pod ou lorsque qu'il ne restera plus d'insuline."
+          }
+        }
+      }
+    },
+    "Change Pod now. Insulin delivery will stop in %1$@ or when no more insulin remains." : {
+      "comment" : "Format string for the action string on pod status page when pod expired. (1: service time remaining)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer le Pod maintenant. L'administration d'insuline s'arrêtera dans %1$@ ou lorsqu'il ne restera plus d'insuline."
+          }
+        }
+      }
+    },
+    "Change Pod now. Insulin delivery will stop in 1 hour." : {
+      "comment" : "Alert content body for podExpireImminent pod alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer le Pod maintenant. L'administration d'insuline s'arrêtera dans 1 heure."
+          }
+        }
+      }
+    },
+    "Change Pod now. Pod has been active for 72 hours." : {
+      "comment" : "Alert content body for podExpiring pod alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer le Pod maintenant. Le Pod est actif depuis 72 heures."
+          }
+        }
+      }
+    },
+    "Check Cannula" : {
+      "comment" : "Title for check cannula screen\nnavigation bar title for check cannula",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifier la canule"
+          }
+        }
+      }
+    },
+    "Check pod, apply to site, then confirm pod attachment." : {
+      "comment" : "Label text for step three of attach pod instructions"
+    },
+    "Checking Insertion" : {
+      "comment" : "Insert cannula action button accessibility label checking insertion",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérification de l'insertion en cours"
+          }
+        }
+      }
+    },
+    "Checking..." : {
+      "comment" : "Cannula insertion button text while checking insertion",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérification en cours..."
+          }
+        }
+      }
+    },
+    "Command error %1$u" : {
+      "comment" : "Format string for invalid message error code (1: error code number)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur de commande %1$u"
+          }
+        }
+      }
+    },
+    "Comms Issue" : {
+      "comment" : "Status highlight that delivery is uncertain.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problème de com."
+          }
+        }
+      }
+    },
+    "Comms Recovered" : {
+      "comment" : "Title for uncertainty recovered screen\nnavigation bar title for comms recovered",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Communications récupérées"
+          }
+        }
+      }
+    },
+    "Communication issue: Unacknowledged command pending." : {
+      "comment" : "Error message when command is rejected because an unacknowledged command is pending.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problème de communication : Commande en attente sans accusé de réception."
+          }
+        }
+      }
+    },
+    "Confidence Reminders" : {
+      "comment" : "Text for confidence reminders navigation link\nnavigation title for confidence reminders",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappels de confirmation"
+          }
+        }
+      }
+    },
+    "Confidence reminders are beeps from the Pod which can be used to acknowledge selected commands when the Pod is not silenced." : {
+      "comment" : "Help text for BeepPreferenceSelectionView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les bips de confirmation sont des bips du Pod pour accuser réception des commandes, sauf en mode silencieux."
+          }
+        }
+      }
+    },
+    "Confidence reminders will sound for commands you initiate, like bolus, cancel bolus, suspend, resume, save notification reminders, etc. When %1$@ automatically adjusts delivery, no confidence reminders are used." : {
+      "comment" : "Description for BeepPreference.manualCommands (1: appName)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les rappels de confirmation retentiront pour les commandes que vous initiez, comme administrer ou annuler un bolus, suspendre, reprendre, enregistrer les rappels de notification, etc. Lorsque %1$@ ajuste automatiquement l'administration, aucun rappel de confirmation n’est utilisé."
+          }
+        }
+      }
+    },
+    "Confidence reminders will sound when %1$@ automatically adjusts delivery as well as for commands you initiate." : {
+      "comment" : "Description for BeepPreference.extended (1: appName)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des rappels de confirmation retentiront lorsque %1$@ ajustera automatiquement l'administration ainsi que pour les commandes que vous lancez."
+          }
+        }
+      }
+    },
+    "Configuration" : {
+      "comment" : "Section header for configuration section",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuration"
+          }
+        }
+      }
+    },
+    "Confirm" : {
+      "comment" : "Button title for confirm attachment option",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmer"
+          }
+        }
+      }
+    },
+    "Confirm Pod Attachment" : {
+      "comment" : "Alert title for confirm pod attachment",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmer l'application du Pod"
+          }
+        }
+      }
+    },
+    "Confirm Pod Type" : {
+      "comment" : "Text for Confirm Pod Type button on PodTypeSelection"
+    },
+    "Continue" : {
+      "comment" : "Action button description when deactivated\nAction button title for attach pod view\nButton title to continue\nCannula insertion button text when inserted\nPod pairing action button text when paired\nText for continue button\nText for continue button on PodSetupView\nTitle of button to continue discard",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer"
+          }
+        }
+      }
+    },
+    "Critical Alerts" : {
+      "comment" : "Title for critical alerts description",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertes critiques"
+          }
+        }
+      }
+    },
+    "Critical Pod Fault %1$03d" : {
+      "comment" : "The title for AlarmCode.other notification: (1: fault code value)"
+    },
+    "Crosstalk possible. Please move to a new location" : {
+      "comment" : "Recovery suggestion when unexpected address received",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interférences possibles. Veuillez vous déplacer vers un nouvel emplacement"
+          }
+        }
+      }
+    },
+    "day" : {
+      "comment" : "Unit for singular day in pod life remaining",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jour"
+          }
+        }
+      }
+    },
+    "days" : {
+      "comment" : "Unit for plural days in pod life remaining",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jours"
+          }
+        }
+      }
+    },
+    "Deactivate Pod" : {
+      "comment" : "Button text for deactivate pod button\nDeactivate pod action button accessibility label while ready to deactivate\nSettings page link description when next lifecycle action is to deactivate pod\nTitle for deactivate pod screen\nnavigation bar title for deactivate pod",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactiver le Pod"
+          }
+        }
+      }
+    },
+    "Deactivated" : {
+      "comment" : "Label text showing pod is deactivated\nPod state when deactivated",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé"
+          }
+        }
+      }
+    },
+    "Deactivating." : {
+      "comment" : "Deactivate pod action button accessibility label while deactivating",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivation."
+          }
+        }
+      }
+    },
+    "Deactivating..." : {
+      "comment" : "Action button description while deactivating",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivation en cours..."
+          }
+        }
+      }
+    },
+    "Device Name" : {
+      "comment" : "description label for device name pod details row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom de l'appareil"
+          }
+        }
+      }
+    },
+    "Devices" : {
+      "comment" : "Header for devices section of RileyLinkSetupView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dispositifs"
+          }
+        }
+      }
+    },
+    "Disabled" : {
+      "comment" : "Title string for BeepPreference.silent\nTitle string for SilencePodPreference.disabled",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé"
+          }
+        }
+      }
+    },
+    "Discard Pod" : {
+      "comment" : "Button title to discard pod on uncertain program\nPairing interface navigation bar button text for discard pod action\nText for discard pod button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeter le Pod"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "comment" : "Title of done button on OmniSettingsView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminé"
+          }
+        }
+      }
+    },
+    "Empty reservoir" : {
+      "comment" : "Description for Empty reservoir pod fault",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réservoir vide"
+          }
+        }
+      }
+    },
+    "Empty Reservoir" : {
+      "comment" : "The title for Empty Reservoir alarm notification",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réservoir vide"
+          }
+        }
+      }
+    },
+    "Empty response from pod" : {
+      "comment" : "Error message shown when empty response from pod was received",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réponse vide du Pod"
+          }
+        }
+      }
+    },
+    "Empty Value" : {
+      "comment" : "Error message description for PeripheralManagerError.emptyValue",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valeur vide"
+          }
+        }
+      }
+    },
+    "Enabled" : {
+      "comment" : "Title string for BeepPreference.manualCommands",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activé"
+          }
+        }
+      }
+    },
+    "Error" : {
+      "comment" : "Accessibility label indicating an error occurred",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur"
+          }
+        }
+      }
+    },
+    "Expiration reminder" : {
+      "comment" : "Description for expiration reminder alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappel d'expiration"
+          }
+        }
+      }
+    },
+    "Expiration Reminder" : {
+      "comment" : "Title for ExpirationReminderSetupView\nnavigation bar title for expiration reminder",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappel d'expiration"
+          }
+        }
+      }
+    },
+    "Expiration Reminder Default" : {
+      "comment" : "Label text for expiration reminder default row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappel d'expiration par défaut"
+          }
+        }
+      }
+    },
+    "Expiration reminder time for the current Pod." : {
+      "comment" : "Footer text for scheduled reminder area"
+    },
+    "Extended" : {
+      "comment" : "Title string for BeepPreference.extended",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étendu"
+          }
+        }
+      }
+    },
+    "Extended bolus running" : {
+      "comment" : "Delivery status when extended bolus is running",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bolus étendu en cours"
+          }
+        }
+      }
+    },
+    "Extended bolus running while suspended" : {
+      "comment" : "Delivery status when extended bolus is running while suspended"
+    },
+    "Extended bolus running with temp basal" : {
+      "comment" : "Delivery status when extended bolus and temp basal is running",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bolus étendu en cours avec basal temporaire"
+          }
+        }
+      }
+    },
+    "Failed to Cancel Manual Basal" : {
+      "comment" : "Alert title for failing to cancel manual basal error",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec d'annulation du basal manuel"
+          }
+        }
+      }
+    },
+    "Failed to play test beeps" : {
+      "comment" : "Alert title for error when playing test beeps"
+    },
+    "Failed to read activation time" : {
+      "comment" : "Alert title for error when reading activation time"
+    },
+    "Failed to read pod status" : {
+      "comment" : "Alert title for error when reading pod status"
+    },
+    "Failed to read pulse log" : {
+      "comment" : "Alert title for error when reading pulse log"
+    },
+    "Failed to read pulse log plus" : {
+      "comment" : "Alert title for error when reading pulse log plus"
+    },
+    "Failed to read triggered alerts" : {
+      "comment" : "Alert title for error when reading triggered alerts"
+    },
+    "Failed to Resume Insulin Delivery" : {
+      "comment" : "Alert title for resume error",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de la reprise de l’administration d’insuline"
+          }
+        }
+      }
+    },
+    "Failed to Set Pump Time" : {
+      "comment" : "Alert title for time sync error",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de réglage de l'heure de la pompe"
+          }
+        }
+      }
+    },
+    "Failed to Suspend Insulin Delivery" : {
+      "comment" : "Alert title for suspend error",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de la suspension de l'administration d'insuline"
+          }
+        }
+      }
+    },
+    "Failed to update confidence reminder preference" : {
+      "comment" : "Alert title for error when updating confidence reminder preference"
+    },
+    "Failed to Update Expiration Reminder" : {
+      "comment" : "Alert title for error when updating expiration reminder",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de la mise à jour du rappel d'expiration"
+          }
+        }
+      }
+    },
+    "Failed to Update Low Reservoir Reminder" : {
+      "comment" : "Alert title for error when updating low reservoir reminder",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de la mise à jour du rappel de réservoir bas"
+          }
+        }
+      }
+    },
+    "Failed to update silence pod preference" : {
+      "comment" : "Alert title for error when updating silence pod preference"
+    },
+    "Fault event occurred" : {
+      "comment" : "Pod state when fault event has occurred",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une erreur s'est produite"
+          }
+        }
+      }
+    },
+    "Fill a new %1$@ pod with U-100 Insulin (leave %2$@ needle cap on)." : {
+      "comment" : "Label text for step 1 of non-Eros pair pod instructions (1: pod type name) (2: pod tab color"
+    },
+    "Fill a new %1$@ pod with U-100 Insulin (leave %2$@ needle cap on). Listen for 2 beeps." : {
+      "comment" : "Label text for step 1 of Eros pair pod instructions (1: pod type name) (2: pod tab color"
+    },
+    "Finish deactivation" : {
+      "comment" : "Settings page link description when next lifecycle action is to finish deactivation",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer la désactivation"
+          }
+        }
+      }
+    },
+    "Finish Deactivation" : {
+      "comment" : "Status highlight that when pod is deactivating.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer la désactivation"
+          }
+        }
+      }
+    },
+    "Finish Setup" : {
+      "comment" : "Action button title to continue at Setup Complete\nStatus highlight that when pod is activating.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer l'installation"
+          }
+        }
+      }
+    },
+    "Finish setup reminder" : {
+      "comment" : "Description for finish setup reminder alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer le paramétrage du rappel"
+          }
+        }
+      }
+    },
+    "Firmware Version" : {
+      "comment" : "description label for firmware version pod details row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version du micrologiciel"
+          }
+        }
+      }
+    },
+    "Greater than %1$@ units remaining at %2$@" : {
+      "comment" : "Accessibility format string for (1: localized volume)(2: time)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus de %1$@ unités restantes à %2$@"
+          }
+        }
+      }
+    },
+    "hour" : {
+      "comment" : "Unit for singular hour in pod life remaining",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "heure"
+          }
+        }
+      }
+    },
+    "hours" : {
+      "comment" : "Unit for plural hours in pod life remaining",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "heures"
+          }
+        }
+      }
+    },
+    "If you cancel Pod setup, the current Pod will be deactivated and will be unusable." : {
+      "comment" : "Alert message body for confirm pod attachment",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si vous annulez la configuration du Pod, le Pod actuel sera désactivé et sera inutilisable."
+          }
+        }
+      }
+    },
+    "Incorrect Response" : {
+      "comment" : "Error message description for PeripheralManagerError.incorrectResponse",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réponse incorrecte"
+          }
+        }
+      }
+    },
+    "Initialized" : {
+      "comment" : "Pod initialized",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Initialisé"
+          }
+        }
+      }
+    },
+    "Insert Cannula" : {
+      "comment" : "Title for insert cannula screen\nnavigation bar title for insert cannula",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insérer la canule"
+          }
+        }
+      }
+    },
+    "Inserted" : {
+      "comment" : "Label text indicating insertion finished.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertion terminée"
+          }
+        }
+      }
+    },
+    "Inserting cannula" : {
+      "comment" : "Pod state when inserting cannula",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertion de la canule"
+          }
+        }
+      }
+    },
+    "Inserting. Please wait." : {
+      "comment" : "Insert cannula action button accessibility label while pairing",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertion en cours. Attendez."
+          }
+        }
+      }
+    },
+    "Inserting..." : {
+      "comment" : "Cannula insertion button text while inserting",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertion en cours..."
+          }
+        }
+      }
+    },
+    "Insulin\nSuspended" : {
+      "comment" : "Text shown in insulin delivery space when insulin suspended",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insuline\nSuspendue"
+          }
+        }
+      }
+    },
+    "Insulin Delivery" : {
+      "comment" : "Title of insulin delivery section",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Administration de l'insuline"
+          }
+        }
+      }
+    },
+    "Insulin delivery stopped. Change Pod now." : {
+      "comment" : "The default notification body for AlarmCodes",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'administration d'insuline s'est arrêtée. Changez de Pod maintenant."
+          }
+        }
+      }
+    },
+    "Insulin delivery will be stopped until you resume manually. Select when you want to be reminded to resume delivery?" : {
+      "comment" : "Message for suspend duration selection action sheet",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'administration d'insuline sera interrompue jusqu'à ce que vous la repreniez manuellement. Sélectionnez quand vous souhaitez recevoir un rappel pour la reprise de l'administration."
+          }
+        }
+      }
+    },
+    "Insulin Remaining" : {
+      "comment" : "Header for insulin remaining on pod settings screen",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insuline restante"
+          }
+        }
+      }
+    },
+    "Insulin Suspended" : {
+      "comment" : "Status highlight that insulin delivery was suspended.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insuline suspendue"
+          }
+        }
+      }
+    },
+    "Insulin Type" : {
+      "comment" : "Text for insulin type navigation link\nTitle for insulin type selection screen",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type d'insuline"
+          }
+        }
+      }
+    },
+    "Insulin type not configured" : {
+      "comment" : "Error description for insulin type not configured",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type d'insuline non configuré"
+          }
+        }
+      }
+    },
+    "Internal pod fault %1$03d" : {
+      "comment" : "The format string for Internal pod fault (1: The fault code value)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code d'erreur interne du Pod %1$03d"
+          }
+        }
+      }
+    },
+    "Internal Pod fault code %1$03d\n%2$@\nRef: %3$@\n" : {
+      "comment" : "The format string for the pod fault info: (1: fault code) (2: fault description) (3: pdm ref string)"
+    },
+    "InterruptedBolus: %1$@ U (%2$@ U scheduled) %3$@ %4$@ %5$@" : {
+      "comment" : "The format string describing a bolus that was interrupted. (1: The amount delivered)(2: The amount scheduled)(3: Start time of the dose)(4: duration)(5: scheduled certainty)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bolus interrompu: %1$@ U (%2$@ U programmé) %3$@ %4$@ %5$@"
+          }
+        }
+      }
+    },
+    "Invalid address 0x%x. Expected 0x%x" : {
+      "comment" : "Error message for when unexpected address is received (1: received address) (2: expected address)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Invalid address 0x%1$x. Expected 0x%2$x"
+          }
+        }
+      }
+    },
+    "Invalid address: (%1$@)" : {
+      "comment" : "Description for MessageError invalidAddress",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse invalide: ( %1$@ )"
+          }
+        }
+      }
+    },
+    "Invalid CRC" : {
+      "comment" : "Description for MessageError invalidCrc",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CRC invalide"
+          }
+        }
+      }
+    },
+    "Invalid Setting" : {
+      "comment" : "Error description for invalid setting",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paramètre invalide"
+          }
+        }
+      }
+    },
+    "Is the cannula inserted properly?" : {
+      "comment" : "Question to confirm the cannula is inserted properly",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La canule est-elle insérée correctement?"
+          }
+        }
+      }
+    },
+    "Keep the RileyLink about 6 inches from the pod during pairing." : {
+      "comment" : "Label text for step 2 of Eros pair pod instructions",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gardez le RileyLink à environ 15 cm (6 pouces) du Pod pendant l'association."
+          }
+        }
+      }
+    },
+    "Last Status" : {
+      "comment" : "description label for last status date pod details row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernier statut"
+          }
+        }
+      }
+    },
+    "Listen for 2 beeps." : {
+      "comment" : "Label text for step 2 of non-Eros pair pod instructions",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attendez que 2 bips retentissent."
+          }
+        }
+      }
+    },
+    "Lot Number" : {
+      "comment" : "description label for lot number pod details row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Numéro de lot"
+          }
+        }
+      }
+    },
+    "Low reservoir" : {
+      "comment" : "Format string for description for low reservoir alert\nPod state when running with fifty or less units",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réservoir bas"
+          }
+        }
+      }
+    },
+    "Low Reservoir" : {
+      "comment" : "Alert content title for lowReservoir pod alert\nLabel text for low reservoir value row\nTitle for LowReservoirReminderSetupView\nnavigation bar title for low reservoir",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réservoir bas"
+          }
+        }
+      }
+    },
+    "Low Reservoir Reminder" : {
+      "comment" : "Label for low reservoir reminder row\nTitle for low reservoir reminder edit page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappel de réservoir bas"
+          }
+        }
+      }
+    },
+    "Low RileyLink Battery" : {
+      "comment" : "Title for RileyLink low battery alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batterie RileyLink faible"
+          }
+        }
+      }
+    },
+    "Make sure iPhone is nearby the active pod" : {
+      "comment" : "Recovery suggestion when no response is received from pod",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assurez-vous que votre iPhone est à proximité du Pod"
+          }
+        }
+      }
+    },
+    "Make sure your phone and pod are close to each other. If communication issues persist, move to a new area." : {
+      "comment" : "The action string on pod status page when pod data is stale",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assurez-vous que votre téléphone et votre Pod sont proches l'un de l'autre. Si les problèmes de communication persistent, déplacez-vous vers un nouvel endroit."
+          }
+        }
+      }
+    },
+    "Make sure your pod is filled and nearby" : {
+      "comment" : "Recovery suggestion for PodCommsError.noPodsFound"
+    },
+    "Make sure your pod is nearby and try again" : {
+      "comment" : "Recovery suggestion when no pod is available"
+    },
+    "Make sure your RileyLink is nearby and powered on" : {
+      "comment" : "Recovery suggestion when no RileyLink is available",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assurez-vous que votre RileyLink est à proximité et allumé"
+          }
+        }
+      }
+    },
+    "Manual Basal" : {
+      "comment" : "Status highlight when manual temp basal is running.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Débit basal manuel"
+          }
+        }
+      }
+    },
+    "Memory initialized" : {
+      "comment" : "Pod memory initialized",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mémoire initialisée"
+          }
+        }
+      }
+    },
+    "minute" : {
+      "comment" : "Unit for singular minute in pod life remaining",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "minute"
+          }
+        }
+      }
+    },
+    "minutes" : {
+      "comment" : "Unit for plural minutes in pod life remaining",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "minutes"
+          }
+        }
+      }
+    },
+    "Missing Config" : {
+      "comment" : "Alert title for missing temp basal configuration",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuration manquante"
+          }
+        }
+      }
+    },
+    "Move to a new area away from any other pods and try again" : {
+      "comment" : "Recovery suggestion for PodCommsError.tooManyPodsFound"
+    },
+    "NA" : {
+      "comment" : "String shown on pod details for active time when conversion fails.\nString shown on pod details for last status date when not available.\nString shown on pod details for total delivery when not available.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "N.A."
+          }
+        }
+      }
+    },
+    "Next" : {
+      "comment" : "Text of continue button on ExpirationReminderSetupView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suivant"
+          }
+        }
+      }
+    },
+    "No" : {
+      "comment" : "Button label for user to answer cannula was not properly inserted",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non"
+          }
+        }
+      }
+    },
+    "No\nDelivery" : {
+      "comment" : "Text shown in insulin remaining space when no pod is paired",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas d'administration"
+          }
+        }
+      }
+    },
+    "No alerts" : {
+      "comment" : "Pod alert state when no alerts are active",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas d'alarme"
+          }
+        }
+      }
+    },
+    "No confidence reminders are used." : {
+      "comment" : "Description for BeepPreference.silent",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun rappel de confirmation n'est utilisé."
+          }
+        }
+      }
+    },
+    "No faults" : {
+      "comment" : "Description for Fault Event Code .noFaults",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de défauts"
+          }
+        }
+      }
+    },
+    "No Insulin" : {
+      "comment" : "Error message for reservoir view when reservoir empty\nStatus highlight message for emptyReservoir alarm.\nStatus highlight that a pump is out of insulin.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas d'insuline"
+          }
+        }
+      }
+    },
+    "No Pod" : {
+      "comment" : "Label for pod life state when no pod paired\nStatus highlight that when no pod is paired.\nText shown in insulin remaining space when no pod is paired",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun Pod"
+          }
+        }
+      }
+    },
+    "No pod paired" : {
+      "comment" : "Error message shown when no pod is paired",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun pod appairé"
+          }
+        }
+      }
+    },
+    "No pods found" : {
+      "comment" : "Error message for PodCommsError.noPodsFound",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun Pod trouvé"
+          }
+        }
+      }
+    },
+    "No Reminder" : {
+      "comment" : "Value text for no expiration reminder",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de rappel"
+          }
+        }
+      }
+    },
+    "No response from pod" : {
+      "comment" : "Error message shown when no response from pod was received",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de réponse du Pod"
+          }
+        }
+      }
+    },
+    "No RileyLink available" : {
+      "comment" : "Error message shown when no response from pod was received",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun RileyLink disponible"
+          }
+        }
+      }
+    },
+    "No, Continue With Pod" : {
+      "comment" : "Continue pairing button title of in pairing cancel modal",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non, continuez avec le Pod"
+          }
+        }
+      }
+    },
+    "No, Keep Pump As Is" : {
+      "comment" : "Button text to cancel pump time sync",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non, garder la pompe telle quelle"
+          }
+        }
+      }
+    },
+    "Normal" : {
+      "comment" : "Pod state when running above fifty units",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        }
+      }
+    },
+    "Normal operation mode where audible Pod beeps are used for all Pod alerts and when confidence reminders are enabled." : {
+      "comment" : "Description for SilencePodPreference.disabled",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En mode normal, le Pod émet des bips sonores pour chaque alerte et lorsque les Bip de confirmation sont activés."
+          }
+        }
+      }
+    },
+    "Not enough data" : {
+      "comment" : "Description for MessageError notEnoughData",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas assez de données"
+          }
+        }
+      }
+    },
+    "Not used" : {
+      "comment" : "Description for not used slot alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non utilisé"
+          }
+        }
+      }
+    },
+    "Notification Settings" : {
+      "comment" : "Text for pod details disclosure row\nnavigation title for notification settings",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paramétrage des notifications"
+          }
+        }
+      }
+    },
+    "Numbers" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombres"
+          }
+        }
+      }
+    },
+    "Occlusion detected" : {
+      "comment" : "Description for Occlusion detected pod fault",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Occlusion détectée"
+          }
+        }
+      }
+    },
+    "Occlusion Detected" : {
+      "comment" : "The title for Occlusion alarm notification",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Occlusion détectée"
+          }
+        }
+      }
+    },
+    "Ok" : {
+      "comment" : "Action button default text for PodAlerts",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ok"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "comment" : "Acknowledge button label for RileyLink low battery alert\nAlert acknowledgment OK button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
+    "Omnipod" : {
+      "comment" : "Title string for an unknown Omnipod",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omnipod"
+          }
+        }
+      }
+    },
+    "Omnipod 5" : {
+      "comment" : "Title string for Omnipod 5"
+    },
+    "Omnipod 5 pods have a clear needle tab with a 12-character LOT number typically starting with 'PH1' or 'PP1'. The pod's \"SmartAdjust\" technology will not be used for closed loop control." : {
+      "comment" : "Description for Omnipod 5 pods"
+    },
+    "Omnipod Classic" : {
+      "comment" : "Title string for Omnipod Classic"
+    },
+    "Omnipod Classic pods (also known as Eros pods) have a clear needle tab with a 6-character LOT number starting with 'L'. These pods require the use of a RileyLink to communicate with the iPhone." : {
+      "comment" : "Description for Omnipod Classic pods"
+    },
+    "Omnipod DASH" : {
+      "comment" : "Title string for Omnipod DASH",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omnipod DASH"
+          }
+        }
+      }
+    },
+    "Omnipod DASH pods have a blue needle tab with a 12-character LOT number typically starting with 'PD1'." : {
+      "comment" : "Description for Omnipod DASH pods"
+    },
+    "Omnipod Reminders" : {
+      "comment" : "Title for omnipod reminders section",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappels Omnipod"
+          }
+        }
+      }
+    },
+    "Omnipod Type" : {
+      "comment" : "Title for Omnipod Type selection screen"
+    },
+    "oneNotUsed" : {
+      "comment" : "Pod state oneNotUsed",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "oneNotUsed"
+          }
+        }
+      }
+    },
+    "Pair %1$@ Pod" : {
+      "comment" : "Title for pod pairing screen (1: pod type brief name)"
+    },
+    "Pair Pod" : {
+      "comment" : "Pod pairing action button text while ready to pair\nSettings page link description when next lifecycle action is to pair new pod",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appairer le Pod"
+          }
+        }
+      }
+    },
+    "Pair pod." : {
+      "comment" : "Pairing action button accessibility label while ready to pair",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appairer le pod."
+          }
+        }
+      }
+    },
+    "Paired" : {
+      "comment" : "Label text indicating pairing finished.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appairé"
+          }
+        }
+      }
+    },
+    "Pairing completed" : {
+      "comment" : "Pod status when pairing completed",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activation terminé"
+          }
+        }
+      }
+    },
+    "Pairing." : {
+      "comment" : "Pairing action button accessibility label while pairing",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activation."
+          }
+        }
+      }
+    },
+    "Pairing..." : {
+      "comment" : "Pod pairing action button text while pairing",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activation en cours..."
+          }
+        }
+      }
+    },
+    "Parsing Error: %1$@ in (%2$@)" : {
+      "comment" : "Description for MessageError parsingError. (1: decription of error), (2: hexadecimal data starting at offset)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur d'analyse : %1$@ dans (%2$@)"
+          }
+        }
+      }
+    },
+    "Percent = %lf" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pourcentage = %lf"
+          }
+        }
+      }
+    },
+    "Peripheral Not Ready" : {
+      "comment" : "Error message description for PeripheralManagerError.notReady",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le périphérique n'est pas prêt"
+          }
+        }
+      }
+    },
+    "Play Test Beeps" : {
+      "comment" : "Text for play test beeps navigation link\nnavigation title for play test beeps",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jouer des bips de test"
+          }
+        }
+      }
+    },
+    "Play test beeps command sent successfully.\n\nIf you did not hear any beeps from your Pod, the piezo speaker in your Pod may be broken or disabled." : {
+      "comment" : "Success message for play test beeps",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La commande de test de lecture des bips a été envoyée avec succès.\n \nSi vous n'avez entendu aucun bip provenant de votre Pod, le haut-parleur de votre Pod est peut-être cassé ou désactivé."
+          }
+        }
+      }
+    },
+    "Playing Test Beeps..." : {
+      "comment" : "button title when executing play test beeps",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture des bips de test..."
+          }
+        }
+      }
+    },
+    "Please bring only original pod in range or deactivate original pod" : {
+      "comment" : "Recovery suggestion on unexpected pod change",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veuillez rapprocher le Pod original ou désactiver le Pod d'origine"
+          }
+        }
+      }
+    },
+    "Please confirm that the Pod is securely attached to your body.\n\nThe cannula can be inserted only once with each Pod. Tap “Confirm” when Pod is attached." : {
+      "comment" : "Alert message body for confirm pod attachment",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veuillez confirmer que le Pod est solidement attaché à votre corps.\n\n La canule ne peut être insérée qu'une seule fois avec chaque Pod. Appuyez sur \"Confirmer\" lorsque le Pod est appliqué."
+          }
+        }
+      }
+    },
+    "Please deactivate the pod. When deactivation is complete, you may pair a new pod." : {
+      "comment" : "Instructions for deactivate pod when pod not on body",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veuillez désactiver le pod. Une fois la désactivation terminée, vous pouvez appairer un nouveau Pod."
+          }
+        }
+      }
+    },
+    "Please deactivate the pod. When deactivation is complete, you may remove it and pair a new pod." : {
+      "comment" : "Instructions for deactivate pod when pod is on body",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veuillez désactiver le pod. Une fois la désactivation terminée, vous pouvez le retirer et appairer un nouveau pod."
+          }
+        }
+      }
+    },
+    "Please enable bluetooth permissions for this app in system settings" : {
+      "comment" : "recoverySuggestion for BluetoothManagerError.bluetoothNotAvailable(.unauthorized)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veuillez activer les autorisations Bluetooth pour cette application dans les paramètres système"
+          }
+        }
+      }
+    },
+    "Please finish pairing your pod." : {
+      "comment" : "Alert content body for finishSetupReminder pod alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veuillez finir de jumeler votre Pod."
+          }
+        }
+      }
+    },
+    "Please pair a new pod" : {
+      "comment" : "Recovery suggestion shown when no pod is paired",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merci d'appairer un nouveau Pod"
+          }
+        }
+      }
+    },
+    "Please reposition the RileyLink further from the pod" : {
+      "comment" : "Recovery suggestion when pairing signal strength is too high",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veuillez repositionner le RileyLink plus loin du Pod"
+          }
+        }
+      }
+    },
+    "Please reposition the RileyLink relative to the pod" : {
+      "comment" : "Recovery suggestion when pairing signal strength is too low",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veuillez repositionner le RileyLink par rapport au Pod"
+          }
+        }
+      }
+    },
+    "Please select if you'd like to switch from using %@ pods to another pod type or to some other pump type." : {
+
+    },
+    "Please try repositioning the pod or the RileyLink and try again" : {
+      "comment" : "Recovery suggestion when no response is received from pod",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veuillez essayer de repositionner le Pod ou le RileyLink et essayez à nouveau"
+          }
+        }
+      }
+    },
+    "Please use a different device with bluetooth capabilities" : {
+      "comment" : "recoverySuggestion for BluetoothManagerError.bluetoothNotAvailable(.unsupported)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veuillez utiliser un autre appareil avec Bluetooth"
+          }
+        }
+      }
+    },
+    "Pod Activated" : {
+      "comment" : "Label for pod insertion row\ndescription label for activated at time pod details row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pod activé"
+          }
+        }
+      }
+    },
+    "Pod Active: %1$@" : {
+      "comment" : "The format string for Pod Active: (1: formatted time)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pod Actif : %1$@"
+          }
+        }
+      }
+    },
+    "Pod already paired" : {
+      "comment" : "Error message shown when user cannot pair because pod is already paired",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pod déjà appairé"
+          }
+        }
+      }
+    },
+    "Pod deactivated successfully. Continue." : {
+      "comment" : "Deactivate pod action button accessibility label when deactivation complete",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pod désactivé avec succès. Continuez."
+          }
+        }
+      }
+    },
+    "Pod Details" : {
+      "comment" : "Text for pod details disclosure row\ntitle for pod details page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détails du pod"
+          }
+        }
+      }
+    },
+    "Pod Diagnostics" : {
+      "comment" : "Text for pod diagnostics row\nTitle for the pod diagnostic view",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnostic du pod"
+          }
+        }
+      }
+    },
+    "Pod Error" : {
+      "comment" : "Status highlight message for other alarm.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur du Pod"
+          }
+        }
+      }
+    },
+    "Pod Expiration Reminder" : {
+      "comment" : "Alert content title for userPodExpiration pod alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappel d'expiration du Pod"
+          }
+        }
+      }
+    },
+    "Pod expired" : {
+      "comment" : "Description for Pod expired pod fault\nDescription for pod expired alert\nLabel for pod life state when within pod expiration window",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pod expiré"
+          }
+        }
+      }
+    },
+    "Pod Expired" : {
+      "comment" : "Alert content title for podExpireImminent pod alert\nAlert content title for podExpiring pod alert\nError message for reservoir view when pod expired\nLabel for pod expiration row, past tense\nStatus highlight message for podExpired alarm.\nThe title for Pod Expired alarm notification",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pod expiré"
+          }
+        }
+      }
+    },
+    "Pod Expires" : {
+      "comment" : "Label for pod expiration row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Péremption du Pod"
+          }
+        }
+      }
+    },
+    "Pod expires in" : {
+      "comment" : "Label for pod life state when time remaining",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Péremption du Pod dans"
+          }
+        }
+      }
+    },
+    "Pod expires in %1$@." : {
+      "comment" : "Format string for alert content body for userPodExpiration pod alert. (1: time until expiration)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Péremption du Pod dans %1$@."
+          }
+        }
+      }
+    },
+    "Pod Fault %1$03d" : {
+      "comment" : "Error message for reservoir view during general pod fault: (1: fault code value)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur du pod %1$03d"
+          }
+        }
+      }
+    },
+    "Pod Fault Details" : {
+      "comment" : "description label for pod fault details",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détails de l'erreur du pod"
+          }
+        }
+      }
+    },
+    "Pod Fault: %1$@" : {
+      "comment" : "Format string for pod fault code",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur du Pod: %1$@"
+          }
+        }
+      }
+    },
+    "Pod is not in a state ready for cannula insertion." : {
+      "comment" : "Error message when cannula insertion fails because the pod is in an unexpected state",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le Pod n’est pas dans un état prêt pour l’insertion de la canule"
+          }
+        }
+      }
+    },
+    "Pod is suspended" : {
+      "comment" : "Error message action could not be performed because pod is suspended",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le Pod est suspendu"
+          }
+        }
+      }
+    },
+    "Pod not connected" : {
+      "comment" : "Error message shown when the pod is not connected.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pod non connecté"
+          }
+        }
+      }
+    },
+    "Pod Occlusion" : {
+      "comment" : "Error message for reservoir view when pod occlusion checks failed\nStatus highlight message for occlusion alarm.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Occlusion du Pod"
+          }
+        }
+      }
+    },
+    "Pod paired successfully. Continue." : {
+      "comment" : "Pairing action button accessibility label when pairing succeeded",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pod appairé avec succès. Continuez."
+          }
+        }
+      }
+    },
+    "Pod Pairing Incomplete" : {
+      "comment" : "Alert content title for finishSetupReminder pod alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Association du pod incomplète"
+          }
+        }
+      }
+    },
+    "Pod sent ack instead of response" : {
+      "comment" : "Error message shown when pod sends ack instead of response",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le Pod a envoyé un ack au lieu d'une réponse"
+          }
+        }
+      }
+    },
+    "Pod Setup" : {
+      "comment" : "Title for PodSetupView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuration du Pod"
+          }
+        }
+      }
+    },
+    "Pod setup is not complete" : {
+      "comment" : "Error description when pod setup is not complete",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La configuration du pod n'est pas terminée"
+          }
+        }
+      }
+    },
+    "Pod suspended reminder" : {
+      "comment" : "Description for pod suspended reminder alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappel de la suspension du Pod"
+          }
+        }
+      }
+    },
+    "Pod Type" : {
+      "comment" : "description label for pod type pod details row"
+    },
+    "Pod type not configured." : {
+      "comment" : "Error message when pod type is not configured"
+    },
+    "Poor signal strength" : {
+      "comment" : "Format string for poor pod signal strength",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faible intensité du signal"
+          }
+        }
+      }
+    },
+    "Possible Bluetooth issue" : {
+      "comment" : "Error description for possible bluetooth issue",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problème Bluetooth possible"
+          }
+        }
+      }
+    },
+    "Prepare site." : {
+      "comment" : "Label text for step one of attach pod instructions",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préparer le site."
+          }
+        }
+      }
+    },
+    "Previous Pod" : {
+      "comment" : "title for previous pod page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pod précédent"
+          }
+        }
+      }
+    },
+    "Previous Pod Details" : {
+      "comment" : "Text for previous pod details row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détails du pod précédent"
+          }
+        }
+      }
+    },
+    "Priming" : {
+      "comment" : "Delivery status when pod is priming\nPod status when priming",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amorçage"
+          }
+        }
+      }
+    },
+    "Priming completed" : {
+      "comment" : "Pod state when priming completed",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amorçage terminé"
+          }
+        }
+      }
+    },
+    "Priming. Please wait." : {
+      "comment" : "Pairing action button accessibility label while priming",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amorçage. S'il vous plaît, attendez."
+          }
+        }
+      }
+    },
+    "Priming..." : {
+      "comment" : "Pod pairing action button text while priming",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amorçage..."
+          }
+        }
+      }
+    },
+    "Pump Manager Details" : {
+      "comment" : "Text for pump manager details navigation link\nnavigation title for pump manager details",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détails du gestionnaire de la pompe"
+          }
+        }
+      }
+    },
+    "Pump Time" : {
+      "comment" : "The title of the command to change pump time zone",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heure de la pompe"
+          }
+        }
+      }
+    },
+    "Rate" : {
+      "comment" : "Label text for basal rate summary",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Débit"
+          }
+        }
+      }
+    },
+    "Read Activation Time" : {
+      "comment" : "Text for read activation time navigation link\nText for read activation time title"
+    },
+    "Read Pod Status" : {
+      "comment" : "Text for read pod status navigation link\nnavigation title for read pod status",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire l'état du Pod"
+          }
+        }
+      }
+    },
+    "Read Pulse Log" : {
+      "comment" : "Text for read pulse log navigation link\nText for read pulse log title"
+    },
+    "Read Pulse Log Plus" : {
+      "comment" : "Text for read pulse log plus navigation link\nText for read pulse log plus title"
+    },
+    "Read Triggered Alerts" : {
+      "comment" : "Text for read triggered alerts navigation link\nText for read triggered alerts title"
+    },
+    "Reading Activation Time..." : {
+      "comment" : "Text for read activation time action"
+    },
+    "Reading Pod Status..." : {
+      "comment" : "button title when executing read pod status",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture de l’état du Pod..."
+          }
+        }
+      }
+    },
+    "Reading Pulse Log Plus..." : {
+      "comment" : "Text for read pulse log plus action"
+    },
+    "Reading Pulse Log..." : {
+      "comment" : "Text for read pulse log action"
+    },
+    "Reading Triggered Alerts..." : {
+      "comment" : "Text for read triggered alerts action",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture des alertes déclenchées..."
+          }
+        }
+      }
+    },
+    "Ref: " : {
+      "comment" : "PDM Ref string line",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réf :"
+          }
+        }
+      }
+    },
+    "Refresh Pump Manager Details" : {
+      "comment" : "button title to refresh pump manager details",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualiser les détails de la pompe"
+          }
+        }
+      }
+    },
+    "Remaining" : {
+      "comment" : "Label for remaining time of manual basal",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restant"
+          }
+        }
+      }
+    },
+    "Reminder initialized" : {
+      "comment" : "Pod pairing reminder initialized",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappel initialisé"
+          }
+        }
+      }
+    },
+    "Remove %1$@ needle cap and check cannula. Then remove paper backing." : {
+      "comment" : "Label text for step two of attach pod instructions (1: pod tab color"
+    },
+    "Remove Pod from Body" : {
+      "comment" : "Title for remove pod modal",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer le Pod du corps"
+          }
+        }
+      }
+    },
+    "Resume" : {
+      "comment" : "Pump Event title for UnfinalizedDose with doseType of .resume",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre"
+          }
+        }
+      }
+    },
+    "Resume delivery" : {
+      "comment" : "Recovery suggestion when pod is suspended",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre l'administration"
+          }
+        }
+      }
+    },
+    "Resume Insulin" : {
+      "comment" : "Alert content title for suspendEnded pod alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre l'insuline"
+          }
+        }
+      }
+    },
+    "Resume Insulin Delivery" : {
+      "comment" : "Text for suspend resume button when insulin delivery is suspended",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre l'administration d'insuline"
+          }
+        }
+      }
+    },
+    "Resume: %1$@ %2$@" : {
+      "comment" : "The format string describing a resume. (1: Time)(2: Scheduled certainty",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprise : %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "Resuming insulin delivery..." : {
+      "comment" : "Text for suspend resume button when insulin delivery is resuming",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprise de l'administration d'insuline..."
+          }
+        }
+      }
+    },
+    "Retrieving Pump Manager Details..." : {
+      "comment" : "button title when retrieving pump manager details",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Récupération des détails du gestionnaire de la pompe..."
+          }
+        }
+      }
+    },
+    "Retry" : {
+      "comment" : "Action button description for deactivate after failed attempt\nCannula insertion button text while showing error\nPod pairing action button text while showing error",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer"
+          }
+        }
+      }
+    },
+    "RileyLink allows for communication with the pump over Bluetooth" : {
+      "comment" : "bodyText for RileyLinkSetupView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RileyLink permet la communication avec la pompe via Bluetooth."
+          }
+        }
+      }
+    },
+    "RileyLink Setup" : {
+      "comment" : "Navigation title for RileyLinkSetupView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuration de RileyLink"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "comment" : "button title for saving confidence reminder\nbutton title for saving low reservoir reminder\nbutton title for saving scheduled reminder\nbutton title for saving silence pod preference",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegarder"
+          }
+        }
+      }
+    },
+    "Saving..." : {
+      "comment" : "button title for saving confidence reminder while saving\nbutton title for saving low reservoir reminder while saving\nbutton title for saving scheduled reminder while saving\nbutton title for saving silence pod preference while saving",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegarde en cours..."
+          }
+        }
+      }
+    },
+    "Scheduled basal" : {
+      "comment" : "Delivery status when scheduled basal is running",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basal programmé"
+          }
+        }
+      }
+    },
+    "Scheduled Basal" : {
+      "comment" : "Title of insulin delivery section",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basal programmé"
+          }
+        }
+      }
+    },
+    "Scheduled Reminder" : {
+      "comment" : "Card title for scheduled reminder\nScheduled reminder card title on SetupCompleteView\nTitle for scheduled expiration reminder edit page\nTitle of scheduled reminder card on NotificationSettingsView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappel programmé"
+          }
+        }
+      }
+    },
+    "Select the particular Omnipod pod type to use with %1$@. Be sure to select the correct pod type or %2$@ will not be able to communicate with it." : {
+      "comment" : "Help text for Omnipod pod type selection (1: appName) (2: appName)"
+    },
+    "Select the type of insulin that you will be using in this pod." : {
+      "comment" : "Title text for insulin type confirmation page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez le type d'insuline que vous utiliserez dans ce Pod."
+          }
+        }
+      }
+    },
+    "Sequence Number" : {
+      "comment" : "description label for sequence number pod details row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Numéro de séquence"
+          }
+        }
+      }
+    },
+    "Set Temporary Basal" : {
+      "comment" : "Button text for setting manual temporary basal rate",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Régler basal temporaire"
+          }
+        }
+      }
+    },
+    "Set Temporary Basal Rate" : {
+      "comment" : "Button title to set temporary basal rate",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Régler basal temporaire"
+          }
+        }
+      }
+    },
+    "Setup Complete" : {
+      "comment" : "Title for setup complete screen\nTitle of SetupCompleteView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’installation est terminée"
+          }
+        }
+      }
+    },
+    "Shutdown imminent" : {
+      "comment" : "Description for shutdown imminent alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêt imminent"
+          }
+        }
+      }
+    },
+    "Signal Loss" : {
+      "comment" : "Error message for reservoir view during signal loss\nStatus highlight when communications with the pod haven't happened recently.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perte de signal"
+          }
+        }
+      }
+    },
+    "Signal strength too high" : {
+      "comment" : "Format string for pod signal strength too high",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intensité du signal trop forte"
+          }
+        }
+      }
+    },
+    "Silence Pod" : {
+      "comment" : "Text for silence pod navigation link\nnavigation title for Silnce Pod",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Silence Pod"
+          }
+        }
+      }
+    },
+    "Silence Pod mode suppresses all Pod alert and confirmation reminder beeping." : {
+      "comment" : "Help text for Silence Pod view",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le mode Silence Pod supprime tous les bips d'alerte du Pod ainsi que les rappels de confirmation."
+          }
+        }
+      }
+    },
+    "Silenced" : {
+      "comment" : "Title string for SilencePodPreference.enabled",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Silencieux"
+          }
+        }
+      }
+    },
+    "Skip Omnipod Onboarding?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer la phase d'intégration d'Omnipod?"
+          }
+        }
+      }
+    },
+    "Slide Button to insert Cannula" : {
+      "comment" : "Insert cannula slider button accessibility label while ready to pair",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites glisser pour insérer la canule"
+          }
+        }
+      }
+    },
+    "Slide the switch below to start cannula insertion." : {
+      "comment" : "Label text for step one of insert cannula instructions",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glisser l'interrupteur ci-dessous pour commencer l'insertion de la canule."
+          }
+        }
+      }
+    },
+    "Slide to Deactivate Pod" : {
+      "comment" : "Action button description for deactivate while pod still active",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites glisser pour désactiver le Pod"
+          }
+        }
+      }
+    },
+    "Slide to Insert Cannula" : {
+      "comment" : "Cannula insertion button text while ready to insert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glissez pour insérer la canule"
+          }
+        }
+      }
+    },
+    "Suspend" : {
+      "comment" : "Pump Event title for UnfinalizedDose with doseType of .suspend",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suspendre"
+          }
+        }
+      }
+    },
+    "Suspend Delivery" : {
+      "comment" : "Title for suspend duration selection action sheet",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suspendre l'administration"
+          }
+        }
+      }
+    },
+    "Suspend In Progress Reminder" : {
+      "comment" : "Alert content body for suspendInProgress pod alert\nAlert content title for suspendInProgress pod alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappel de suspension en cours"
+          }
+        }
+      }
+    },
+    "Suspend Insulin Delivery" : {
+      "comment" : "Text for suspend resume button when insulin delivery active",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suspendre l'administration d'insuline"
+          }
+        }
+      }
+    },
+    "Suspend time expired" : {
+      "comment" : "Description for suspend time expired alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Délai de suspension expiré"
+          }
+        }
+      }
+    },
+    "Suspend: %1$@ %2$@" : {
+      "comment" : "The format string describing a suspend. (1: Time)(2: Scheduled certainty",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suspension : %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "Suspended" : {
+      "comment" : "Delivery status when insulin delivery is suspended",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suspendu"
+          }
+        }
+      }
+    },
+    "Suspended At" : {
+      "comment" : "Label for suspended at time",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suspendu à"
+          }
+        }
+      }
+    },
+    "Suspending insulin delivery..." : {
+      "comment" : "Text for suspend resume button when insulin delivery is suspending",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suspension de l'administration d'insuline..."
+          }
+        }
+      }
+    },
+    "Suspension time is up. Open the app and resume." : {
+      "comment" : "Alert notification body for suspendEnded pod alert user notification",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La période de suspension est terminée. Ouvrez l'application et reprenez."
+          }
+        }
+      }
+    },
+    "Switch Insulin Delivery Device" : {
+      "comment" : "Title for switch insulin delivery device action sheet."
+    },
+    "Switch pod type" : {
+      "comment" : "Button text to confirm switching pod type"
+    },
+    "Switch pump type" : {
+      "comment" : "Button text to confirm switching pump type"
+    },
+    "Switch to another pod or pump type" : {
+      "comment" : "Label for the switch to another pod or pump type button"
+    },
+    "Sync to Current Time" : {
+      "comment" : "The title of the command to change pump time zone",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchroniser avec l'heure actuelle"
+          }
+        }
+      }
+    },
+    "Temp Basal" : {
+      "comment" : "Pump Event title for UnfinalizedDose with doseType of .tempBasal",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Débit basal temporaire"
+          }
+        }
+      }
+    },
+    "Temp basal in progress" : {
+      "comment" : "Error message shown when temp basal could not be set due to existing temp basal in progress",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basal temporaire en cours"
+          }
+        }
+      }
+    },
+    "Temp basal running" : {
+      "comment" : "Delivery status when temp basal is running",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basal temporaire active"
+          }
+        }
+      }
+    },
+    "TempBasal: %1$@ U/hour %2$@ %3$@ %4$@ U %5$@" : {
+      "comment" : "The format string describing a temp basal. (1: The rate)(2: Start time)(3: duration)(4: volume)(5: scheduled certainty",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basal temporaire: %1$@ U/heure %2$@ %3$@ %4$@ U %5$@"
+          }
+        }
+      }
+    },
+    "Temporary Basal" : {
+      "comment" : "Navigation Title for ManualTempBasalEntryView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basale temporaire"
+          }
+        }
+      }
+    },
+    "Temporary Basal Failed" : {
+      "comment" : "Alert title for a failure to set temporary basal",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec mise en route basal temporaire"
+          }
+        }
+      }
+    },
+    "The insulin suspension period has ended.\n\nYou can resume delivery from the banner on the home screen or from your pump settings screen. You will be reminded again in 15 minutes." : {
+      "comment" : "Alert content body for suspendEnded pod alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La période de suspension de l'insuline est terminée.\n\nVous pouvez relancer l'administration à partir de la bannière sur l'écran d'accueil ou à partir de l'écran des paramètres de votre pompe. Vous recevrez un nouveau rappel dans 15 minutes."
+          }
+        }
+      }
+    },
+    "The reminders above will not sound on your device when it is in Silent or Do Not Disturb mode. There are other critical Pod alerts that will sound on your device even when set to Silent or Do Not Disturb mode.\n\nThe Pod will also use audible beeps for all Pod reminders and alerts except when the Pod is Silenced." : {
+      "comment" : "Description text for critical alerts",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les rappels ci-dessus ne retentiront pas sur votre appareil lorsqu'il est en mode Silencieux ou Ne pas déranger. D'autres alertes critiques du Pod retentiront sur votre appareil même lorsqu'il est réglé sur Silencieux ou Ne pas déranger.\n\nLe Pod émettra également des bips sonores pour tous les rappels et alertes du Pod, sauf lorsque le Pod est en mode silencieux."
+          }
+        }
+      }
+    },
+    "The time on your pump is different from the current time. Do you want to update the time on your pump to the current time?" : {
+      "comment" : "Message for pod sync time action sheet",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'heure de votre pompe est différente de l'heure actuelle. Voulez vous mettre à jour l'heure de votre pompe avec l'heure actuelle?"
+          }
+        }
+      }
+    },
+    "The time on your pump is different from the current time. You can review the pump time and and sync to current time in settings." : {
+      "comment" : "Alert content body for timeOffsetChangeDetected pod alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'heure de votre pompe est différente de l'heure actuelle. Vous pouvez vérifier l'heure de la pompe et la synchroniser avec l'heure actuelle dans les paramètres."
+          }
+        }
+      }
+    },
+    "The time on your pump is different from the current time. Your pump’s time controls your scheduled therapy settings. Scroll down to Pump Time row to review the time difference and configure your pump." : {
+      "comment" : "description for time change detected notice",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'heure de votre pompe est différente de l'heure actuelle. L'heure de votre pompe contrôle les paramètres de votre traitement. Faites défiler jusqu'à la ligne Heure de Pompe pour vérifier le décalage de l'heure et configurer votre pompe."
+          }
+        }
+      }
+    },
+    "The window on the top of the Pod should be colored pink when the cannula is properly inserted into the skin." : {
+      "comment" : "Description of proper cannula insertion",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La fenêtre située sur le dessus du Pod est colorée en rose lorsque la canule est correctement insérée dans la peau."
+          }
+        }
+      }
+    },
+    "There was a problem communicating with the pod. If this problem persists, tap Discard Pod. You can then activate a new Pod." : {
+      "comment" : "Format string for recovery suggestion during deactivate pod.",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il y a eu un problème de communication avec le Pod. Si ce problème persiste, appuyez sur Jeter le pod. Vous pourrez ensuite activer un nouveau Pod."
+          }
+        }
+      }
+    },
+    "This PumpManager has not been configured with a maximum basal rate because it was added before manual temp basal was a feature. Please set a new maximum basal rate." : {
+      "comment" : "Alert format string for missing temp basal configuration."
+    },
+    "threeNotUsed" : {
+      "comment" : "Pod state threeNotUsed",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "threeNotUsed"
+          }
+        }
+      }
+    },
+    "Time" : {
+      "comment" : "Label for expiration reminder row\nLabel for scheduled expiration reminder row\nLabel for scheduled reminder value row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heure"
+          }
+        }
+      }
+    },
+    "Time Change Detected" : {
+      "comment" : "Alert content title for timeOffsetChangeDetected pod alert\nTitle for pod sync time action sheet.\ntitle for time change detected notice",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changement d'heure détecté"
+          }
+        }
+      }
+    },
+    "Timeout" : {
+      "comment" : "Error message description for PeripheralManagerError.timeout",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temps expiré"
+          }
+        }
+      }
+    },
+    "Toggle sign" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bouton de bascule"
+          }
+        }
+      }
+    },
+    "Too many pods found" : {
+      "comment" : "Error message for PodCommsError.tooManyPodsFound",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trop de Pods trouvés"
+          }
+        }
+      }
+    },
+    "Total Delivery" : {
+      "comment" : "description label for total delivery pod details row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total administré"
+          }
+        }
+      }
+    },
+    "Try adjusting pod position or toggle Bluetooth off and then on in iPhone Settings" : {
+      "comment" : "Recovery suggestion for possible bluetooth issue"
+    },
+    "Try again" : {
+      "comment" : "Recovery suggestion when ack received instead of response\nrecoverySuggestion for BluetoothManagerError.bluetoothNotAvailable(.resetting)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer"
+          }
+        }
+      }
+    },
+    "Turn bluetooth on" : {
+      "comment" : "recoverySuggestion for BluetoothManagerError.bluetoothNotAvailable(.poweredOff)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer le bluetooth"
+          }
+        }
+      }
+    },
+    "twoNotUsed" : {
+      "comment" : "Pod state twoNotUsed",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "twoNotUsed"
+          }
+        }
+      }
+    },
+    "U/hr" : {
+      "comment" : "Units for showing temp basal rate",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U/h"
+          }
+        }
+      }
+    },
+    "Unable to Reach Pod" : {
+      "comment" : "Title of delivery uncertainty recovery page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de joindre le Pod"
+          }
+        }
+      }
+    },
+    "Unable To Reach Pod" : {
+      "comment" : "Title for pending command recovery screen",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de joindre le Pod"
+          }
+        }
+      }
+    },
+    "Unable to set a temporary basal rate: %1$@" : {
+      "comment" : "Alert format string for a failure to set temporary basal. (1: error description)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de définir un débit basal temporaire: %1$@"
+          }
+        }
+      }
+    },
+    "Unable to set a temporary basal rate: %1$@\n\n%2$@" : {
+      "comment" : "Alert format string for a failure to set temporary basal with recovery suggestion. (1: error description) (2: recovery text)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de définir un débit basal temporaire: %1$@\n\n%2$@"
+          }
+        }
+      }
+    },
+    "Uncertain" : {
+      "comment" : "String describing a dose that was possibly scheduled",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incertain"
+          }
+        }
+      }
+    },
+    "Unexpected Alert" : {
+      "comment" : "Alert content title for unexpected pod alert"
+    },
+    "Unexpected message sequence number" : {
+      "comment" : "Description for MessageError invalidSequence",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Numéro de séquence du message inattendu"
+          }
+        }
+      }
+    },
+    "Unexpected Pod Alert #%1@!" : {
+      "comment" : "Alert content body for unexpected pod alert (1: slotNumberString)"
+    },
+    "Unexpected pod change" : {
+      "comment" : "Format string for unexpected pod change",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changement inattendu du pod"
+          }
+        }
+      }
+    },
+    "Unexpected response from pod" : {
+      "comment" : "Error message shown when empty response from pod was received",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reponse inattendue du Pod"
+          }
+        }
+      }
+    },
+    "Unfinished Activation" : {
+      "comment" : "Label for pod life state when pod not fully activated",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activation inachevée"
+          }
+        }
+      }
+    },
+    "Unfinished deactivation" : {
+      "comment" : "Label for pod life state when pod not fully deactivated",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivation inachevée"
+          }
+        }
+      }
+    },
+    "Unknown Characteristic" : {
+      "comment" : "Error message description for PeripheralManagerError.unknownCharacteristic",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caractéristique inconnue"
+          }
+        }
+      }
+    },
+    "Unknown Omnipod Pod Type" : {
+      "comment" : "Description for an unknown Omnipod pod type"
+    },
+    "Unknown pod fault %1$03d" : {
+      "comment" : "The format string for Unknown pod fault (1: The fault code value)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur de Pod inconnue %1$03d"
+          }
+        }
+      }
+    },
+    "Unknown Value (%1$@) for type %2$@" : {
+      "comment" : "Format string for description of MessageError unknownValue. (1: value) (2: Type)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valeur inconnue (%1$@) pour le type %2$@."
+          }
+        }
+      }
+    },
+    "Validation failed: %1$@" : {
+      "comment" : "Format string for description of MessageError validationFailed. (1: description of validation failure)",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de la validation: %1$@"
+          }
+        }
+      }
+    },
+    "Wait for existing bolus to finish, or cancel bolus" : {
+      "comment" : "Recovery suggestion when operation could not be completed due to existing bolus in progress",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attendez que le bolus en cours se termine, ou annulez le bolus"
+          }
+        }
+      }
+    },
+    "Wait for existing temp basal to finish, or suspend to cancel" : {
+      "comment" : "Recovery suggestion when operation could not be completed due to existing temp basal in progress",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attendez que le débit basal temporaire se termine pour quitter, ou mettez en suspens pour annuler"
+          }
+        }
+      }
+    },
+    "Wait until insertion is completed." : {
+      "comment" : "Label text for step two of insert cannula instructions",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attendez que l'insertion soit terminée."
+          }
+        }
+      }
+    },
+    "Waiting for pairing reminder" : {
+      "comment" : "Description waiting for pairing reminder alert",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente d'association"
+          }
+        }
+      }
+    },
+    "Yes" : {
+      "comment" : "Button label for user to answer cannula was properly inserted",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oui"
+          }
+        }
+      }
+    },
+    "Yes, Deactivate Pod" : {
+      "comment" : "Button title for confirm deactivation option",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oui, désactiver le Pod"
+          }
+        }
+      }
+    },
+    "Yes, Sync to Current Time" : {
+      "comment" : "Button text to confirm pump time sync",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oui, synchroniser avec l'heure actuelle"
+          }
+        }
+      }
+    },
+    "You will be notified in advance of Pod expiration.\n\nScroll to set the number of hours advance notice you would like to have." : {
+      "comment" : "Description text on ExpirationReminderSetupView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous recevrez un avertissement avant que le Pod n’expire.\n\nFaites défiler pour indiquer le nombre d'heures souhaité avant expiration."
+          }
+        }
+      }
+    },
+    "You will be notified when the amount of insulin in the Pod reaches a selected level.\n\nScroll to set the number of units (1 to 50) at which you would like to be reminded." : {
+      "comment" : "Description text on LowReservoirReminderSetupView",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous serez averti lorsque la quantité d'insuline dans le Pod atteindra le niveau sélectionné.\n\nFaites défiler pour définir le nombre d'unités (de 1 à 50) auquel vous souhaitez recevoir un rappel."
+          }
+        }
+      }
+    },
+    "You will be notified when the amount of insulin in the Pod reaches this level." : {
+      "comment" : "Footer text for low reservoir value row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous serez averti lorsque la quantité d'insuline dans le Pod atteindra ce niveau."
+          }
+        }
+      }
+    },
+    "You will now begin the process of configuring your reminders, selecting your insulin type, selecting the Omnipod pod type you will be using, filling your Pod with insulin, pairing to your device and placing it on your body." : {
+      "comment" : "bodyText for PodSetupView"
+    },
+    "Your insulin delivery will not be automatically adjusted until the temporary basal rate finishes or is canceled." : {
+      "comment" : "Description text on manual temp basal action sheet",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre administration d'insuline ne sera pas automatiquement ajustée tant que le débit basal temporaire n'est pas terminé ou annulé."
+          }
+        }
+      }
+    },
+    "Your Pod is ready for use.\n\nThe default reminder was scheduled for this Pod at setup. You can change the reminder to a more convenient time in Pod Notification Settings." : {
+      "comment" : "Format string for instructions for setup complete view",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre Pod est prêt à être utilisé.\n\nLe rappel par défaut a été programmé pour ce Pod lors de la configuration. Vous pouvez modifier l'heure du rappel dans les paramètres de notification du Pod pour choisir un moment plus pratique."
+          }
+        }
+      }
+    },
+    "Your Pod may still be delivering Insulin.\nRemove it from your body, then tap “Continue.“" : {
+      "comment" : "Alert message body for confirm pod attachment",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre Pod peut encore délivrer de l'insuline.\nRetirez-le de votre corps, puis appuyez sur \"Continuer\"."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
