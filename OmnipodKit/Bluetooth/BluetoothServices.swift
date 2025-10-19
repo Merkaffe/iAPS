@@ -131,7 +131,7 @@ extension PeripheralManager.Configuration {
 }
 
 // Quick hack to deal with DASH and O5 BLE Service and Attribute differences
-private var servicePodType: PodType = unknownOmnipodType
+private var servicePodType: PodType = dashType
 
 func setServicePodType(podType: PodType) {
     assert(podType == dashType || podType == omnipod5Type)
@@ -157,37 +157,29 @@ func setServicePodType(podType: PodType) {
 }
 
 var OmnipodServiceUUID_advertisement_cbUUID: CBUUID {
-    assert(servicePodType == dashType || servicePodType == omnipod5Type)
-    if servicePodType == dashType {
-        return dashOmnipodServiceUUID.advertisement.cbUUID
-    } else {
+    if servicePodType == omnipod5Type {
         return o5OmnipodServiceUUID.advertisement.cbUUID
     }
+    return dashOmnipodServiceUUID.advertisement.cbUUID
 }
 
 var OmnipodServiceUUID_service_cbUUID: CBUUID {
-    assert(servicePodType == dashType || servicePodType == omnipod5Type)
-    if servicePodType == dashType {
-        return dashOmnipodServiceUUID.service.cbUUID
-    } else {
+    if servicePodType == omnipod5Type {
         return o5OmnipodServiceUUID.service.cbUUID
     }
+    return dashOmnipodServiceUUID.service.cbUUID
 }
 
 var OmnipodCharacteristicUUID_command_cbUUID: CBUUID {
-    assert(servicePodType == dashType || servicePodType == omnipod5Type)
-    if servicePodType == dashType {
-        return dashOmnipodCharacteristicUUID.command.cbUUID
-    } else {
+    if servicePodType == omnipod5Type {
         return o5OmnipodCharacteristicUUID.command.cbUUID
     }
+    return dashOmnipodCharacteristicUUID.command.cbUUID
 }
 
 var OmnipodCharacteristicUUID_data_cbUUID: CBUUID {
-    assert(servicePodType == dashType || servicePodType == omnipod5Type)
-    if servicePodType == dashType {
-        return dashOmnipodCharacteristicUUID.data.cbUUID
-    } else {
+    if servicePodType == omnipod5Type {
         return o5OmnipodCharacteristicUUID.data.cbUUID
     }
+    return dashOmnipodCharacteristicUUID.data.cbUUID
 }

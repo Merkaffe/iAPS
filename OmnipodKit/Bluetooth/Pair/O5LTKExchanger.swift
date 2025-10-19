@@ -2,7 +2,7 @@
 //  O5LTKExchanger.swift
 //  OmnipodKit
 //
-//  From OmniBLE/OmniBLE/Bluetooth/Pair/LTKExchanger.swift
+//  Based on OmniBLE/OmniBLE/Bluetooth/Pair/LTKExchanger.swift
 //  Created by Joe Moran on 3/25/25.
 //  Copyright © 2025 LoopKit Authors. All rights reserved.
 //
@@ -12,20 +12,18 @@ import CryptoKit
 import os.log
 
 class O5LTKExchanger {
-    // DEADFACE is replaced by 32-bit PDM ID, for DIY it is myId
-    // (serial # << 2) (e.g., for Joe PDM SN #000012722=0x31B2<<2 = 0x0000C6C8
-    static let SET_UNIQUE_ID_HEX_COMMAND: Data = Data(hex: "060104DEADFACE")
+    // Fixed 6-byte value taken from the PDM firmware
     static let FIRMWARE_ID: Data = Data(hex: "9b0ab96a76f4")
 
     static private let SP1 = "SP1="
     static private let SP2 = ",SP2="
     static private let SPS0 = "SPS0="
-    static private let SPS1  = "SPS1="
-    static private let SPS2 = "SPS2="
+    static private let SPS1 = "SPS1="
     static private let SPS2_1 = "SPS2.1="
+    static private let SPS2 = "SPS2="
     static private let SP0GP0 = "SP0,GP0"
     static private let P0 = "P0="
-    static private let UNKNOWN_P0_PAYLOAD = Data([0xa5])
+    static private let EXPECTED_P0_PAYLOAD = Data([0xa5]) // unknown meaning
 
     private let manager: PeripheralManager
     private let ids: Ids
@@ -67,10 +65,9 @@ class O5LTKExchanger {
         guard let podSps0 = try manager.readMessagePacket(doRTS: false) else {
             throw PodProtocolError.pairingException("Could not read SPS0")
         }
-        try validateO5sps0(podSps0)
+        try validatePodO5sps0(podSps0)
 
-        // send and receive 80-byte SPS1
-
+        // send and receive 80-byte SPS1 pairing messsages
         log.debug("Sending sps1")
         seq += 1
         let sps1 = PairMessage(
@@ -87,26 +84,41 @@ class O5LTKExchanger {
         }
         try o5validatePodSps1(podSps1)
 
-        // send 642 byte SPS2.1 and receive 641 byte SPS2.1
+        // send 642 byte SPS2.1 and receive 641 byte SPS2.1 pairing messages
         log.debug("Sending sps2.1")
         seq += 1
         let sps2_1 = try PairMessage(
-            sequenceNumber: seq, source: ids.myId, destination: podAddress, keys: [O5LTKExchanger.SPS2_1], payloads: [
-                o5sps2_1()
-            ]
+            sequenceNumber: seq,
+            source: ids.myId,
+            destination: podAddress,
+            keys: [O5LTKExchanger.SPS2_1],
+            payloads: [o5sps2_1()]
         )
         try o5throwOnSendError(sps2_1.message, O5LTKExchanger.SPS2_1)
         guard let podSPS2_1 = try manager.readMessagePacket(doRTS: false) else {
             throw PodProtocolError.pairingException("Could not read SPS2.1")
         }
         try o5validatePodSps2_1(podSPS2_1)
-        throw PodProtocolError.pairingException("Not implemented yet")
 
-        // send 948 byte SPS2 and receive 871 byte SPS2
-
-        // send 0 byte SP0GP0
+        /// send 948 byte SPS2 and receive 871 byte SPS2 pairing messages
+        log.debug("Sending sps2")
         seq += 1
-        // send SP0GP0
+        let sps2 = try PairMessage(
+            sequenceNumber: seq,
+            source: ids.myId,
+            destination: podAddress,
+            keys: [O5LTKExchanger.SPS2],
+            payloads: [o5sps2()]
+        )
+        try o5throwOnSendError(sps2.message, O5LTKExchanger.SPS2)
+        guard let podSPS2 = try manager.readMessagePacket(doRTS: false) else {
+            throw PodProtocolError.pairingException("Could not read SPS2")
+        }
+        try o5validatePodSps2(podSPS2)
+
+        // send 0 byte SP0GP0 pair message
+        seq += 1
+        /// send SP0GP0
         let sp0gp0 = PairMessage(
             sequenceNumber: seq,
             source: ids.myId,
@@ -119,7 +131,7 @@ class O5LTKExchanger {
             throw PodProtocolError.pairingException("Error sending SP0GP0: \(result)")
         }
 
-        // read and validate 1 byte P0
+        /// read and validate the fixed 1 byte P0 response
         guard let p0 = try manager.readMessagePacket(doRTS: false) else {
             throw PodProtocolError.pairingException("Could not read P0")
         }
@@ -143,15 +155,65 @@ class O5LTKExchanger {
         }
     }
 
+    /// The 11-byte O5 SP2 payload is an encoded type 0 get pod status command for the requested id including the calculated CRC-16
+    /// SP2=[00 0b][[00 0c 3a 35][00][03][0e 01 00][02 45]
+    private func o5sp2(podId: Id) -> Data {
+        let address = podId.toUInt32()
+        let sequenceNum = 0 // when does this 4-bit Omnipod sequence # need to be something else?
+        let message = Message(address: address, messageBlocks: [GetStatusCommand()], sequenceNum: sequenceNum)
+        let encoded = message.encoded()
+        print("Encoded SP2 get status command for address 0x\(String(address, radix: 16)) and seq # \(seq): 0x\(encoded.hexadecimalString)")
+        log.debug("Encoded SP2 get status command for address 0x%x and seq # %u: %@", address, seq, encoded.hexadecimalString)
+        return encoded
+    }
+
+    /// Generate the 5-byte fixed SPS0: 0000099129
+    /// The first byte has been 0x00 each time
+    /// The second is 0x01 for the PDM and 0x00 for the Pod
+    /// The third is a number that specifies the encryption algorithm (fixed 0x09)
+    /// Bytes 4 and 5 are the CRC-16/XMODEM checksum
+    private func o5sps0() -> Data {
+        let fixedO5SPS0 = "000109a218" // XXX define values and calculate the CRC-16
+        log.debug("Using fixed SPS0 value of %@", fixedO5SPS0)
+        return Data(hex: fixedO5SPS0)
+    }
+
+    /// Validate the returned fixed 5-byte SPS0: 000109a218
+    /// The first byte has been 0x00 each time
+    /// The second is 0x01 for the PDM and 0x00 for the Pod
+    /// The third is a number that specifies the encryption algorithm (fixed 0x09)
+    /// Bytes 4 and 5 are the CRC-16/XMODEM checksum
+    private func validatePodO5sps0(_ msg: MessagePacket) throws {
+        log.debug("Received SPS0 from pod: %@", msg.payload.hexadecimalString)
+
+        let payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS0], msg.payload)[0]
+        let fixedO5SPS0Return = "0000099129"  // XXX define values and calculate the CRC-16
+        if payload != Data(hex: fixedO5SPS0Return) {
+            throw PodProtocolError.pairingException("Received unexpected SPS0 payload: \(payload.hexadecimalString)")
+        }
+    }
+
     private func o5validatePodSps1(_ msg: MessagePacket) throws {
         log.debug("Received SPS1 from pod: %@", msg.payload.hexadecimalString)
 
         let payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS1], msg.payload)[0]
         log.debug("SPS1 payload from pod: %@", payload.hexadecimalString)
-        
+
         try keyExchange.o5updatePodPublicData(payload)
     }
-    
+
+    private func o5sps2_1() throws -> Data {
+        let rawCert = Data(hex: "/* DECRYPTED CERT FROM PDM */")
+        let nonce = keyExchange.getSPSNonce(direction: .write)
+        let key = keyExchange.conf
+        log.info("Encrypting with key %{PRIVATE}@ and nonce %{PRIVATE}@", key.bytes.toHexString(), nonce.bytes.toHexString())
+        let ccm = CCM(iv: nonce.bytes, tagLength: 8, messageLength: rawCert.count)
+        let aes = try AES(key: key.bytes, blockMode: ccm, padding: .noPadding)
+        let payload = try aes.encrypt(rawCert.bytes)
+        keyExchange.incrementNonce(direction: .write)
+        return Data(payload)
+    }
+
     private func o5validatePodSps2_1(_ msg: MessagePacket) throws {
         log.debug("Received SPS2.1 from pod: %{PRIVATE}@", msg.payload.hexadecimalString)
         let payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS2_1], msg.payload)[0]
@@ -169,56 +231,16 @@ class O5LTKExchanger {
         log.info("Decrypted SPS2.1 payload from pod: %{PRIVATE}@", decryptedPayload.toHexString())
         keyExchange.incrementNonce(direction: .read)
     }
-    
-    
-    private func o5sps2_1() throws -> Data {
-        let rawCert = Data(hex: "/*DECRYPTED CERT FROM PDM */")
-        let nonce = keyExchange.getSPSNonce(direction: .write)
-        let key =  keyExchange.conf
-        log.info("Encrypting with key %{PRIVATE}@ and nonce %{PRIVATE}@", key.bytes.toHexString(), nonce.bytes.toHexString())
-        let ccm = CCM(iv: nonce.bytes, tagLength: 8, messageLength: rawCert.count)
-        let aes = try AES(key: key.bytes, blockMode: ccm, padding: .noPadding)
-        let payload = try aes.encrypt(rawCert.bytes)
-        keyExchange.incrementNonce(direction: .write)
-        return Data(payload)
+
+    /// XXX need to figure out algo to correctly generate about 948 bytes of data for SPS2.
+    /// Probably involves some encoding using private PDM key to create pairing message.
+    private func o5sps2() throws -> Data {
+        return Data()
     }
 
-    // The 11-byte O5 SP2 payload is an encoded type 0 get pod status command for the requested id including the calculated CRC-16
-    // SP2=[00 0b][[00 0c 3a 35][00][03][0e 01 00][02 45]
-    private func o5sp2(podId: Id) -> Data {
-        let address = podId.toUInt32()
-        let sequenceNum = 0 // when does this 4-bit Omnipod sequence # need to be something else?
-        let message = Message(address: address, messageBlocks: [GetStatusCommand()], sequenceNum: sequenceNum)
-        let encoded = message.encoded()
-        print("Encoded SP2 get status command for address 0x\(String(address, radix: 16)) and seq # \(seq): 0x\(encoded.hexadecimalString)")
-        log.debug("Encoded SP2 get status command for address 0x%x and seq # %u: %@", address, seq, encoded.hexadecimalString)
-        return encoded
-    }
-
-    // 5-byte fixed SPS00: 0000099129
-    // The first byte has been 0x00 each time
-    // The second is 0x01 for the PDM and 0x00 for the Pod
-    // The third is a number that specifies the encryption algorithm
-    // Bytes 4 and 5 are CRC-16/XMODEM checksum
-    private func o5sps0() -> Data {
-        let fixedO5SPS0 = "000109a218" // XXX define values and calculate the CRC-16
-        log.debug("Using fixed SPS0 value of %@", fixedO5SPS0)
-        return Data(hex: fixedO5SPS0)
-    }
-
-    // Validate the returned fixed 5-byte SPS0: 000109a218
-    // The first byte has been 0x00 each time
-    // The second is 0x01 for the PDM and 0x00 for the Pod
-    // The third is a number that specifies the encryption algorithm
-    // Bytes 4 and 5 are CRC-16/XMODEM checksum
-    private func validateO5sps0(_ msg: MessagePacket) throws {
-        log.debug("Received SPS0 from pod: %@", msg.payload.hexadecimalString)
-
-        let payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS0], msg.payload)[0]
-        let fixedO5SPS0Return = "0000099129"  // XXX define values and calculate the CRC-16
-        if payload != Data(hex: fixedO5SPS0Return) {
-            throw PodProtocolError.pairingException("Received unexpected SPS0 payload: \(payload)")
-        }
+    /// If we get this far in pairing process, what do we want (if anything) to validate in the 871 byte SPS2 response?
+    private func o5validatePodSps2(_ msg: MessagePacket) throws {
+        log.debug("Received SPS2 from pod: %{PRIVATE}@", msg.payload.hexadecimalString)
     }
 
     private func o5validateP0(_ msg: MessagePacket) throws {
@@ -226,7 +248,7 @@ class O5LTKExchanger {
 
         let payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.P0], msg.payload)[0]
         log.debug("P0 payload from pod: %@", payload.hexadecimalString)
-        if payload != O5LTKExchanger.UNKNOWN_P0_PAYLOAD {
+        if payload != O5LTKExchanger.EXPECTED_P0_PAYLOAD {
             throw PodProtocolError.pairingException("Reveived unexpected P0 payload: \(payload)")
         }
     }

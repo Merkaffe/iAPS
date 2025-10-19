@@ -10,6 +10,8 @@
 import Foundation
 
 // JJJ if patched to non-nil, use this fake controller ID for the O5
+/// For the PDM, the controller ID is the (serial # << 2) (e.g., Joe PDM SN #000012722=0x31B2<<2 = 0x0000C6C8
+/// Joe (PDM) => 0x0000C6C8; Brian (iOS O5 app?) = 0x000C3A34
 var fakeO5Pairing: Bool = false                 // fake O5 pairing using DASH pairing
 var fakeO5ControllerID: UInt32? = 0x0000c6c8    // if non-nil, use as the fake O5 controller ID (to match O5 app/PDM traces to real O5 pods)
 
