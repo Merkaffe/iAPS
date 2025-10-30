@@ -8,6 +8,7 @@
 
 import Foundation
 import LoopKitUI
+import OmnipodKit
 import os.log
 
 class OmnipodKitPlugin: NSObject, PumpManagerUIPlugin {
