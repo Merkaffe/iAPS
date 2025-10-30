@@ -1,0 +1,168 @@
+diff --git a/Trio/Sources/APS/DeviceDataManager.swift b/Trio/Sources/APS/DeviceDataManager.swift
+index 821bb0baa..5a7f6f4d7 100644
+--- a/Trio/Sources/APS/DeviceDataManager.swift
++++ b/Trio/Sources/APS/DeviceDataManager.swift
+@@ -9,6 +9,7 @@ import MinimedKit
+ import MockKit
+ import OmniBLE
+ import OmniKit
++import OmnipodKit
+ import ShareClient
+ import SwiftDate
+ import Swinject
+@@ -35,6 +36,7 @@ private let staticPumpManagers: [PumpManagerUI.Type] = [
+     MinimedPumpManager.self,
+     OmnipodPumpManager.self,
+     OmniBLEPumpManager.self,
++    OmniPumpManager.self,
+     DanaKitPumpManager.self,
+     MockPumpManager.self
+ ]
+@@ -43,6 +45,7 @@ private let staticPumpManagersByIdentifier: [String: PumpManagerUI.Type] = [
+     MinimedPumpManager.pluginIdentifier: MinimedPumpManager.self,
+     OmnipodPumpManager.pluginIdentifier: OmnipodPumpManager.self,
+     OmniBLEPumpManager.pluginIdentifier: OmniBLEPumpManager.self,
++    OmniPumpManager.pluginIdentifier: OmniPumpManager.self,
+     DanaKitPumpManager.pluginIdentifier: DanaKitPumpManager.self,
+     MockPumpManager.pluginIdentifier: MockPumpManager.self
+ ]
+@@ -111,6 +114,13 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
+                     }
+                     pumpExpiresAtDate.send(endTime)
+                 }
++                if let omni = pumpManager as? OmniPumpManager {
++                    guard let endTime = omni.state.podState?.expiresAt else {
++                        pumpExpiresAtDate.send(nil)
++                        return
++                    }
++                    pumpExpiresAtDate.send(endTime)
++                }
+                 if let simulatorPump = pumpManager as? MockPumpManager {
+                     pumpDisplayState.value = PumpDisplayState(name: simulatorPump.localizedTitle, image: simulatorPump.smallImage)
+                     pumpName.send(simulatorPump.localizedTitle)
+@@ -480,6 +490,39 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
+             }
+         }
+ 
++        if let omni = pumpManager as? OmniPumpManager {
++            let reservoirVal = omni.state.podState?.lastInsulinMeasurements?.reservoirLevel ?? 0xDEAD_BEEF
++            // TODO: find the value Pod.maximumReservoirReading
++            let reservoir = Decimal(reservoirVal) > 50.0 ? 0xDEAD_BEEF : reservoirVal
++
++            storage.save(Decimal(reservoir), as: OpenAPS.Monitor.reservoir)
++            broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
++                $0.pumpReservoirDidChange(Decimal(reservoir))
++            }
++
++            // manual temp basal on
++            if let tempBasal = omni.state.podState?.unfinalizedTempBasal, !tempBasal.isFinished(),
++               !tempBasal.automatic
++            {
++                // the manual basal temp is launch - block every thing
++                debug(.deviceManager, "manual temp basal")
++                manualTempBasal.send(true)
++            } else {
++                // no more manual Temp Basal !
++                manualTempBasal.send(false)
++            }
++
++            guard let endTime = omni.state.podState?.expiresAt else {
++                pumpExpiresAtDate.send(nil)
++                return
++            }
++            pumpExpiresAtDate.send(endTime)
++
++            if let startTime = omni.state.podState?.activatedAt {
++                storage.save(startTime, as: OpenAPS.Monitor.podAge)
++            }
++        }
++
+         if let simulatorPump = pumpManager as? MockPumpManager {
+             broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
+                 $0.pumpReservoirDidChange(Decimal(simulatorPump.state.reservoirUnitsRemaining))
+@@ -671,6 +714,13 @@ extension BaseDeviceDataManager: AlertObserver {
+                 }
+             }
+ 
++            if let omni = self.pumpManager as? OmniPumpManager {
++                if omni.state.activeAlerts.isEmpty {
++                    // force to ack alert in the alertStorage
++                    self.alertHistoryStorage.ackAlert(alertIssueDate, nil)
++                }
++            }
++
+             self.pumpManager?.acknowledgeAlert(alertIdentifier: alert.alertIdentifier) { error in
+                 if let error = error {
+                     self.alertHistoryStorage.ackAlert(alertIssueDate, error.localizedDescription)
+diff --git a/Trio/Sources/Modules/Home/View/HomeRootView.swift b/Trio/Sources/Modules/Home/View/HomeRootView.swift
+index e8d8cb392..7b4c60358 100644
+--- a/Trio/Sources/Modules/Home/View/HomeRootView.swift
++++ b/Trio/Sources/Modules/Home/View/HomeRootView.swift
+@@ -935,6 +935,7 @@ extension Home {
+             // PUMP RELATED
+             .confirmationDialog("Pump Model", isPresented: $showPumpSelection) {
+                 Button("Medtronic") { state.addPump(.minimed) }
++                Button("All Omnipod Types") { state.addPump(.omni) }
+                 Button("Omnipod Eros") { state.addPump(.omnipod) }
+                 Button("Omnipod DASH") { state.addPump(.omnipodBLE) }
+                 Button("Dana(RS/-i)") { state.addPump(.dana) }
+diff --git a/Trio/Sources/Modules/PumpConfig/PumpConfigDataFlow.swift b/Trio/Sources/Modules/PumpConfig/PumpConfigDataFlow.swift
+index 68b921400..3a5114bd8 100644
+--- a/Trio/Sources/Modules/PumpConfig/PumpConfigDataFlow.swift
++++ b/Trio/Sources/Modules/PumpConfig/PumpConfigDataFlow.swift
+@@ -9,6 +9,7 @@ enum PumpConfig {
+         case minimed
+         case omnipod
+         case omnipodBLE
++        case omni
+         case dana
+         case simulator
+     }
+diff --git a/Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift b/Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift
+index 262224839..5eb6b3cbd 100644
+--- a/Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift
++++ b/Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift
+@@ -109,6 +109,7 @@ extension PumpConfig {
+                                 )
+                                 VStack(alignment: .leading) {
+                                     Text("• Medtronic")
++                                    Text("• All Omnipod Types")
+                                     Text("• Omnipod Eros")
+                                     Text("• Omnipod DASH")
+                                     Text("• Dana (RS/-i)")
+@@ -124,6 +125,7 @@ extension PumpConfig {
+                 }
+                 .confirmationDialog("Pump Model", isPresented: $showPumpSelection) {
+                     Button("Medtronic") { state.addPump(.minimed) }
++                    Button("All Omnipod Types") { state.addPump(.omni) }
+                     Button("Omnipod Eros") { state.addPump(.omnipod) }
+                     Button("Omnipod DASH") { state.addPump(.omnipodBLE) }
+                     Button("Dana(RS/-i)") { state.addPump(.dana) }
+diff --git a/Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift b/Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift
+index 3c4c6bb50..9d5da90c2 100644
+--- a/Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift
++++ b/Trio/Sources/Modules/PumpConfig/View/PumpSetupView.swift
+@@ -8,6 +8,7 @@ import MockKitUI
+ import OmniBLE
+ import OmniKit
+ import OmniKitUI
++import OmnipodKit
+ import SwiftUI
+ import UIKit
+ 
+@@ -59,6 +60,15 @@ extension PumpConfig {
+                     allowDebugFeatures: true,
+                     allowedInsulinTypes: [.apidra, .humalog, .novolog, .fiasp, .lyumjev]
+                 )
++            case .omni:
++                setupViewController = OmniPumpManager.setupViewController(
++                    initialSettings: initialSettings,
++                    bluetoothProvider: bluetoothManager,
++                    colorPalette: .default,
++                    allowDebugFeatures: true,
++                    prefersToSkipUserInteraction: false,
++                    allowedInsulinTypes: [.apidra, .humalog, .novolog, .fiasp, .lyumjev]
++                )
+             case .dana:
+                 setupViewController = DanaKitPumpManager.setupViewController(
+                     initialSettings: initialSettings,
