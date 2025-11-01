@@ -384,10 +384,10 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             }
         }
         if deliveryStatus.tempBasalRunning && unfinalizedTempBasal == nil { // active temp basal that we aren't tracking
-            // unfinalizedTempBasal = UnfinalizedDose(tempBasalRate: 0, startTime: Date(), duration: .minutes(30), isHighTemp: false, scheduledCertainty: .certain, insulinType: insulinType)
+            // unfinalizedTempBasal = UnfinalizedDose(tempBasalRate: 0, startTime: date, duration: .minutes(30), isHighTemp: false, scheduledCertainty: .certain, insulinType: insulinType)
         }
         if !deliveryStatus.suspended && isSuspended { // active basal that we aren't tracking
-            let resumeStartTime = Date()
+            let resumeStartTime = date
             suspendState = .resumed(resumeStartTime)
             unfinalizedResume = UnfinalizedDose(resumeStartTime: resumeStartTime, scheduledCertainty: .certain, insulinType: insulinType)
         }
