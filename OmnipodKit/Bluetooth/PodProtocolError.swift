@@ -22,18 +22,18 @@ extension PodProtocolError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidLTKKey(let message):
-            return String(format: LocalizedString("Invalid LTK Key: %1$@", comment: "The format string for PodProtocolError.invalidLTKKey (1: message associated with error)"), message)
+            return String(format: "Invalid LTK Key: %1$@", message)
         case .pairingException(let message):
-            return String(format: LocalizedString("Pairing Exception: %1$@", comment: "The format string for PodProtocolError.pairingException (1: message associated with error)"), message)
+            return String(format: "Pairing Exception: %1$@", message)
         case .messageIOException(let message):
-            return String(format: LocalizedString("Message IO Exception: %1$@", comment: "The format string for PodProtocolError.messageIOException (1: message associated with error)"), message)
+            return String(format: "Message IO Exception: %1$@", message)
         case .couldNotParseMessageException(let message):
-            return String(format: LocalizedString("Could not parse message: %1$@", comment: "The format string for PodProtocolError.couldNotParseMessageException (1: message associated with error)"), message)
+            return String(format: "Could not parse message: %1$@", message)
         case .incorrectPacketException(let payload, let location):
             let payloadStr = payload.hexadecimalString
-            return String(format: LocalizedString("Incorrect Packet Exception: %1$@ (location=%2$d)", comment: "The format string for PodProtocolError.incorrectPacketException (1: payload)(2: location)"), payloadStr, location)
+            return String(format: "Incorrect Packet Exception: %1$@ (location=%2$d)", payloadStr, location)
         case .invalidCrc(let payloadCrc, let computedCrc):
-            return String(format: LocalizedString("Payload crc32 %1$@ does not match computed crc32 %2$@", comment: "The format string for description of PodProtocolError.invalidCrc (1:payload crc)(2:computed crc)"), payloadCrc.hexadecimalString, computedCrc.hexadecimalString)
+            return String(format: "Payload crc32 %1$@ does not match computed crc32 %2$@", payloadCrc.hexadecimalString, computedCrc.hexadecimalString)
         }
     }
 

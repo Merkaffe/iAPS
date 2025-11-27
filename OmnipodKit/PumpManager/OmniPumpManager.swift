@@ -502,15 +502,9 @@ extension OmniPumpManager {
     }
 
     private func basalDeliveryState(for state: OmniPumpManagerState, at date: Date = Date()) -> PumpManagerStatus.BasalDeliveryState {
-        guard let podState = state.podState else {
+        // Treat a non-active (faulted or setup incomplete) pod just like no pod
+        guard let podState = state.podState, podState.isActive else {
             return .active(.distantPast)
-        }
-
-        switch podCommState(for: state) {
-        case .fault:
-            return .active(.distantPast)
-        default:
-            break
         }
 
         switch state.suspendEngageState {
@@ -938,6 +932,13 @@ extension OmniPumpManager {
             // Don't wipe out the previous PodState when switching pod types
             if let podState = state.podState {
                 state.previousPodState = podState
+                #if targetEnvironment(simulator)
+                if let activatedAt = state.previousPodState?.activatedAt {
+                    /// When using running on a simulator, initialize the prevous podState
+                    /// activeTime so that the Previous Pod Details view will look correct.
+                    state.previousPodState?.activeTime = Date().timeIntervalSince(activatedAt)
+                }
+                #endif
             }
 
             switch podType {
@@ -975,7 +976,7 @@ extension OmniPumpManager {
         self.podComms.prepForNewPod(myId: self.state.controllerId, podId: self.state.podId)
     }
 
-     func forgetPod(completion: @escaping () -> Void) {
+    func forgetPod(completion: @escaping () -> Void) {
 
         self.podComms.forgetPod()
 
@@ -1040,7 +1041,7 @@ extension OmniPumpManager {
     // MARK: - Pairing
 
     // Called on the main thread
-     func pairAndPrime(completion: @escaping (PumpManagerResult<TimeInterval>) -> Void) {
+    func pairAndPrime(completion: @escaping (PumpManagerResult<TimeInterval>) -> Void) {
 
         guard self.state.podType != unknownOmnipodType else {
             completion(.failure(.configuration(OmniPumpManagerError.podTypeNotConfigured)))
@@ -1056,12 +1057,14 @@ extension OmniPumpManager {
         // If we're in the simulator, create a mock PodState
         let mockFaultDuringPairing = false
         let mockCommsErrorDuringPairing = false
+        let mockStartDate = Date()
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + .seconds(2)) {
             if self.state.podType.usesRileyLink {
-                self.jumpStartPod(address: 0x1f0b3557, lotNo: 40505, lotSeq: 6439, mockFault: mockFaultDuringPairing)
+                let address: UInt32 = self.state.podState?.address ?? 0x1f1f1f1f
+                self.jumpStartPod(address: address, lotNo: 135601809, lotSeq: 0800525, startDate: mockStartDate, mockFault: mockFaultDuringPairing)
             } else {
                 let address: UInt32 = self.state.podState?.address ?? 0x17171717
-                self.jumpStartPod(address: address, lotNo: 135601809, lotSeq: 0800525, mockFault: mockFaultDuringPairing)
+                self.jumpStartPod(address: address, lotNo: 135601809, lotSeq: 0800525, startDate: mockStartDate, mockFault: mockFaultDuringPairing)
             }
             let fault: DetailedStatus? = self.setStateWithResult({ (state) in
                 var podState = state.podState
@@ -2166,7 +2169,7 @@ extension OmniPumpManager: PumpManager {
 
         switch shouldFetchStatus {
         case .none:
-            completion?(lastSync)
+            completion?(self.lastSync)
             return // No active pod
         case true?:
             log.default("Fetching status because pumpData is too old")
@@ -2797,7 +2800,7 @@ extension OmniPumpManager: PumpManager {
     }
 
     func store(doses: [UnfinalizedDose], completion: @escaping (_ error: Error?) -> Void) {
-        let lastSync = lastSync
+        let lastSync = self.lastSync
 
         pumpDelegate.notify { (delegate) in
             guard let delegate = delegate else {

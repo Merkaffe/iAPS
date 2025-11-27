@@ -77,7 +77,7 @@ If LoopWorkspace is open in Xcode, then before executing these commands:
 * select File, Close Workspace
 
 ```
-git switch -c add_omnipodkit
+git switch -c add_omnipodkit_loop
 git submodule add https://github.com/loopandlearn/OmnipodKit
 git apply OmnipodKit/patches/add_omnipodkit_to_LoopWorkspace.patch
 git add .
@@ -90,13 +90,12 @@ When Xcode opens, if questioned, select use the version on disk.
 After building Loop, be sure to select the new "All Omnipod Types"
 when doing an "Add Pump" to use the new OmnipodKit pump manager.
 
-
-## To Add to Trio
+## To Add to the Public Beta for Trio
 
 Included in the OmnipodKit repository is the patch to add OmnipodKit to a fresh clone of [Trio](https://github.com/nightscout/Trio/).
 
-* This patch only works with the open beta, Trio 0.5.x, `dev` branch
-* This patch does not work with the released version of Trio (0.2.x). `main` branch.
+* This patch only works with the open beta, Trio 0.6.x, `dev` branch
+* This patch does not work with Trio 0.2.x, `main` branch
 
 The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio directory. 
 This patch handles all the Trio pump manager integration requirements to add the
@@ -108,7 +107,35 @@ If Trio is open in Xcode, then before executing these commands:
 * select File, Close Workspace
 
 ```
-git switch -c add_omnipodkit
+git switch -c add_omnipodkit_trio
+git submodule add https://github.com/loopandlearn/OmnipodKit
+git apply OmnipodKit/patches/add_omnipodkit_to_Trio.patch
+git add .
+git commit -am "add submodule OmnipodKit"
+xed .
+```
+
+When Xcode opens, if questioned, select use the version on disk.
+
+After building with Xcode, this file will be modified as well: `Trio/Sources/Localizations/Main/Localizable.xcstrings`
+
+
+
+## To Add to the Private Repository Trio-dev
+
+Included in the OmnipodKit repository is the patch to add OmnipodKit to a fresh clone of [Trio](https://github.com/nightscout/Trio-dev/). Because this is a private repository, most people will not have access to it.
+
+The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio directory. 
+This patch handles all the Trio pump manager integration requirements to add the
+OmnipodKit (private repo) pump manager to Trio-dev (private repo).
+
+If Trio is open in Xcode, then before executing these commands:
+
+* select Product, Clean Build Folder
+* select File, Close Workspace
+
+```
+git switch -c add_omnipodkit_trio-dev
 git submodule add https://github.com/loopandlearn/OmnipodKit
 git apply OmnipodKit/patches/add_omnipodkit_to_Trio-dev.patch
 git add .
