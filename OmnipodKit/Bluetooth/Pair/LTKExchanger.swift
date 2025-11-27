@@ -10,8 +10,8 @@ import Foundation
 import os.log
 
 class LTKExchanger {
+    // This is the binary representation of a "GetPodStatus command" for podID 0xffc32db used in the SP2 payload
     static let GET_POD_STATUS_HEX_COMMAND: Data = Data(hex: "ffc32dbd08030e0100008a")
-    // This is the binary representation of "GetPodStatus command"
 
     static private let SP1 = "SP1="
     static private let SP2 = ",SP2="

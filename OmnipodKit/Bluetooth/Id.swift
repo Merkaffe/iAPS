@@ -9,6 +9,12 @@
 
 import Foundation
 
+// JJJ if patched to non-nil, use this fake controller ID for the O5
+/// For the PDM, the controller ID is the (serial # << 2) (e.g., Joe PDM SN #000012722=0x31B2<<2 = 0x0000C6C8
+/// Joe (PDM) => 0x0000C6C8; Brian (iOS O5 app?) = 0x000C3A34
+var fakeO5Pairing: Bool = false                 // fake O5 pairing using DASH pairing
+var fakeO5ControllerID: UInt32? = 0x0000c6c8    // if non-nil, use as the fake O5 controller ID (to match O5 app/PDM traces to real O5 pods)
+
 class Id: Equatable {
 
     static func fromInt(_ v: Int) -> Id {
@@ -50,6 +56,12 @@ class Id: Equatable {
 // unknown values for the top 3 nibbles of its fixed 32-bit controller ID.
 // OmniBLE also does this, but OmnipodKit now shifts one more bit for 7 podId's.
 func createControllerId(topIdByte: UInt8) -> UInt32 {
+    /* JJJ */
+    if topIdByte == 0x15, let fakeO5ControllerID = fakeO5ControllerID, !fakeO5Pairing {
+        print("Using fake O5 controller ID: \(String(format: "%08X", fakeO5ControllerID))")
+        return fakeO5ControllerID
+    }
+    /* JJJ */
     return (UInt32(topIdByte) << 24) | ((arc4random() & 0x001FFFFF) << 3)
 }
 

@@ -16,7 +16,6 @@ class PeripheralManager: NSObject {
     // TODO: Make private
     let log = OSLog(category: "OmniPeripheralManager")
 
-    ///
     /// This is mutable, because CBPeripheral instances can seemingly become invalid, and need to be periodically re-fetched from CBCentralManager
     var peripheral: CBPeripheral {
         didSet {
@@ -75,12 +74,22 @@ class PeripheralManager: NSObject {
     // Confined to `queue`
     private var needsConfiguration = true
 
+    let podType: PodType
+
     weak var delegate: PeripheralManagerDelegate?
 
-    init(peripheral: CBPeripheral, configuration: Configuration, centralManager: CBCentralManager) {
+    init(peripheral: CBPeripheral, podType: PodType, centralManager: CBCentralManager) {
         self.peripheral = peripheral
         self.central = centralManager
-        self.configuration = configuration
+
+        assert(podType == dashType || podType == omnipod5Type)
+        self.podType = podType
+        setServicePodType(podType: podType)
+        if podType == omnipod5Type {
+            self.configuration = .omnipod5
+        } else {
+            self.configuration = .omnipodDash
+        }
 
         super.init()
 
@@ -117,7 +126,6 @@ protocol PeripheralManagerDelegate: AnyObject {
 
 // MARK: - Operation sequence management
 extension PeripheralManager {
-
 
     func configureAndRun(_ block: @escaping (_ manager: PeripheralManager) -> Void) -> (() -> Void) {
         return {
@@ -515,19 +523,27 @@ extension PeripheralManager {
 
 extension CBPeripheral {
     func getCommandCharacteristic() -> CBCharacteristic? {
-        guard let service = services?.itemWithUUID(OmnipodServiceUUID.service.cbUUID) else {
+        guard let service = services?.itemWithUUID(OmnipodServiceUUID_service_cbUUID) else {
             return nil
         }
 
-        return service.characteristics?.itemWithUUID(OmnipodCharacteristicUUID.command.cbUUID)
+        let val = service.characteristics?.itemWithUUID(OmnipodCharacteristicUUID_command_cbUUID)
+        if val == nil {
+            return nil
+        }
+        return val
     }
 
     func getDataCharacteristic() -> CBCharacteristic? {
-        guard let service = services?.itemWithUUID(OmnipodServiceUUID.service.cbUUID) else {
+        guard let service = services?.itemWithUUID(OmnipodServiceUUID_service_cbUUID) else {
             return nil
         }
 
-        return service.characteristics?.itemWithUUID(OmnipodCharacteristicUUID.data.cbUUID)
+        let val = service.characteristics?.itemWithUUID(OmnipodCharacteristicUUID_data_cbUUID)
+        if val == nil {
+            return nil
+        }
+        return val
     }
 }
 

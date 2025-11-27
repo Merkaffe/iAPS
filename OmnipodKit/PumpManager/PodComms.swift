@@ -37,12 +37,15 @@ class PodComms: CustomDebugStringConvertible {
         }
     }
 
-    init(podState: PodState?, myId: UInt32 = 0, podId: UInt32 = 0) {
+    let podType: PodType
+
+    init(podState: PodState?, podType: PodType, myId: UInt32 = 0, podId: UInt32 = 0) {
         self.podState = podState
         self.delegate = nil
         self.messageLogger = nil
         self.myId = myId
         self.podId = podId
+        self.podType = podType
     }
 
     func updateInsulinType(_ insulinType: InsulinType) {

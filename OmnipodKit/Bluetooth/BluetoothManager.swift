@@ -94,6 +94,8 @@ class BluetoothManager: NSObject {
 
     weak var connectionDelegate: OmniConnectionDelegate?
 
+    var podType: PodType = unknownOmnipodType
+
     private let log = OSLog(category: "BluetoothManager")
 
     /// Isolated to `managerQueue`
@@ -143,7 +145,7 @@ class BluetoothManager: NSObject {
                 device.advertisement = podAdvertisement
             }
         } else {
-            device = Omni(peripheralManager: PeripheralManager(peripheral: peripheral, configuration: .omnipod, centralManager: manager), advertisement: podAdvertisement)
+            device = Omni(peripheralManager: PeripheralManager(peripheral: peripheral, podType: podType, centralManager: manager), advertisement: podAdvertisement)
             devices.append(device)
             log.info("Created device")
         }
@@ -239,7 +241,7 @@ class BluetoothManager: NSObject {
     
     private func startScanning() {
         log.default("Start scanning")
-        manager.scanForPeripherals(withServices: [OmnipodServiceUUID.advertisement.cbUUID], options: nil)
+        manager.scanForPeripherals(withServices: [OmnipodServiceUUID_advertisement_cbUUID], options: nil)
     }
 
     private func stopScanning() {
@@ -329,7 +331,7 @@ extension BluetoothManager: CBCentralManagerDelegate {
 
         log.debug("%{public}@: %{public}@, %{public}@", #function, peripheral, advertisementData)
         
-        if let podAdvertisement = PodAdvertisement(advertisementData) {
+        if let podAdvertisement = PodAdvertisement(advertisementData, podType: podType) {
             addPeripheral(peripheral, podAdvertisement: podAdvertisement)
             
             if discoveryModeEnabled && peripheral.state == .disconnected && podAdvertisement.pairable {

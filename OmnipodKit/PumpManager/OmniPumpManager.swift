@@ -103,15 +103,16 @@ public class OmniPumpManager: RileyLinkPumpManager {
     init(state: OmniPumpManagerState, rileyLinkDeviceProvider: RileyLinkDeviceProvider, dateGenerator: @escaping () -> Date = Date.init) {
         self.lockedState = Locked(state)
         let podComms: PodComms
-        switch state.podType {
+        let podType = state.podType
+        switch podType {
         case erosType:
-            let erosPodComms = ErosPodComms.init(podState: state.podState)
+            let erosPodComms = ErosPodComms.init(podState: state.podState, podType: podType)
             podComms = erosPodComms
         case dashType, omnipod5Type:
-            let blePodComms = BlePodComms.init(podState: state.podState, myId: state.controllerId, podId: state.podId)
+            let blePodComms = BlePodComms.init(podState: state.podState, podType: podType, myId: state.controllerId, podId: state.podId)
             podComms = blePodComms
         default:
-            podComms = PodComms(podState: state.podState)
+            podComms = PodComms(podState: state.podState, podType: podType)
         }
         self.lockedPodComms = Locked(podComms)
         self.dateGenerator = dateGenerator
@@ -876,13 +877,13 @@ extension OmniPumpManager {
             let podComms: PodComms
             switch newValue {
             case erosType:
-                let erosPodComms = ErosPodComms.init(podState: state.podState)
+                let erosPodComms = ErosPodComms.init(podState: nil, podType: newValue)
                 podComms = erosPodComms
             case dashType, omnipod5Type:
-                let blePodComms = BlePodComms.init(podState: state.podState, myId: state.controllerId, podId: state.podId)
+                let blePodComms = BlePodComms.init(podState: nil, podType: newValue, myId: state.controllerId, podId: state.podId)
                 podComms = blePodComms
             default:
-                podComms = PodComms(podState: state.podState)
+                podComms = PodComms(podState: nil, podType: newValue)
             }
 
             self.lockedPodComms = Locked(podComms)
@@ -1015,10 +1016,10 @@ extension OmniPumpManager {
 
         let podComms: PodComms
         if state.podType.usesRileyLink {
-            let erosPodComms = ErosPodComms.init(podState: podState)
+            let erosPodComms = ErosPodComms.init(podState: podState, podType: state.podType)
             podComms = erosPodComms
         } else {
-            let blePodComms = BlePodComms.init(podState: podState, myId: state.controllerId, podId: state.podId)
+            let blePodComms = BlePodComms.init(podState: podState, podType: state.podType, myId: state.controllerId, podId: state.podId)
             podComms = blePodComms
         }
 

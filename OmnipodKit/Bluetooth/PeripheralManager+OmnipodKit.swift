@@ -7,6 +7,8 @@
 //  Copyright © 2021 LoopKit Authors. All rights reserved.
 //
 
+import CoreBluetooth
+
 
 enum SendMessageResult {
     case sentWithAcknowledgment
@@ -40,14 +42,16 @@ extension PeripheralManager {
         try setNotifyValue(true, for: dataChar, timeout: .seconds(2))
     }
         
-    func sendMessagePacket(_ message: MessagePacket, _ forEncryption: Bool = false) -> SendMessageResult {
+    func sendMessagePacket(_ message: MessagePacket, _ forEncryption: Bool = false, doRTS: Bool = true) -> SendMessageResult {
         dispatchPrecondition(condition: .onQueue(queue))
         
         var didSend = false
 
         do {
-            try requestToSend()
-            try waitForCommand(PodCommand.CTS, timeout: 5)
+            if doRTS {
+                try requestToSend()
+                try waitForCommand(PodCommand.CTS, timeout: 5)
+            }
 
             let splitter = PayloadSplitter(payload: message.asData(forEncryption: forEncryption))
             let packets = splitter.splitInPackets()
@@ -63,8 +67,7 @@ extension PeripheralManager {
             }
 
             try waitForCommand(PodCommand.SUCCESS, timeout: 5)
-        }
-        catch {
+        } catch {
             if didSend {
                 return .sentWithError(error)
             } else {
@@ -75,14 +78,16 @@ extension PeripheralManager {
     }
     
     /// - Throws: PeripheralManagerError
-    func readMessagePacket() throws -> MessagePacket? {
+    func readMessagePacket(doRTS: Bool = true) throws -> MessagePacket? {
         dispatchPrecondition(condition: .onQueue(queue))
 
         var packet: MessagePacket?
 
         do {
-            try waitForCommand(PodCommand.RTS)
-            try sendCommandType(PodCommand.CTS)
+            if doRTS {
+                try waitForCommand(PodCommand.RTS)
+                try sendCommandType(PodCommand.CTS)
+            }
 
             var expected: UInt8 = 0
 
@@ -90,12 +95,14 @@ extension PeripheralManager {
 
             let joiner = try PayloadJoiner(firstPacket: firstPacket)
 
-            for _ in 1...joiner.fullFragments {
-                expected += 1
-                let packet = try waitForData(sequence: expected, timeout: 5)
-                try joiner.accumulate(packet: packet)
+            if joiner.fullFragments > 0 {
+                for _ in 1...joiner.fullFragments {
+                    expected += 1
+                    let packet = try waitForData(sequence: expected, timeout: 5)
+                    try joiner.accumulate(packet: packet)
+                }
             }
-            if (joiner.oneExtraPacket) {
+            if joiner.oneExtraPacket {
                 expected += 1
                 let packet = try waitForData(sequence: expected, timeout: 5)
                 try joiner.accumulate(packet: packet)
@@ -193,10 +200,21 @@ extension PeripheralManager {
         dispatchPrecondition(condition: .onQueue(queue))
         
         guard let characteristic = peripheral.getDataCharacteristic() else {
+            log.error("Unable to get characteristic... peripheral status: %{PUBLIC}@", peripheral.state.description)
             throw PeripheralManagerError.notReady
         }
         
-        try writeValue(value, for: characteristic, type: .withResponse, timeout: timeout)
+        var type: CBCharacteristicWriteType
+        switch self.podType {
+        case omnipod5Type:
+            type = .withoutResponse
+        case dashType:
+            type = .withResponse
+        default:
+            throw PeripheralManagerError.unknownPodType
+        }
+
+        try writeValue(value, for: characteristic, type: type, timeout: timeout)
     }
 
     /// - Throws: PeripheralManagerError
