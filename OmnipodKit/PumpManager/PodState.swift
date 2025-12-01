@@ -431,21 +431,35 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
         guard
             let address = rawValue["address"] as? UInt32,
-            let firmwareVersion = rawValue["firmwareVersion"] as? String,
-            let iFirmwareVersion = rawValue["iFirmwareVersion"] as? String,
-            let lotNo = rawValue["lotNo"] as? UInt32,
-            let lotSeq = rawValue["lotSeq"] as? UInt32
+            let lotNo = rawValue["lotNo"] as? UInt32 ?? rawValue["lot"] as? UInt32,
+            let lotSeq = rawValue["lotSeq"] as? UInt32 ?? rawValue["tid"] as? UInt32
             else {
                 return nil
             }
 
-        let formatVersion: Int = rawValue["version"] as? Int ?? 1
-
         self.address = address
-        self.firmwareVersion = firmwareVersion
-        self.iFirmwareVersion = iFirmwareVersion
         self.lotNo = lotNo
         self.lotSeq = lotSeq
+
+        let formatVersion: Int = rawValue["version"] as? Int ?? 1
+
+        if let firmwareVersion = rawValue["firmwareVersion"] as? String {
+            self.firmwareVersion = firmwareVersion
+        } else if let pmVersion = rawValue["pmVersion"] as? String {
+            self.firmwareVersion = pmVersion // OmniKit
+        } else {
+            return nil
+        }
+
+        if let iFirmwareVersion = rawValue["iFirmwareVersion"] as? String {
+            self.iFirmwareVersion = iFirmwareVersion
+        } else if let bleFirmwareVersion = rawValue["bleFirmwareVersion"] as? String {
+            self.iFirmwareVersion = bleFirmwareVersion // OmniBLE
+        } else if let piVersion = rawValue["piVersion"] as? String {
+            self.iFirmwareVersion = piVersion // OmniKit
+        } else {
+            return nil
+        }
 
         self.activeTime = rawValue["activeTime"] as? TimeInterval
 
@@ -575,41 +589,50 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         if let podTypeRaw = rawValue["podType"] as? UInt8 {
             self.podType = PodType(rawValue: podTypeRaw)
         } else if rawValue["ltk"] != nil {
-            self.podType = dashType
+            self.podType = dashType // OmniBLE
         } else {
-            self.podType = erosType
+            self.podType = erosType // OmniKit
         }
 
-        // Dash specific values
-        if let ltkString = rawValue["ltk"] as? String, let bleIdentifier = rawValue["bleIdentifier"] as? String {
-            self.ltk = Data(hexadecimalString: ltkString)
-            self.bleIdentifier = bleIdentifier
-        }
+        switch podType {
+        case erosType:
+            self.bleMessageTransportState = BleMessageTransportState() /// dummy intialization
+            if let erosMessageTransportStateRaw = rawValue["erosMessageTransportState"] as? ErosMessageTransportState.RawValue,
+                let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
+            {
+                self.erosMessageTransportState = erosMessageTransportState
+            } else if let erosMessageTransportStateRaw = rawValue["messageTransportState"] as? ErosMessageTransportState.RawValue,
+                let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
+            {
+                self.erosMessageTransportState = erosMessageTransportState
+            } else {
+                self.erosMessageTransportState = ErosMessageTransportState()
+            }
 
-        if let erosMessageTransportStateRaw = rawValue["erosMessageTransportState"] as? ErosMessageTransportState.RawValue,
-            let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
-        {
-            self.erosMessageTransportState = erosMessageTransportState
-        } else if let erosMessageTransportStateRaw = rawValue["messageTransportState"] as? ErosMessageTransportState.RawValue,
-            let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
-        {
-            // compatability for the case of PodState having an messageTransportState: Any MessageTransport var
-            self.erosMessageTransportState = erosMessageTransportState
-        } else {
-            self.erosMessageTransportState = ErosMessageTransportState()
-        }
+        case dashType,omnipod5Type:
+            self.erosMessageTransportState = ErosMessageTransportState() /// dummy initialization
+            if let bleMessageTransportStateRaw = rawValue["bleMessageTransportState"] as? BleMessageTransportState.RawValue,
+                let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
+            {
+                self.bleMessageTransportState = bleMessageTransportState
+            } else if let bleMessageTransportStateRaw = rawValue["messageTransportState"] as? BleMessageTransportState.RawValue,
+                let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
+            {
+                self.bleMessageTransportState = bleMessageTransportState
+            } else {
+                self.bleMessageTransportState = BleMessageTransportState()
+            }
 
-        if let bleMessageTransportStateRaw = rawValue["bleMessageTransportState"] as? BleMessageTransportState.RawValue,
-            let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
-        {
-            self.bleMessageTransportState = bleMessageTransportState
-        } else if let bleMessageTransportStateRaw = rawValue["messageTransportState"] as? BleMessageTransportState.RawValue,
-            let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
-        {
-            // compatability for the case of PodState having an messageTransportState: Any MessageTransport var
-            self.bleMessageTransportState = bleMessageTransportState
-        } else {
-            self.bleMessageTransportState = BleMessageTransportState()
+            // BLE pod type specific values
+            if let ltkString = rawValue["ltk"] as? String,
+                let bleIdentifier = rawValue["bleIdentifier"] as? String
+            {
+                self.ltk = Data(hexadecimalString: ltkString)
+                self.bleIdentifier = bleIdentifier
+            }
+
+        default:
+            return nil
         }
     }
 

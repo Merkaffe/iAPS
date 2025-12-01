@@ -14,7 +14,7 @@ import LoopKit
 public struct OmniPumpManagerState: RawRepresentable, Equatable {
     public typealias RawValue = PumpManager.RawStateValue
 
-    static let version = 3
+    static let version = 4
 
     var isOnboarded: Bool = false
 
@@ -63,7 +63,9 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
     // which means they have configured any parameters, but may not have paired a pod yet.
     var initialConfigurationCompleted: Bool = false
 
-    internal var maximumTempBasalRate: Double
+    internal var maxBasalRateUnitsPerHour: Double
+
+    internal var maxBolusUnits: Double
 
 
     // From last status response
@@ -111,8 +113,9 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         podState: PodState?,
         timeZone: TimeZone,
         basalSchedule: BasalSchedule,
+        maxBasalRateUnitsPerHour: Double,
+        maxBolusUnits: Double,
         insulinType: InsulinType?,
-        maximumTempBasalRate: Double,
         podType: PodType,
         rileyLinkConnectionManagerState: RileyLinkConnectionState? = nil, // Eros
         controllerId: UInt32? = nil, // BLE
@@ -123,8 +126,8 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         self.timeZone = timeZone
         self.basalSchedule = basalSchedule
         self.insulinType = insulinType
-        self.maximumTempBasalRate = maximumTempBasalRate
-
+        self.maxBasalRateUnitsPerHour = maxBasalRateUnitsPerHour
+        self.maxBolusUnits = maxBolusUnits
         self.unstoredDoses = []
         self.silencePod = false
         self.confirmationBeeps = .manualCommands
@@ -166,8 +169,10 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         let podType: PodType
         if let podTypeRaw = rawValue["podType"] as? UInt8 {
             podType = PodType(rawValue: podTypeRaw)
+        } else if rawValue["controllerId"] != nil {
+            podType = dashType // OmniBLE
         } else {
-            podType = dashType
+            podType = erosType // OmniKit
         }
 
         let podState: PodState?
@@ -198,9 +203,10 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             insulinType = InsulinType(rawValue: rawInsulinType)
         }
 
-        // If this doesn't exist (early adopters of dev/pre-3.0) set to zero
-        // Will not let them set a manual temp until a limits sync has been performed.
-        let maximumTempBasalRate = rawValue["maximumTempBasalRate"] as? Double ?? 0
+        let maxBasalRateUnitsPerHour = rawValue["maxBasalRateUnitsPerHour"] as? Double ??
+                                        rawValue["maximumTempBasalRate"] as? Double ?? Pod.maximumBasalUnitsPerHour
+
+        let maxBolusUnits = rawValue["maxBolusUnits"] as? Double ?? Pod.maximumBolusUnits
 
         // Omnipod model specific values
         let rileyLinkConnectionManagerState: RileyLinkConnectionState?
@@ -224,8 +230,9 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             podState: podState,
             timeZone: timeZone,
             basalSchedule: basalSchedule,
+            maxBasalRateUnitsPerHour: maxBasalRateUnitsPerHour,
+            maxBolusUnits: maxBolusUnits,
             insulinType: insulinType ?? .novolog,
-            maximumTempBasalRate: maximumTempBasalRate,
             podType: podType,
             rileyLinkConnectionManagerState: rileyLinkConnectionManagerState, // Eros only
             controllerId: controllerId, // non-Eros only
@@ -308,7 +315,8 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             "acknowledgedTimeOffsetAlert": acknowledgedTimeOffsetAlert,
             "alertsWithPendingAcknowledgment": alertsWithPendingAcknowledgment.map { $0.rawValue },
             "initialConfigurationCompleted": initialConfigurationCompleted,
-            "maximumTempBasalRate": maximumTempBasalRate,
+            "maxBasalRateUnitsPerHour": maxBasalRateUnitsPerHour,
+            "maxBolusUnits": maxBolusUnits,
             "controllerId": controllerId,
             "podId": podId,
         ]
@@ -350,7 +358,8 @@ extension OmniPumpManagerState: CustomDebugStringConvertible {
             "* isOnboarded: \(isOnboarded)",
             "* timeZone: \(timeZone)",
             "* basalSchedule: \(String(describing: basalSchedule))",
-            "* maximumTempBasalRate: \(maximumTempBasalRate)",
+            "* maxBasalRateUnitsPerHour: \(maxBasalRateUnitsPerHour)",
+            "* maxBolusUnits: \(maxBolusUnits)",
             "* unstoredDoses: \(String(describing: unstoredDoses))",
             "* suspendEngageState: \(String(describing: suspendEngageState))",
             "* bolusEngageState: \(String(describing: bolusEngageState))",

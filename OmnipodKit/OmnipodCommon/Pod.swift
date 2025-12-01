@@ -92,6 +92,12 @@ struct Pod {
     
     // Allowed Low Reservoir reminder values
     static let allowedLowReservoirReminderValues = Array(stride(from: 1, through: 50, by: 1))
+
+    // Pod firmware imposed maximum basal rate
+    static let maximumBasalUnitsPerHour = 30.0
+
+    // Pod firmware imposed maximum bolus size
+    static let maximumBolusUnits = 30.0
 }
 
 // DeliveryStatus used in StatusResponse and DetailedStatus

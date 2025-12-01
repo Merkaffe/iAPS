@@ -440,7 +440,7 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
                         Spacer()
                         Text(self.viewModel.faultedAtString)
                             .foregroundColor(Color.secondary)
-                    } else if viewModel.podOk {
+                    } else {
                         FrameworkLocalText("Delivery Stops", comment: "Label for Delivery Stops row")
                         Spacer()
                         Text(self.viewModel.deliveryStopsAtString)

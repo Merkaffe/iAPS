@@ -515,7 +515,7 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     var allowedTempBasalRates: [Double] {
-        return Pod.supportedTempBasalRates.filter { $0 <= pumpManager.state.maximumTempBasalRate }
+        return Pod.supportedTempBasalRates.filter { $0 <= pumpManager.state.maxBasalRateUnitsPerHour }
     }
 
     var podType: PodType {

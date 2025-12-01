@@ -1504,6 +1504,15 @@ extension OmniPumpManager {
 
     func setBasalSchedule(_ schedule: BasalSchedule, completion: @escaping (Error?) -> Void) {
         let shouldContinue = setStateWithResult({ (state) -> PumpManagerResult<Bool> in
+
+            // The Trio UI doesn't enforce the max basal rates for the basal schedule and
+            // doesn't prevent maximum basal rates settings based on the basal schedule.
+            for entry in schedule.entries {
+                guard entry.rate <= state.maxBasalRateUnitsPerHour else {
+                    return .failure(PumpManagerError.configuration(OmniPumpManagerError.invalidSetting))
+                }
+            }
+
             guard state.hasActivePod else {
                 // If there's no active pod yet, save the basal schedule anyway
                 state.basalSchedule = schedule
@@ -2202,6 +2211,11 @@ extension OmniPumpManager: PumpManager {
     // MARK: - Programming Delivery
 
     public func enactBolus(units: Double, activationType: BolusActivationType, completion: @escaping (PumpManagerError?) -> Void) {
+        guard units <= state.maxBolusUnits else {
+            completion(.configuration(OmniPumpManagerError.invalidSetting))
+            return
+        }
+
         guard self.hasActivePod else {
             completion(.configuration(OmniPumpManagerError.noPodPaired))
             return
@@ -2346,6 +2360,11 @@ extension OmniPumpManager: PumpManager {
     }
 
     public func enactTempBasal(unitsPerHour: Double, for duration: TimeInterval, automatic: Bool, completion: @escaping (PumpManagerError?) -> Void) {
+        guard unitsPerHour <= state.maxBasalRateUnitsPerHour else {
+            completion(.configuration(OmniPumpManagerError.invalidSetting))
+            return
+        }
+
         guard self.hasActivePod, let podState = self.state.podState else {
             completion(.configuration(OmniPumpManagerError.noPodPaired))
             return
@@ -2359,7 +2378,7 @@ extension OmniPumpManager: PumpManager {
 
         // Legal duration values are [virtual] zero (to cancel current temp basal) or between 30 min and 12 hours
         guard duration < .ulpOfOne || (duration >= .minutes(30) && duration <= .hours(12)) else {
-            completion(.deviceState(OmniPumpManagerError.invalidSetting))
+            completion(.configuration(OmniPumpManagerError.invalidSetting))
             return
         }
 
@@ -2503,8 +2522,11 @@ extension OmniPumpManager: PumpManager {
 
     public func syncDeliveryLimits(limits deliveryLimits: DeliveryLimits, completion: @escaping (Result<DeliveryLimits, Error>) -> Void) {
         setState { state in
-            if let rate = deliveryLimits.maximumBasalRate?.doubleValue(for: .internationalUnitsPerHour) {
-                state.maximumTempBasalRate = rate
+            if let maxBasalRate = deliveryLimits.maximumBasalRate?.doubleValue(for: .internationalUnitsPerHour),
+               let maxBolus = deliveryLimits.maximumBolus?.doubleValue(for: .internationalUnit())
+            {
+                state.maxBasalRateUnitsPerHour = maxBasalRate
+                state.maxBolusUnits = maxBolus
                 completion(.success(deliveryLimits))
             } else {
                 completion(.failure(OmniPumpManagerError.invalidSetting))

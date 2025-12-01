@@ -1766,6 +1766,9 @@
         }
       }
     },
+    "Nack" : {
+      "comment" : "Error message description for PeripheralManagerError.nack"
+    },
     "Next" : {
       "comment" : "Text of continue button on ExpirationReminderSetupView",
       "localizations" : {
@@ -3789,6 +3792,9 @@
           }
         }
       }
+    },
+    "Unknown Pod Type" : {
+      "comment" : "Error message description for PeripheralManagerError.unknownPodType"
     },
     "Unknown Value (%1$@) for type %2$@" : {
       "comment" : "Format string for description of MessageError unknownValue. (1: value) (2: Type)",

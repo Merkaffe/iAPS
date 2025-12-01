@@ -413,8 +413,9 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 podState: nil,
                 timeZone: basalSchedule.timeZone,
                 basalSchedule: BasalSchedule(repeatingScheduleValues: basalSchedule.items, podType: self.podType),
+                maxBasalRateUnitsPerHour: pumpManagerSettings.maxBasalRateUnitsPerHour,
+                maxBolusUnits: pumpManagerSettings.maxBolusUnits,
                 insulinType: nil,
-                maximumTempBasalRate: pumpManagerSettings.maxBasalRateUnitsPerHour,
                 podType: self.podType)
 
             self.pumpManager = OmniPumpManager(state: pumpManagerState, rileyLinkDeviceProvider: deviceProvider)
