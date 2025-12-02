@@ -1,12 +1,20 @@
 APP_DISPLAY_NAME = iAPS
-APP_VERSION = 6.2.3
+APP_VERSION = 8.0.3
 APP_BUILD_NUMBER = 1
 COPYRIGHT_NOTICE =
 DEVELOPER_TEAM = T7VZ6LU6H3
 BUNDLE_IDENTIFIER = com.nilofar.$(DEVELOPMENT_TEAM).aps
 APP_GROUP_ID = group.com.$(DEVELOPMENT_TEAM).loopkit.LoopGroup
-APP_ICON = pod_colorful
+
+//Default App Icon, displayed at first installation.
+APP_ICON = appIcon1
+
+// Require authentication when bolusing.
+AUTHENTICATE = true
+
+// iAPS URL in other apps
 APP_URL_SCHEME = freeaps-x
 
+// Include file for overriding configuration
 #include? "ConfigOverride.xcconfig"
 //#include? "../../ConfigOverride.xcconfig"

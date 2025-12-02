@@ -7,7 +7,7 @@ extension AddCarbs {
         let resolver: Resolver
         let editMode: Bool
         let override: Bool
-        @StateObject var state = StateModel()
+        @StateObject var state: StateModel
         @State var dish: String = ""
         @State var isPromptPresented = false
         @State var saved = false
@@ -20,13 +20,29 @@ extension AddCarbs {
 
         @FetchRequest(
             entity: Presets.entity(),
-            sortDescriptors: [NSSortDescriptor(key: "dish", ascending: true)], predicate: NSPredicate(
-                format: "dish != %@", " " as String
+            sortDescriptors: [NSSortDescriptor(key: "dish", ascending: true)], predicate:
+            NSCompoundPredicate(
+                andPredicateWithSubpredicates: [
+                    NSPredicate(format: "dish != %@", " " as String),
+                    NSPredicate(format: "dish != %@", "Empty" as String)
+                ]
             )
+
         ) var carbPresets: FetchedResults<Presets>
 
         @Environment(\.managedObjectContext) var moc
         @Environment(\.colorScheme) var colorScheme
+
+        init(
+            resolver: Resolver,
+            editMode: Bool,
+            override: Bool
+        ) {
+            self.resolver = resolver
+            self.editMode = editMode
+            self.override = override
+            _state = StateObject(wrappedValue: StateModel(resolver: resolver))
+        }
 
         private var formatter: NumberFormatter {
             let formatter = NumberFormatter()
@@ -141,13 +157,14 @@ extension AddCarbs {
             .compactSectionSpacing()
             .dynamicTypeSize(...DynamicTypeSize.xxLarge)
             .onAppear {
-                configureView {
-                    state.loadEntries(editMode)
-                }
+                state.loadEntries(editMode)
             }
             .navigationTitle("Add Meal")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Cancel", action: state.hideModal))
+            .navigationBarItems(trailing: Button("Cancel", action: {
+                state.hideModal()
+                if editMode { state.apsManager.determineBasalSync() }
+            }))
             .sheet(isPresented: $presentPresets, content: { presetView })
         }
 
@@ -208,7 +225,8 @@ extension AddCarbs {
                     header: { Text("Save") }
                 }
 
-                let filtered = carbPresets.filter { ($0.dish ?? "").count > 1 }.removeDublicates()
+                let filtered = carbPresets.filter { !($0.dish ?? "").isEmpty && ($0.dish ?? "Empty") != "Empty" }
+                    .removeDublicates()
                 if filtered.count > 4 {
                     Section {
                         TextField("Search", text: $string)
@@ -234,6 +252,7 @@ extension AddCarbs {
                 }
             }
             .sheet(isPresented: $state.edit, content: { editView })
+            .environment(\.colorScheme, colorScheme)
         }
 
         private var editView: some View {
@@ -245,17 +264,17 @@ extension AddCarbs {
                     HStack {
                         Text("Carbs").foregroundStyle(.secondary)
                         Spacer()
-                        DecimalTextField("0", value: $newPreset.carbs, formatter: formatter)
+                        DecimalTextField("0", value: $newPreset.carbs, formatter: formatter, liveEditing: true)
                     }
                     HStack {
                         Text("Fat").foregroundStyle(.secondary)
                         Spacer()
-                        DecimalTextField("0", value: $newPreset.fat, formatter: formatter)
+                        DecimalTextField("0", value: $newPreset.fat, formatter: formatter, liveEditing: true)
                     }
                     HStack {
                         Text("Protein").foregroundStyle(.secondary)
                         Spacer()
-                        DecimalTextField("0", value: $newPreset.protein, formatter: formatter)
+                        DecimalTextField("0", value: $newPreset.protein, formatter: formatter, liveEditing: true)
                     }
                 } header: { Text("Saved Food") }
 
@@ -267,7 +286,7 @@ extension AddCarbs {
                         .tint(.white)
                         .disabled(disabled)
                 }
-            }
+            }.environment(\.colorScheme, colorScheme)
         }
 
         @ViewBuilder private func proteinAndFat() -> some View {
@@ -368,7 +387,7 @@ extension AddCarbs {
             do {
                 try moc.save()
             } catch {
-                // To do: add error
+                debug(.apsManager, "Couldn't delete meal preset at \(offsets).")
             }
         }
 
@@ -389,7 +408,7 @@ extension AddCarbs {
             if moc.hasChanges {
                 do {
                     try moc.save()
-                } catch { /* To do: add error */ }
+                } catch { debug(.apsManager, "Failed to save \(moc.updatedObjects)") }
             }
             state.edit = false
         }

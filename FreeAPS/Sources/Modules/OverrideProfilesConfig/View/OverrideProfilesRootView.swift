@@ -6,7 +6,7 @@ extension OverrideProfilesConfig {
     struct RootView: BaseView {
         let resolver: Resolver
 
-        @StateObject var state = StateModel()
+        @StateObject var state: StateModel
         @State private var isEditing = false
         @State private var showAlert = false
         @State private var showingDetail = false
@@ -68,6 +68,18 @@ extension OverrideProfilesConfig {
             return formatter
         }
 
+        private var promilleFormatter: NumberFormatter {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            formatter.maximumFractionDigits = 3
+            return formatter
+        }
+
+        init(resolver: Resolver) {
+            self.resolver = resolver
+            _state = StateObject(wrappedValue: StateModel(resolver: resolver))
+        }
+
         var body: some View {
             overridesView
                 .navigationBarTitle("Profiles")
@@ -75,7 +87,6 @@ extension OverrideProfilesConfig {
                 .navigationBarItems(trailing: Button("Close", action: state.hideModal))
                 .dynamicTypeSize(...DynamicTypeSize.xxLarge)
                 .onAppear {
-                    configureView()
                     state.savedSettings(edit: false, identifier: nil)
                 }
                 .alert(
@@ -111,13 +122,16 @@ extension OverrideProfilesConfig {
                 Section {
                     VStack {
                         Spacer()
-                        Text("\(state.percentage.formatted(.number)) %")
-                            .foregroundColor(
-                                state
-                                    .percentage >= 130 ? .red :
-                                    (isEditing ? .orange : .blue)
-                            )
-                            .font(.largeTitle)
+                        Text(
+                            (formatter.string(from: state.percentage as NSNumber) ?? "")
+                                + " %"
+                        )
+                        .foregroundColor(
+                            state
+                                .percentage >= 130 ? .red :
+                                (isEditing ? .orange : .blue)
+                        )
+                        .font(.largeTitle)
                         let max: Double = state.extended_overrides ? 400 : 200
                         Slider(
                             value: $state.percentage,
@@ -200,11 +214,13 @@ extension OverrideProfilesConfig {
                                 }
                             }
                         }
+
                         HStack {
                             Toggle(isOn: $state.isfAndCr) {
                                 Text("Change ISF and CR and Basal")
                             }
                         }
+
                         if !state.isfAndCr {
                             HStack {
                                 Toggle(isOn: $state.isf) {
@@ -261,6 +277,53 @@ extension OverrideProfilesConfig {
                                 Text("U").foregroundColor(.secondary)
                             }
                         }
+
+                        // Blank Divider()
+                        HStack {}
+
+                        HStack {
+                            Toggle(isOn: $state.endWIthNewCarbs) {
+                                Text("End the Override with next Meal")
+                            }
+                        }
+
+                        HStack {
+                            Toggle(isOn: $state.glucoseOverrideThresholdActive) {
+                                Text("End the Override when Glucose is Trending Up")
+                            }
+                        }
+
+                        if state.glucoseOverrideThresholdActive {
+                            HStack {
+                                Text("And when Glucose is higher than")
+                                BGTextField(
+                                    "0",
+                                    mgdlValue: $state.glucoseOverrideThreshold,
+                                    units: $state.units,
+                                    isDisabled: false,
+                                    liveEditing: true
+                                )
+                            }
+                        }
+
+                        HStack {
+                            Toggle(isOn: $state.glucoseOverrideThresholdActiveDown) {
+                                Text("End the Override when Glucose is Lower ...")
+                            }
+                        }
+
+                        if state.glucoseOverrideThresholdActiveDown {
+                            HStack {
+                                Text("... than")
+                                BGTextField(
+                                    "0",
+                                    mgdlValue: $state.glucoseOverrideThresholdDown,
+                                    units: $state.units,
+                                    isDisabled: false,
+                                    liveEditing: true
+                                )
+                            }
+                        }
                     }
                 } header: { Text("Advanced Settings") }
 
@@ -277,7 +340,7 @@ extension OverrideProfilesConfig {
 
                         if state.autoISFsettings.autoisf {
                             Toggle(isOn: $state.autoISFsettings.enableBGacceleration) {
-                                Text("Enable BG Acceleration")
+                                Text("Enable BG acceleration")
                             }
 
                             HStack {
@@ -332,7 +395,7 @@ extension OverrideProfilesConfig {
                             }
 
                             HStack {
-                                Text("Dura ISF Hourly Max Change")
+                                Text("Duration Weight")
                                 DecimalTextField(
                                     "0",
                                     value: $state.autoISFsettings.autoISFhourlyChange,
@@ -342,7 +405,7 @@ extension OverrideProfilesConfig {
                             }
 
                             HStack {
-                                Text("ISF Weight for higher BGs")
+                                Text("ISF weight for higher BG")
                                 DecimalTextField(
                                     "0",
                                     value: $state.autoISFsettings.higherISFrangeWeight,
@@ -352,7 +415,7 @@ extension OverrideProfilesConfig {
                             }
 
                             HStack {
-                                Text("ISF Weight for lower BGs")
+                                Text("ISF weight for lower BG")
                                 DecimalTextField(
                                     "0",
                                     value: $state.autoISFsettings.lowerISFrangeWeight,
@@ -362,17 +425,16 @@ extension OverrideProfilesConfig {
                             }
 
                             HStack {
-                                Text("ISF Weight for postprandial BG rise")
+                                Text("ISF weight for postprandial BG rise")
                                 DecimalTextField(
                                     "0",
                                     value: $state.autoISFsettings.postMealISFweight,
-                                    formatter: higherPrecisionFormatter,
-                                    liveEditing: true
+                                    formatter: promilleFormatter, liveEditing: true
                                 )
                             }
 
                             HStack {
-                                Text("ISF Weight while BG accelerates")
+                                Text("ISF weight while BG accelerates")
                                 DecimalTextField(
                                     "0",
                                     value: $state.autoISFsettings.bgAccelISFweight,
@@ -382,7 +444,7 @@ extension OverrideProfilesConfig {
                             }
 
                             HStack {
-                                Text("ISF Weight while BG deccelerates")
+                                Text("ISF weight while BG decelerates")
                                 DecimalTextField(
                                     "0",
                                     value: $state.autoISFsettings.bgBrakeISFweight,
@@ -428,7 +490,7 @@ extension OverrideProfilesConfig {
                                 }
 
                                 HStack {
-                                    Text("Upper SMB limit")
+                                    Text("Upper BG limit")
                                     BGTextField(
                                         "0",
                                         mgdlValue: $state.autoISFsettings.b30upperLimit,
@@ -439,7 +501,7 @@ extension OverrideProfilesConfig {
                                 }
 
                                 HStack {
-                                    Text("Upper Delta SMB limit")
+                                    Text("Upper Delta limit")
                                     BGTextField(
                                         "0",
                                         mgdlValue: $state.autoISFsettings.b30upperdelta,
@@ -527,7 +589,7 @@ extension OverrideProfilesConfig {
                             Button("Start") {
                                 showAlert.toggle()
                                 let duration = TimeInterval(state.duration * 60)
-                                alertSring = "\(state.percentage.formatted(.number)) %, " +
+                                alertSring = (formatter.string(from: state.percentage as NSNumber) ?? "100") + "%, " +
                                     (
                                         state.duration > 0 && !state._indefinite ? (
                                             dateFormatter
@@ -653,6 +715,9 @@ extension OverrideProfilesConfig {
                 VStack(alignment: .leading, spacing: 1) {
                     HStack {
                         Text(name).padding(.vertical, 4)
+                        if preset.advancedSettings, preset.endWIthNewCarbs {
+                            Image("PreMealOverride").foregroundStyle(.green)
+                        }
                         Spacer()
                     }
                     HStack {
@@ -664,12 +729,20 @@ extension OverrideProfilesConfig {
                         if let aisf = autoisfSettings, preset.overrideAutoISF {
                             bool(bool: aisf.autoisf, setting: state.currentSettings.autoisf, label: "Auto ISF")
                         }
+
+                        if preset.glucoseOverrideThresholdActive || preset.glucoseOverrideThresholdActiveDown {
+                            Image(systemName: "drop.fill").foregroundStyle(.red)
+                        }
                     }
                     .font(.caption)
 
                     if preset.advancedSettings {
                         HStack {
-                            percent != 1 && !(preset.isf && preset.cr && preset.basal) ? Text("Adjust " + isfAndCRstring) : nil
+                            percent != 1 && !(preset.isf && preset.cr && preset.basal) ?
+                                Text(
+                                    NSLocalizedString("Adjust ", comment: "Override adjustment of ISF, CR and Basal") +
+                                        isfAndCRstring
+                                ) : nil
                             if !preset.smbIsOff {
                                 decimal(decimal: preset.smbMinutes ?? 0, setting: state.defaultSmbMinutes, label: "SMB ")
                                 decimal(decimal: preset.uamMinutes ?? 0, setting: state.defaultUamMinutes, label: "UAM ")
@@ -685,20 +758,14 @@ extension OverrideProfilesConfig {
                     // All of the Auto ISF Settings (Bool and Decimal optionals)
                     if preset.overrideAutoISF, let aisf = autoisfSettings, aisf.autoisf {
                         let standard = state.currentSettings
-
                         HStack {
-                            bool(
-                                bool: aisf.enableBGacceleration,
-                                setting: standard.enableBGacceleration,
-                                label: "Accel"
-                            )
-                            bool(bool: aisf.ketoProtect, setting: standard.ketoProtect, label: "Keto")
-                            bool(bool: aisf.use_B30, setting: standard.use_B30, label: "B30 ")
+                            bool(bool: aisf.enableBGacceleration, setting: standard.enableBGacceleration, label: "Accel")
+                                .frame(maxHeight: 30)
+                            bool(bool: aisf.ketoProtect, setting: standard.ketoProtect, label: "Keto").frame(maxHeight: 30)
+                            bool(bool: aisf.use_B30, setting: standard.use_B30, label: "B30").frame(maxHeight: 30)
 
-                            HStack {
-                                decimal(decimal: aisf.autoisf_min, setting: standard.autoisf_min, label: "Min: ")
-                                decimal(decimal: aisf.autoisf_max, setting: standard.autoisf_max, label: "Max: ")
-                            }
+                            decimal(decimal: aisf.autoisf_min, setting: standard.autoisf_min, label: "Min: ")
+                            decimal(decimal: aisf.autoisf_max, setting: standard.autoisf_max, label: "Max: ")
                         }
                         .foregroundStyle(.secondary).font(.caption)
 
@@ -768,7 +835,7 @@ extension OverrideProfilesConfig {
         }
 
         private var edit: some View {
-            overridesView
+            overridesView.dynamicTypeSize(...DynamicTypeSize.xxLarge)
         }
 
         private func unChanged() -> Bool {
@@ -779,16 +846,20 @@ extension OverrideProfilesConfig {
             let smbMinutesUnchanged = state.smbMinutes == state.defaultSmbMinutes
             let uamMinutesUnchanged = state.uamMinutes == state.defaultUamMinutes
             let autoISFUnchanged = !state.overrideAutoISF
+            let glucoseOverrideUnchanged = !state.glucoseOverrideThresholdActive
 
             return percentUnchanged && targetUnchanged && smbUnchanged && maxIOBUnchanged && smbMinutesUnchanged &&
-                uamMinutesUnchanged && autoISFUnchanged
+                uamMinutesUnchanged && autoISFUnchanged && glucoseOverrideUnchanged
         }
 
         private func decimal(decimal: NSDecimalNumber?, setting: Decimal, label: String) -> Text? {
-            if let dec = decimal as? Decimal, round(dec) != round(setting) {
-                return Text(label + "\(dec)")
+            guard let dec = decimal as? Decimal, round(dec) != round(setting) else { return nil }
+
+            guard label != "pp: " else {
+                return Text(label + (promilleFormatter.string(from: decimal ?? 0) ?? ""))
             }
-            return nil
+
+            return Text(label + "\(dec)")
         }
 
         private func bool(bool: Bool, setting: Bool, label: String) -> AnyView? {
@@ -831,7 +902,7 @@ extension OverrideProfilesConfig {
             do {
                 try moc.save()
             } catch {
-                // To do: add error
+                debug(.apsManager, "Couldn't profile preset at \(offsets).")
             }
         }
 
@@ -840,7 +911,7 @@ extension OverrideProfilesConfig {
 
             saveOverride.duration = state.duration as NSDecimalNumber
             saveOverride.indefinite = state._indefinite
-            saveOverride.percentage = state.percentage
+            saveOverride.percentage = state.percentage.rounded()
             saveOverride.smbIsOff = state.smbIsOff
             saveOverride.name = state.profileName
             saveOverride.emoji = state.emoji
@@ -854,6 +925,7 @@ extension OverrideProfilesConfig {
             } else { saveOverride.target = 6 }
 
             saveOverride.advancedSettings = state.advancedSettings
+            saveOverride.endWIthNewCarbs = state.endWIthNewCarbs
             saveOverride.isfAndCr = state.isfAndCr
             if !state.isfAndCr {
                 saveOverride.isf = state.isf
@@ -875,6 +947,17 @@ extension OverrideProfilesConfig {
             if state.overrideMaxIOB {
                 saveOverride.maxIOB = state.maxIOB as NSDecimalNumber
             }
+
+            saveOverride.glucoseOverrideThresholdActive = state.glucoseOverrideThresholdActive
+            if state.glucoseOverrideThresholdActive {
+                saveOverride.glucoseOverrideThreshold = state.glucoseOverrideThreshold as NSDecimalNumber
+            }
+
+            saveOverride.glucoseOverrideThresholdActiveDown = state.glucoseOverrideThresholdActiveDown
+            if state.glucoseOverrideThresholdActiveDown {
+                saveOverride.glucoseOverrideThresholdDown = state.glucoseOverrideThresholdDown as NSDecimalNumber
+            }
+
             saveOverride.date = Date.now
 
             if state.overrideAutoISF {
@@ -884,7 +967,7 @@ extension OverrideProfilesConfig {
             do {
                 try moc.save()
             } catch {
-                // To do: add error
+                debug(.apsManager, "Failed to save \(moc.updatedObjects)")
             }
         }
     }

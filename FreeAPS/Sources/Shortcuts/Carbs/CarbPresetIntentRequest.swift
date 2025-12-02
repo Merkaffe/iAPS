@@ -18,9 +18,8 @@ final class CarbPresetIntentRequest: BaseIntentsRequest {
                 fat: Decimal(quantityFat),
                 protein: Decimal(quantityProtein),
                 note: "add with shortcuts",
-                enteredBy: CarbsEntry.manual,
-                isFPU: (quantityFat > 0 || quantityProtein > 0) ? true : false,
-                fpuID: (quantityFat > 0 || quantityProtein > 0) ? UUID().uuidString : nil
+                enteredBy: CarbsEntry.shortcut,
+                isFPU: (quantityFat > 0 || quantityProtein > 0) ? true : false
             )]
         )
         var resultDisplay: String

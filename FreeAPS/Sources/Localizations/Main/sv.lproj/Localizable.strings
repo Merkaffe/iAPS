@@ -16,6 +16,15 @@
 /* Continue after added carbs without bolus */
 "Continue without bolus" = "Fortsätt utan bolus";
 
+/* History View */
+"No data." = "Ingen data.";
+
+/* Bolus View */
+"No Predictions. Failed loop suggestion." = "Inga blodsockerprognoser. Misslyckad loop.";
+
+/* Bolus View */
+"New Glucose Missing" = "Nytt blodsocker saknas";
+
 /* Continue after added meal without bolus */
 "Save Meal without bolus" = "Spara måltid utan bolus";
 
@@ -157,6 +166,15 @@
 /* Add carbs header and button in Watch app. You can skip the last " " space. It's just for differentiation */
 "Add Carbs " = "Lägg till";
 
+/* Home View */
+"Override" = "Undantag";
+
+/* Home View Message if no pump is connected */
+"No Pump" = "Ingen pump";
+
+/* Home View Message if open loop is active */
+"Open" = "Öppen";
+
 /*  */
 "Amount Carbs" = "Mängd kolhydrater";
 
@@ -172,6 +190,21 @@
 /* */
 "Are you sure?" = "Är du säker?";
 
+/* */
+"Clear Records" = "Rensa data";
+
+/* */
+"Delete CoreData database records" = "Ta bort CoreData - data";
+
+/* */
+"Delete NS records" = "Radera NS-data";
+
+/* */
+"All records in " = "Alla data i ";
+
+/* */
+" will be deleted!" = " kommer att raderas!";
+
 /* Bottom target temp */
 "Bottom target" = "Nedre målvärde";
 
@@ -180,6 +213,9 @@
 
 /*  */
 "Cancel Temp Target" = "Avbryt tillfälligt målvärde";
+
+/*  */
+"Cancel Temporary Target" = "Avbryt tillfälligt målvärde";
 
 /* Custom temp target */
 "Custom" = "Anpassad";
@@ -262,6 +298,9 @@
 /*  */
 "Autotune" = "Autotune";
 
+/* Debug option view Dynamic Variables */
+"Dynamic Variables" = "Dynamiska variabler";
+
 /*  */
 "Basal profile" = "Basalinställningar";
 
@@ -297,6 +336,9 @@
 
 /*  */
 "Schedule" = "Schema";
+
+/* */
+"(standard units / hour)" = "(standardenheter / timme)";
 
 /*  */
 "starts at" = "startar kl";
@@ -449,6 +491,9 @@ Enact a temp Basal or a temp target */
 /* Add Omnipod pump */
 "Add Omnipod" = "Lägg till Omnipod";
 
+/* Add Dana-i/RS pump */
+"Add Dana-i/RS" = "Lägg till Dana-i/RS";
+
 /* Add Simulator pump */
 "Add Simulator" = "Lägg till simulator";
 
@@ -598,10 +643,16 @@ Enact a temp Basal or a temp target */
 "Display on Watch" = "Visa på klocka";
 
 /* */
+"Display either Overrides or Temp Targets" = "Visa antingen knapp för profiler eller knapp för tillfälliga målvärden";
+
+/* */
 "Garmin Watch" = "Garmin - klocka";
 
 /* */
 "Add devices" = "Lägg till enhet";
+
+/* */
+"Profile Overrides Button / Temp Targets Button" = "Knapp för profiler / Tillfälliga målvärden";
 
 /* */
 "Glucose Target" = "Målvärde för glukos";
@@ -614,6 +665,9 @@ Enact a temp Basal or a temp target */
 
 /* */
 "ISF" = "ISF";
+
+/* */
+"% Override" = "% Undantag";
 
 /* */
 "The app Garmin Connect must be installed to use for iAPS.\n Go to App Store to download it" = "Appen 'Garmin Connect' måste  vara installerad för att kunna användas med iAPS.\n Gå till App Store för att ladda ner";
@@ -687,8 +741,23 @@ Enact a temp Basal or a temp target */
 /* Treatments list */
 "Treatments" = "Behandlingar";
 
+/* Add Insulin */
+"Add Insulin" = "Lägg till insulin";
+
+/* Add Glucose */
+"Add Glucose" = "Lägg till blodsocker";
+
+/* New Glucose */
+"New Glucose" = "Nytt blodsocker";
+
 /* Hypo Treatment Preset */
 "Treatment" = "Behandling";
+
+/* Hypo Treatment Default Value */
+"Default  📉" = "Standard 📉";
+
+/* Hypo Treatment Default Value */
+"None" = "Ingen";
 
 /* " min" in Treatments list */
 " min" = " min";
@@ -913,7 +982,10 @@ Enact a temp Basal or a temp target */
 "Sensor Info" = "SensorInfo";
 
 /* */
-"Sensor Age" = "Sensorålder";
+"Sensor Life-Span" = "Sensorlivslängd i dagar";
+
+/* */
+"When using %@ iAPS doesn't know the type of sensor used or the sensor life-span." = "Vid användning av %@ känner iAPS inte till vilken typ av sensor som används eller sensorns livslängd.";
 
 /* */
 "Sensor Age Left" = "Sensortid kvar";
@@ -961,7 +1033,7 @@ Enact a temp Basal or a temp target */
 "Delete CGM" = "Radera CGM";
 
 /* */
-"Are you sure you want to remove this cgm from loop?" = "Är du säker på att du vill ta bort denna CGM från iAPS?";
+"Are you sure you want to remove this cgm from iAPS?" = "Är du säker på att du vill ta bort denna CGM från iAPS?";
 
 /* */
 "There is no undo" = "Det går inte att ångra!";
@@ -1118,6 +1190,9 @@ Enact a temp Basal or a temp target */
 /* Temp Basal Shortcut */
 "Temp basal Amount in U/h" = "Temporär basaldos i enheter per timme";
 
+/* */
+"Cancel Temp" = "Avbryt temporär basal";
+
 
 
 /* */
@@ -1146,6 +1221,12 @@ Enact a temp Basal or a temp target */
 
 /* */
 "No Glucose Alarm active" = "Inget blodsockerlarm aktivt";
+
+/* */
+"Ascending Glucose Alarm active" = "Stigande blodsockerlarm aktivt";
+
+/* */
+"Descending Glucose Alarm active" = "Fallande blodsockerlarm aktivt";
 
 /* */
 "snoozing until %@" = "snoozar till %@";
@@ -1187,7 +1268,7 @@ Enact a temp Basal or a temp target */
 "Backfill options" = "Alternativ för återfyllnad";
 
 /* */
-"Backfilling from trend is currently not well supported by Loop" = "Återfyllning från trend stöds för närvarande inte bra av Loop";
+"Backfilling from trend is currently not well supported by iAPS" = "Återfyllning från trend stöds för närvarande inte bra av iAPS";
 
 /* */
 "Backfill from history" = "Återfyll från historik";
@@ -1212,6 +1293,57 @@ Enact a temp Basal or a temp target */
 
 /* */
 "Carbs Required Threshold" = "Tröskelvärde för kolhydrater som krävs";
+
+/* */
+"Carbs Required" = "Kolhydrater krävs";
+
+/* */
+"Sounds" = "Ljud";
+
+/* Sound for Hypo alert */
+"Hypoglycemia" = "Lågt blodsocker";
+
+/* Sound for Hyper alert */
+"Hyperglycemia" = "Högt blodsocker";
+
+/* Sound for ascending glucose */
+"Rapidly Ascending" = "Snabbt stigande";
+
+/* Sound for descending glucose */
+"Rapidly Descending" = "Snabbt fallande";
+
+/* Silent sound option */
+"Silent" = "Tyst";
+
+/* Option for no sound */
+"Silent" = "Tyst";
+
+/* Option for default notification sound */
+"Default" = "Standard";
+
+/* The iOS default sound */
+"iOS default sound" = "iOS standardljud";
+
+/* Alert for descending glucose */
+"RAPIDLY DESCENDING GLUCOSE!" = "SNABBT FALLANDE BLODSOCKER!";
+
+/* Alert for ascending glucose */
+"RAPIDLY ASCENDING GLUCOSE!" = "SNABBT STIGANDE BLODSOCKER!";
+
+/* Sound for bolus failure */
+"Bolus Failure" = "Bolus misslyckades";
+
+/* Sound for missing loops */
+"Missing Loops" = "Saknade loopar";
+
+/* Alert for ascending glucose */
+"Ascending" = "Stigande";
+
+/* Alert for descending glucose */
+"Descending" = "Sjunkande";
+
+/* Thresholds for Alerts */
+"Thresholds" = "Tröskelvärden";
 
 /* */
 "Carbs required: %d g" = "Kolhydrater som krävs: %d g";
@@ -1325,7 +1457,10 @@ Enact a temp Basal or a temp target */
 "Developer" = "Utvecklare";
 
 /* Debug option view NS Upload Profile */
-"NS Upload Profile" = "Ladda upp profil till NS";
+"NS Upload Profile and Settings" = "NS Ladda upp profil och inställningar";
+
+/* Debug option delete all NS overrides */
+"Delete All NS Overrides" = "Ta bort alla NS-undantag";
 
 /* Debug option view NS Uploaded Profile */
 "NS Uploaded Profile" = "Uppladdad profil";
@@ -1348,8 +1483,11 @@ Enact a temp Basal or a temp target */
 /* Debug option view Pump History */
 "Pump History" = "Pumphistorik";
 
+/* Debug option view Temp Basals */
+"Temp Basals" = "Temporära basaler";
+
 /* Debug option view Target Ranges */
-"Target ranges" = "Målvärden";
+"Targets ranges" = "Målvärden";
 
 /* Debug option view Temp targets */
 "Temp targets" = "Tillfälliga målvärden";
@@ -1372,6 +1510,9 @@ Enact a temp Basal or a temp target */
 /* Debug option view Enacted announcements announcements (from NS) */
 "Enacted announcements" = "Överförda meddelanden";
 
+/* Debug option view Not Uploaded Overrides */
+"Overrides Not Uploaded" = "Undantag ej uppladdade";
+
 /* Debug option view Autotune */
 "Autotune" = "Autotune";
 
@@ -1392,10 +1533,10 @@ Enact a temp Basal or a temp target */
 "Connect to Apple Health" = "Anslut till Apple Hälsa";
 
 /* Show when have not permissions for writing to Health */
-"For write data to Apple Health you must give permissions in Settings > Health > Data Access" = "För att kunna skriva data till Apple Hälsa måste du först ge din tillåtelse i Inställningar > Hälsa > Datatillgång och enheter";
+"To allow iAPS to write data to Apple Health, you must grant permission in Settings > Health > Data Access." = "För att kunna skriva data till Apple Hälsa måste du först ge din tillåtelse i Inställningar > Hälsa > Datatillgång och enheter";
 
 /* */
-"This allows iAPS to read from and write to Apple Heath. You must also give permissions in Settings > Health > Data Access. If you enter a glucose value into Apple Health, open iAPS to confirm it shows up." = "Tillåt iAPS att använda databasen Apple Hälsa. För att se och ändra tillåtelser öppna 'Inställningar/Hälsa/Datatillgång och enheter' på din iPhone.";
+"This allows iAPS to read from and write to Apple Heath. You must also give permissions in Settings > Health > Data Access." = "Tillåt iAPS att använda databasen Apple Hälsa. För att se och ändra tillåtelser öppna 'Inställningar/Hälsa/Datatillgång och enheter' på din iPhone.";
 
 /* New ALerts ------------------------- */
 /* Info title */
@@ -1423,7 +1564,7 @@ Enact a temp Basal or a temp target */
 " -  Manual Basal ⚠️" = " -  Manuell basal ⚠️";
 
 /* Total AT / Scheduled basal insulin */
-" U/day" = " IE/dag";
+"U/day" = "IE/dag";
 
 /* Total AT / Scheduled basal insulin */
 "Total" = "Totalt";
@@ -1472,6 +1613,9 @@ Enact a temp Basal or a temp target */
 /* Service Section */
 "Fat And Protein Conversion" = "Fett och protein";
 
+/* Ignore flat CGM readings */
+"Ignore flat CGM readings" = "Ignorera varningar för oförändrade sensorvärden";
+
 /* Service Section */
 "Profile Override" = "Undantag från dina sparade profiler";
 
@@ -1501,6 +1645,21 @@ Enact a temp Basal or a temp target */
 /* */
 "Disable SMBs" = "Stäng av autobolusar (SMBs)";
 
+/* */
+"End the Override with next Meal" = "Avsluta profilen med nästa måltid";
+
+/* */
+"End the Override when Glucose is Trending Up" = "Avsluta profilen när blodsockret trendar uppåt";
+
+/* */
+"And when Glucose is higher than" = "Och när blodsockret är högre än";
+
+/* */
+"End the Override when Glucose is Lower ..." = "Avsluta profilen när blodsockret är lägre ...";
+
+/* */
+"... than" = "... än";
+
 /* Your normal Profile. Use a short string */
 "Normal Profile" = "Normal Profil";
 
@@ -1509,6 +1668,9 @@ Enact a temp Basal or a temp target */
 
 /* */
 "Profiles" = "Profiler";
+
+/* */
+"Advanced Settings" = "Avancerade inställningar";
 
 /* */
 "More options" = "Fler alternativ";
@@ -1526,10 +1688,16 @@ Enact a temp Basal or a temp target */
 "Change CR" = "Ändra CR";
 
 /* */
+"Change Basal" = "Ändra basal";
+
+/* */
 "SMB Minutes" = "SMB-minuter";
 
 /* */
 "UAM SMB Minutes" = "UAM-SMB-minuter";
+
+/* */
+"Override Max IOB" = "Åsidosätt max IOB";
 
 /* */
 "Start new Profile" = "Starta ny profil";
@@ -1645,6 +1813,9 @@ Enact a temp Basal or a temp target */
 "Eventual Glucose" = "Blodsockerprognos";
 
 /* */
+"Minimum Predicted Glucose" = "Lägsta beräknade blodsocker";
+
+/* */
 "Please wait" = "Vänta...";
 
 /* */
@@ -1697,6 +1868,12 @@ Enact a temp Basal or a temp target */
 
 /* Add insulin without bolusing alert */
 " without bolusing" = " utan att ge insulin";
+
+/* */
+"Don't Use 15 min Trend" = "Använd inte 15 min - trend";
+
+/* */
+"Don't adjust for past 15 minutes glucose trend." = "Justera inte för de senaste 15 minuternas glukostrend.";
 
 /* -------------------------------------------------------------------------------------------
   DASH strings
@@ -1781,7 +1958,7 @@ Enact a temp Basal or a temp target */
 "%1$@ for %2$@" = "%1$@ i %2$@";
 
 /* Description text on manual temp basal action sheet */
-"Loop will not automatically adjust your insulin delivery until the temporary basal rate finishes or is canceled." = "iAPS kommer inte automatiskt att justera dina insulindoser förrän den temporära basalen är färdig eller har avbrytits.";
+"iAPS will not automatically adjust your insulin delivery until the temporary basal rate finishes or is canceled." = "iAPS kommer inte automatiskt att justera dina insulindoser förrän den temporära basalen är färdig eller har avbrytits.";
 /* Button text for setting manual temporary basal rate*/
 "Set Temporary Basal" = "Ställ in temporaär basal";
 
@@ -1892,10 +2069,16 @@ Enact a temp Basal or a temp target */
 "2 hours" = "2 timmar";
 
 /* */
+"3 hours" = "3 timmar";
+
+/* */
 "4 hours" = "4 timmar";
 
 /* */
 "6 hours" = "6 timmar";
+
+/* */
+"9 hours" = "9 timmar";
 
 /* */
 "12 hours" = "12 timmar";
@@ -2008,8 +2191,8 @@ Enact a temp Basal or a temp target */
 /* HbA1c for all glucose storage days */
 "all" = "alla";
 
-/* Active Insulin View */
-"Active Insulin" = "Aktivt insulin";
+/* IOB View */
+"Insulin on Board" = "Insulin ombord";
 
 /* Active Insulin View */
 "Time with negative insulin" = "Tid med negativt insulin";
@@ -2032,8 +2215,14 @@ Enact a temp Basal or a temp target */
 /* Active Insulin View */
 "TDD 3 days ago" = "TDD för 3 dagar sedan";
 
-/* Active Carbohydrates View */
-"Active Carbohydrates" = "Aktiva kolhydrater";
+/* COB View */
+"Carbohydrates on Board" = "Kolhydrater ombord";
+
+/* UI/UX-setting */
+"Display COB Chart" = "Visa COB-diagram";
+
+/* UI/UX-setting */
+"Display Insulin Activity Chart" = "Visa diagram för insulinaktivitet";
 
 /* --------------------------------------------------------  Dexcom G7 --------------------------------------*/
 
@@ -2060,7 +2249,7 @@ Enact a temp Basal or a temp target */
 "Share and Backup" = "Dela och säkerhetskopiera";
 
 /* Section 1 title */
-"Upload settings and statistics" = "Ladda upp inställningar och statistik";
+"Upload Settings and Statistics" = "Ladda upp inställningar och statistik";
 
 /* On-off toggle */
 "Share and Backup all of your Settings and Statistics" = "Dela och säkerhetskopiera alla dina inställningar och statistik";
@@ -2224,7 +2413,7 @@ Enact a temp Basal or a temp target */
 "WideFontTracking" = "Bred";
 
 /* Contact Image, settings, light font weight */
-"LightFontWeight" = "Lätt";
+"LightFontWeight" = "Ljus";
 
 /* Contact Image, settings, regular font weight */
 "RegularFontWeight" = "Reguljär";
@@ -2267,6 +2456,11 @@ Enact a temp Basal or a temp target */
 
 /* Contact Image, settings, loop status (data to display) */
 "LoopStatusContactValue" = "Loopstatus";
+
+/* --------------------------  Dana Pump  ---------------------- */
+/* Dana footer */
+
+"Dana pump does not allow editing of max basal and max bolus. Configure these in the doctor's settings of the pump. Saving the settings will fetch the lastest values from the pump" = "Dana-pumpen tillåter inte ändring av max basal och max bolus i iAPS. Ändra istället dessa inställningar på pumpen. När du klickar på spara kommer de senaste inställningarna att hämtas från pumpen";
 
 /* --------- Auto ISF --------- */
 /* */
@@ -2347,13 +2541,13 @@ Enact a temp Basal or a temp target */
 "Upper Delta limit" = "Övre gräns för blodsockerdelta";
 
 /* */
-"SMBs will be diabled when under this limit, while a B30 Basal rate is running. Default is 8 mg/dl (0.5 mmol/l)." = "Automatiska bolusar (SMBs) kommer att stängas av när ditt negativa blodsockerdelta är under denna inställning, under tiden en B30-basaldos körs. Standardvärde är 0,5 mmol/l.";
+"SMBs will be disabled when under this limit, while a B30 Basal rate is running. Default is 8 mg/dl (0.5 mmol/l)." = "Automatiska bolusar (SMBs) kommer att stängas av när ditt negativa blodsockerdelta är under denna inställning, under tiden en B30-basaldos körs. Standardvärde är 0,5 mmol/l.";
 
 /* */
 "Upper BG limit" = "Övre blodsockergräns";
 
 /* */
-"SMBs will be diabled when under this limit, while a B30 Basal rate is running. Default is 130 mg/dl (7.2 mmol/l)." = "Automatiska bolusar (SMBs) kommer att stängas av när ditt blodsocker är under denna inställning, under tiden en B30-basaldos körs. Standardvärde är 7,2 mmol/l.";
+"SMBs will be disabled when under this limit, while a B30 Basal rate is running. Default is 130 mg/dl (7.2 mmol/l)." = "Automatiska bolusar (SMBs) kommer att stängas av när ditt blodsocker är under denna inställning, under tiden en B30-basaldos körs. Standardvärde är 7,2 mmol/l.";
 
 /* */
 "Target Level for B30 to be enacted" = "Målvärde för blodsocker för att aktivera B30";
@@ -2404,27 +2598,27 @@ Enact a temp Basal or a temp target */
 "Default value: 0.0 This is the weight applied to the polygon which adapts ISF higher deltas. With 0.0 the effect is effectively disabled." = "Standardvärde: 0,0. Detta är den vikt som tillämpas på polygonen som justerar din insulinkänslighet vid högt blodsockerdelta (delta innebär här positiv differens från mälvärde). Vid 0,0 är denna justering inaktiverad.";
 
 /* */
-"ISF weight for lower BG's" = "Justering för låga blodsocker";
+"ISF weight for lower BG" = "Justering för låga blodsocker";
 
 /* */
 "Default value: 0.0 This is the weight applied to the polygon which adapts ISF if glucose is below target. With 0.0 the effect is effectively disabled." = "Standardvärde: 0,0. Detta är den vikt som tillämpas på polygonen som justerar din insulinkänslighet vid låga blodsocker. Vid 0,0 är denna justering inaktiverad.";
 
 /* */
-"ISF weight for higher BG's" = "Justering för höga blodsocker";
+"ISF weight for higher BG" = "Justering för höga blodsocker";
 
 /* */
 "Default value: 0.0 This is the weight applied to the polygon which adapts ISF if glucose is above target. With 0.0 the effect is effectively disabled." = "Standardvärde: 0,0. Detta är den vikt som tillämpas på polygonen som justerar din insulinkänslighet vid höga blodsocker. Vid 0,0 är denna justering inaktiverad.";
 
 /* */
-"Dura ISF Hourly Max Change" = "Maxjustering av insulinkänslighet per timme";
+"Duration Weight" = "Justering för långvarigt högt blodsocker";
 
 /* */
-"Rate at which ISF is reduced per hour assuming BG level remains at double target for that time. When value = 1.0, ISF is reduced to 50% after 1 hour of BG level at 2x target." = "Hastigheten med vilken din insulinkänslighet reduceras per timme förutsatt att blodsockernivån förblir dubbelt så hög som ditt målvärde vid tidpunkten. När värdet är 1,0 kommer insulinkänsligheten att reduceras till 50% efter 1 timme av blodsocker över dubbla målvärdet.";
+"Weight for a prolonged high glucose. For every hour the glucose stays high this adjustment will lower your ISF more.\n\nThe formula for Dura ISF adjustment is:\n\nDura ISF = 1 + hours above target * weight / target * (average glucose - target glucose)" = "Den vikt som tillämpas på ett långvarigt högt blodsocker. För varje timme som ditt blodsocker är för högt kommer din insulinkänslighet att justeras nedåt. \n\nFormeln för justering är:\n\nJustering = 1 + timmar över målvärde * vikt / målvärde * (genomsnittligt blodsocker - målvärde)";
 
 /* */
 "SMB Delivery Ratio BG Range" = "Blodsockerintervall för SMB-kvot";
 
-/* */
+/* SMB Delivery Ratio BG Range description */
 "Default value: 0, Sensible is between 40 mg/dL and 120 mg/dL. The linearly increasing SMB delivery ratio is mapped to the glucose range [target_bg, target_bg+bg_range]. At target_bg the SMB ratio is smb_delivery_ratio_min, at target_bg+bg_range it is smb_delivery_ratio_max. With 0 the linearly increasing SMB ratio is disabled and the fix smb_delivery_ratio is used." = "Standardvärde: 0. Rimlig inställning är mellan 2 och 6 mmol/l. Den linjärt ökande SMB-kvoten beror på blodsockerintervallinställningen och min/max-inställning för din SMB-kvot.";
 
 /* */
@@ -2461,6 +2655,9 @@ Enact a temp Basal or a temp target */
 "Enables the BG acceleration adaptions, adjusting ISF for accelerating/decelerating blood glucose." = "Aktivera blodsockeraccelerationsjusteringar. Justerar ISF vid ett accelererande / decelererande blodsocker.";
 
 /* */
+"Override Auto ISF" = "Ändra Auto ISF";
+
+/* */
 "Enable Auto ISF" = "Aktivera Auto ISF";
 
 /* */
@@ -2472,8 +2669,29 @@ Enact a temp Basal or a temp target */
 /* */
 "Max IOB Threshold Percent" = "Procent av Max IOB som tröskelvärde för SMB";
 
+/* IOB Threshold Percent Description */
+"Percentage of the max IOB setting to use for SMBs while Auto ISF is enabled.\n\nWhile current IOB is below the threshold, the SMB amount can exceed the threshold by 30%, however never the max IOB setting.\n\nAt 100% this setting is disabled." = "Begränsa dina SMB (automatiska bolusar) med en procent av fin inställning för maximalt tillåten mängd aktivt insulin (Max IOB). Kommer endast att användas medan Auto ISF är aktivt.\n\nMedan nuvarande aktivt insulin (IOB) ligger under tröskelvärdet, kan SMB-beloppet överskrida detta tröskelvärde med 30%, men kan aldrig överskrida din inställning för maximalt tillåteb mängd aktivt insulin.\n\nPå 100% kommer denna inställning ar inaktiveras.";
+
 /* */
 "Auto ISF" = "Auto ISF";
+
+/* Is true */
+" on" = " på";
+
+/* Is false */
+" off" = " av";
+
+/* Override adjustment of ISF, CR and Basal */
+"Adjust " = "Justera ";
+
+/* History of the adjustments */
+"Final Ratio" = "Kvot";
+
+/* History of the adjustments */
+"Adjustments" = "Justeringar";
+
+/* History of the adjustments */
+"Insulin" = "Insulin";
 
 /* ---------------------------------------------------------------------------------------------------------------
   Infotexts from openaps.docs and androidaps.docs
@@ -2661,7 +2879,7 @@ Enact a temp Basal or a temp target */
 "Remaining Carbs Cap" = "Max mängd absorption av kolhydrater";
 
 /* "Remaining Carbs Cap" */
-"This is the amount of the maximum number of carbs we’ll assume will absorb over 4h if we don’t yet see carb absorption." = "Mängd av maximala antal kolhydrater som vi antar kommer att absorberas över 4h om vi ännu inte ser 'carb absorption'.";
+"This is the amount of the maximum number of carbs we’ll assume will absorb over 4h if we don’t yet see carb absorption. Maximum 90" = "Mängd av maximala antal kolhydrater som vi antar kommer att absorberas över 4h om vi ännu inte ser någon absorption. Maxvärde 90";
 
 /* Headline ”Max SMB Basal Minutes" */
 "Max SMB Basal Minutes" = "Basalminuter för automatiska bolusar (SMB)";
@@ -2801,6 +3019,18 @@ Enact a temp Basal or a temp target */
 "Use alternate Bolus Calculator" = "Använd alternativ boluskalkylator";
 
 /* Bolus Calculator Setting */
+"Use Bolus Calculator" = "Använd boluskalkylator";
+
+/* Bolus Calculator Setting */
+"Depending on your settings the Swift bolus calculator is using data from the OpenAPS glucose predictions and/or from IOB, COB, glucose trend, current gluccose and target glucose. At the end of the calculation a custom factor is applied (default 0.8).\n\nYou can also have the option in your bolus calculator to apply another (!) customizable factor at the end of the calculation which could be useful for fatty meals, e.g Pizza (default 0.7).\n\nThe bolus calculator is NOT using the OpenAPS variable \"insulinRequired\", made for SMBs." = "Beroende på dina inställningar använder Swift-boluskalkylatorn data från OpenAPS glukosprognoser och/eller IOB, COB, glukostrend, nuvarande glukos och målglukos. I slutet av beräkningen tillämpas en anpassad faktor (standard 0,8).\n\nDu kan också ha alternativet i din boluskalkylator för att använda en annan (!) anpassningsbar faktor i slutet av beräkningen som kan vara användbar för fettmåltider, e. Pizza (standard 0,7).\n\nBoluskalkylatorn använder INTE OpenAPS-variabeln \"insulinRequired\".";
+
+/* Bolus Calculator Setting */
+"Adjustment" = "Justering";
+
+/* Bolus Calculator Setting */
+"Use OpenAPS glucose predictions" = "Använd OpenAPS-glukosprognoser";
+
+/* Bolus Calculator Setting */
 "Fatty Meals" = "Fet måltid";
 
 /* Bolus Calculator Setting */
@@ -2809,8 +3039,14 @@ Enact a temp Basal or a temp target */
 /* Bolus Calculator Footer */
 "The new alternate bolus calculator is another approach to the default bolus calculator in iAPS. If the toggle is on you use this bolus calculator and not the original iAPS calculator. At the end of the calculation a custom factor is applied as it is supposed to be when using smbs (default 0.8).\n\nYou can also add the option in your bolus calculator to apply another (!) customizable factor at the end of the calculation which could be useful for fatty meals, e.g Pizza (default 0.7)." = "Den alternativa boluskalkylatorn använder en annan algoritm för beräkning av bolus. För individuell justering kan du ändra justeringsfaktor (standardvärde 0.8) beroende på om du vill få högre (över 1) eller mindre (under 1) bolusrekommendationer.\n\nFö extra feta måltider, tex pizza, finns möjlighet att minska rekommenderad bolus med en annan faktor (standard 0,7).";
 
+/* Bolus Calculator Setting */
+"1. Use the OpenAPS eventual glucose prediction for computing the insulin recommended. This setting will enable the \"old\" calculator. On by default.\n\n2. Use the OpenAPS minPredBG prediction as a complementary safety guard rail, not allowing the glucose prediction to descend below your threshold. This setting can be used together with or without the eventual glucose. On by default" = "1. Använd OpenAPS-glukosprognos för din bolusrekommendation. Denna inställning kommer att aktivera \"gamla\" kalkylatorn. På som standard.\n\n2. Använd OpenAPS-minPredBG-prognos som en kompletterande säkerhetsinställning. Denna inställning kan användas tillsammans med eller utan OpenAPS-glukosprognosen. På som standard";
+
 /* Settings Section */
 "Extra Features" = "Extra";
+
+/* Header */
+"UI/UX Settings" = "UI/UX-inställningar";
 
 /* UI/UX option */
 "Display Predictions" = "Visa prognoser";
@@ -2826,6 +3062,12 @@ Enact a temp Basal or a temp target */
 
 /* UI/UX option */
 "Display Temp Targets Button" = "Visa knapp för tillfälligt målvärde";
+
+/* UI/UX option */
+"Display Profile Override Button" = "Visa profilknapp";
+
+/* UI/UX option */
+"Display Meal Button" = "Visa måltidsknapp";
 
 /* UI/UX option */
 "Home View Button Panel " = "Knappar på hemskärmen ";
@@ -2866,13 +3108,55 @@ Enact a temp Basal or a temp target */
 "Display Glucose Delta" = "Visa exakt glukosförändring";
 
 /* UI/UX option */
+"Display Sensor Age" = "Visa sensorålder";
+
+/* UI/UX option */
+"Display Sensor Time Remaining" = "Visa återstående tid för sensor";
+
+/* UI/UX option */
 "Hide Concentration Badge" = "Dölj koncentrationsmärke";
 
 /* UI/UX option */
 "Use insulin bars" = "Använd insulinstänger";
 
 /* UI/UX option */
+"Use carb bars" = "Använd kolhydratstänger";
+
+/* UI/UX option */
 "Hide the bolus amount strings when amount is under" = "Dölj bolusmängdtext när beloppet är under";
+
+/* UI/UX option */
+"Display carb equivalents" = "Visa kolhydratekvivalenter";
+
+/* UI/UX option */
+"Display carb equivalent amount" = "Visa kolhydratekvivalentmängd";
+
+/* UI/UX option */
+"Display Ratio and a History View button" = "Visa kvot och knapp för historikvisning";
+
+/* UI/UX option */
+"Home View Ratio Button" = "Kvotknapp på hemvy";
+
+/* UI/UX option */
+"Light" = "Ljus";
+
+/* UI/UX option */
+"Dark" = "Mörk";
+
+/* UI/UX option */
+"Auto" = "Automatisk";
+
+/* UI/UX option */
+"Color Scheme" = "Färgschema";
+
+/* UI/UX option */
+"Light / Dark Mode" = "Ljust / Mörkt";
+
+/* Debug option */
+"Neglect Carbohydrates in oref0" = "Negligera kolhydrater i oref0";
+
+/* Debug option */
+"Hide oref0 Predictions" = "Dölj oref0-prognoser";
 
 /* Setting title */
 "Bolus Calculator" = "Boluskalkylator";
@@ -2882,6 +3166,15 @@ Enact a temp Basal or a temp target */
 
 /* Notification option */
 "Live Activity" = "Liveaktiviteter";
+
+/* Show Live Activity */
+"Show Live Activity" = "Visa Liveaktiviteter";
+
+/* Display Chart */
+"Display Chart" = "Visa diagram";
+
+/* Show Predictions */
+"Show Predictions" = "Visa prognoser";
 
 /* Notification option */
 "Live activity displays blood glucose live on the lock screen and on the dynamic island (if available)" = "Liveaktivitet visar senaste blodsockeravläsning på låsskärmen och på Dynamic Island, om sådan finns på din iPhone-modell";
@@ -2933,3 +3226,66 @@ Enact a temp Basal or a temp target */
 
 /* Headline "Adjustment Factor" */
 "Adjustment Factor" = "Justeringskonstant";
+
+/* Apple Watch Overrides */
+"Overrides" = "Undantag";
+
+/* Apple Watch Overrides */
+"Cancel Override" = "Avbryt Undantag";
+
+/* Headline "To enable settings, go to the App Config section in iOS Settings App" */
+"To enable settings, go to the App Config section in iOS Settings App" = "För att visa inställningar gå till iOS-inställningar, under Appar/iAPS";
+
+/* Section header in CGM view */
+"Active CGM" = "Aktiv CGM";
+
+/* pump name label, when pump is a cgm "Pump/CGM" */
+"Pump/CGM" = "Pump/CGM";
+
+/* Button "Stop using the pump as CGM" */
+"Stop using the pump as CGM" = "Sluta att använda pumpen som CGM";
+
+/* Section header in CGM view */
+"Shared App Group Source" = "Källa för delad appgrupp";
+
+/* prefix for the shared app group application */
+"Reading from" = "Läser från";
+
+/* button to disconnect from the shared app group "Disconnect" */
+"Disconnect" = "Koppla från";
+
+
+/* description for Shared App Group Source section */
+"Read BG from an external CGM app using a shared app group." = "Läs BG från en extern CGM-app med hjälp av en delad appgrupp.";
+
+
+/* prefix before the app name on the button to start reading from shared app group */
+"Read from " = "Läs från ";
+
+/* description for the backfill section in Nightscout settings screen */
+"Fetches old glucose readings from Nightscout" = "Hämtar gamla glukosvärden från Nightscout";
+
+/* header and button label for the 'upload old glucose' action in Nightscout settings screen */
+"Upload glucose" = "Ladda upp glukosvärden";
+
+/* description for the 'upload old glucose' section in Nightscout settings screen */
+"Uploads old glucose readings to Nightscout" = "Ladda upp gamla glukosvärden till Nightscout";
+
+/* message when uploads are enabled, but glucose uploads are disabled, in Nightscout settings screen */
+"Glucose upload disabled in CGM settings" = "Uppladdning av blodsocker inaktiverat i CGM-inställningar";
+
+/* header for the CGM list in CGM settings screen */
+"Connect to CGM" = "Anslut till CGM";
+
+
+/* message displayed when the pump is configured to be the CGM as well (enlite), in CGM settings screen */
+"Pump+CGM" = "Pump+CGM";
+
+/* label for the button to remove the CGM when the pump is configured to be the CGM as well (enlite), in CGM settings screen */
+"Stop using the pump as CGM" = "Sluta att använda pumpen som CGM";
+
+/* hint under the CGM list in CGM settings screen */
+"To receive reading from xDrip4iOS, Glucose Direct or another compatible app, select Shared App Group CGM." = "För att ta emot blodsocker från xDrip4iOS, Glucose Direct eller en annan kompatibel app, välj delad appgrupp-CGM.";
+
+/* message displayed in pump settings screen when the pump manager reports uncertain delivery */
+"Pump delivery uncertain" = "Pumpleverans osäker";

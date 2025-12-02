@@ -5,7 +5,12 @@ import Swinject
 extension AutoISF {
     struct RootView: BaseView {
         let resolver: Resolver
-        @StateObject var state = StateModel()
+        @StateObject var state: StateModel
+
+        init(resolver: Resolver) {
+            self.resolver = resolver
+            _state = StateObject(wrappedValue: StateModel(resolver: resolver))
+        }
 
         @State var isPresented = false
         @State var description = Text("")
@@ -159,24 +164,10 @@ extension AutoISF {
                         }
 
                         HStack {
-                            Text("Dura ISF Hourly Max Change")
+                            Text("ISF weight for higher BG")
                                 .onTapGesture {
                                     info(
-                                        header: "Dura ISF Hourly Max Change",
-                                        body: "Rate at which ISF is reduced per hour assuming BG level remains at double target for that time. When value = 1.0, ISF is reduced to 50% after 1 hour of BG level at 2x target.",
-                                        useGraphics: nil
-                                    )
-                                }
-                            Spacer()
-                            DecimalTextField("0", value: $state.autoISFhourlyChange, formatter: formatter)
-                                .disabled(isPresented)
-                        }
-
-                        HStack {
-                            Text("ISF weight for higher BG's")
-                                .onTapGesture {
-                                    info(
-                                        header: "ISF weight for higher BG's",
+                                        header: "ISF weight for higher BG",
                                         body: "Default value: 0.0 This is the weight applied to the polygon which adapts ISF if glucose is above target. With 0.0 the effect is effectively disabled.",
                                         useGraphics: nil
                                     )
@@ -187,10 +178,24 @@ extension AutoISF {
                         }
 
                         HStack {
-                            Text("ISF weight for lower BG's")
+                            Text("Duration Weight")
                                 .onTapGesture {
                                     info(
-                                        header: "ISF weight for lower BG's",
+                                        header: "Duration Weight",
+                                        body: "Weight for a prolonged high glucose. For every hour the glucose stays high this adjustment will lower your ISF more.\n\nThe formula for Dura ISF adjustment is:\n\nDura ISF = 1 + hours above target * weight / target * (average glucose - target glucose)",
+                                        useGraphics: nil
+                                    )
+                                }
+                            Spacer()
+                            DecimalTextField("0", value: $state.autoISFhourlyChange, formatter: formatter)
+                                .disabled(isPresented)
+                        }
+
+                        HStack {
+                            Text("ISF weight for lower BG")
+                                .onTapGesture {
+                                    info(
+                                        header: "ISF weight for lower BG",
                                         body: "Default value: 0.0 This is the weight applied to the polygon which adapts ISF if glucose is below target. With 0.0 the effect is effectively disabled.",
                                         useGraphics: nil
                                     )
@@ -247,7 +252,7 @@ extension AutoISF {
                                 .onTapGesture {
                                     info(
                                         header: "Max IOB Threshold Percent",
-                                        body: "Percent of the max IOB setting to use for SMBs while Auto ISF is enabled.\n\nWhile current IOB is below the threshold, the SMB amount can exceed the threshold by 30%, however never the max IOB setting.\n\nAt 100% this setting is disabled.",
+                                        body: "Percentage of the max IOB setting to use for SMBs while Auto ISF is enabled.\n\nWhile current IOB is below the threshold, the SMB amount can exceed the threshold by 30%, however never the max IOB setting.\n\nAt 100% this setting is disabled.",
                                         useGraphics: nil
                                     )
                                 }
@@ -311,7 +316,7 @@ extension AutoISF {
                                     .onTapGesture {
                                         info(
                                             header: "Upper BG limit",
-                                            body: "SMBs will be diabled when under this limit, while a B30 Basal rate is running. Default is 130 mg/dl (7.2 mmol/l).",
+                                            body: "SMBs will be disabled when under this limit, while a B30 Basal rate is running. Default is 130 mg/dl (7.2 mmol/l).",
                                             useGraphics: nil
                                         )
                                     }
@@ -329,7 +334,7 @@ extension AutoISF {
                                     .onTapGesture {
                                         info(
                                             header: "Upper Delta limit",
-                                            body: "SMBs will be diabled when under this limit, while a B30 Basal rate is running. Default is 8 mg/dl (0.5 mmol/l).",
+                                            body: "SMBs will be disabled when under this limit, while a B30 Basal rate is running. Default is 8 mg/dl (0.5 mmol/l).",
                                             useGraphics: nil
                                         )
                                     }
@@ -460,11 +465,11 @@ extension AutoISF {
                 if scrollView { infoScrollView() } else { infoView() }
             }
             .dynamicTypeSize(...DynamicTypeSize.xxLarge)
-            .onAppear(perform: configureView)
             .navigationBarTitle("Auto ISF")
             .navigationBarTitleDisplayMode(.automatic)
             .sheet(isPresented: $presentHistory) {
                 AutoISFHistoryView(units: state.units)
+                    .environment(\.colorScheme, colorScheme)
             }
         }
 
@@ -533,7 +538,7 @@ extension AutoISF {
             }
 
             .padding(.all, 20)
-            .foregroundStyle(colorScheme == .dark ? Color.white : Color.black)
+            .foregroundStyle(colorScheme == .dark ? IAPSconfig.previewBackgroundLight : IAPSconfig.previewBackgroundDark)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(colorScheme == .dark ? Color(.black).opacity(0.3) : Color(.white))
