@@ -2933,16 +2933,19 @@ extension OmniPumpManager: AlertSoundVendor {
 
 extension OmniPumpManager {
     public func acknowledgeAlert(alertIdentifier: Alert.AlertIdentifier, completion: @escaping (Error?) -> Void) {
-        guard self.hasActivePod else {
-            log.default("Skipping alert acknowledgements with no active pod")
+        guard self.hasActivePod, !state.activeAlerts.isEmpty else {
+            log.default("@@@ Skipping acknowledge alert %{public}@ with no active pod or alerts", alertIdentifier)
             completion(nil)
             return
         }
 
+        var found = false
         for alert in state.activeAlerts {
             if alert.alertIdentifier == alertIdentifier || alert.repeatingAlertIdentifier == alertIdentifier {
+                found = true
                 // If this alert was triggered by the pod find the slot to clear it.
                 if let slot = alert.triggeringSlot {
+                    // Special case handling for the suspend time expired alert
                     if (self.state.podState?.isSuspended == true || self.state.podState?.lastDeliveryStatusReceived?.suspended == true) &&
                         slot == .slot6SuspendTimeExpired
                     {
@@ -2952,6 +2955,8 @@ extension OmniPumpManager {
                         completion(nil)
                         return
                     }
+
+                    // Acknowledge the pod alert for the triggering slot
                     self.runSession(withName: "Acknowledge Alert") { (result) in
                         switch result {
                         case .success(let session):
@@ -2987,6 +2992,11 @@ extension OmniPumpManager {
                     completion(nil)
                 }
             }
+        }
+
+        if !found {
+            log.error("@@@ acknowledge alert %{public}@ not found!", alertIdentifier)
+            completion(nil)
         }
     }
 }

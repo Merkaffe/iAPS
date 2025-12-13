@@ -18,7 +18,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     var isOnboarded: Bool = false
 
-    // XXX still needs be declared public with the current Trio implementatio
+    // XXX still needs be declared public with the current Trio implementation
     private(set) public var podState: PodState?
 
     // State should only be modifiable by PodComms
@@ -44,8 +44,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     var podAttachmentConfirmed: Bool
 
-    // XXX still needs be declared public with the current Trio implementatio
-    public var activeAlerts: Set<PumpManagerAlert>
+    var activeAlerts: Set<PumpManagerAlert>
 
     var alertsWithPendingAcknowledgment: Set<PumpManagerAlert>
 
