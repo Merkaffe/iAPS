@@ -44,8 +44,6 @@ struct DetailedStatus: PodInfo, Equatable {
         }
         self.podProgressStatus = PodProgressStatus(rawValue: encodedData[1])!
 
-        self.deliveryStatus = DeliveryStatus(rawValue: encodedData[2] & 0xf)!
-
         self.bolusNotDelivered = Double((Int(encodedData[3] & 0x3) << 8) | Int(encodedData[4])) / Pod.pulsesPerUnit
 
         self.lastProgrammingMessageSeqNum = encodedData[5]
@@ -53,6 +51,13 @@ struct DetailedStatus: PodInfo, Equatable {
         self.totalInsulinDelivered = Double(encodedData[6...7].toBigEndian(UInt16.self)) / Pod.pulsesPerUnit
 
         self.faultEventCode = FaultEventCode(rawValue: encodedData[8])
+
+        /// Older pod simulators didn't know that all faulted pods are suspended, so handle this here
+        if self.faultEventCode.faultType != .noFaults {
+            self.deliveryStatus = .suspended
+        } else {
+            self.deliveryStatus = DeliveryStatus(rawValue: encodedData[2] & 0xf)!
+        }
 
         let minutesSinceActivation = encodedData[9...10].toBigEndian(UInt16.self)
         if minutesSinceActivation != 0xffff {
@@ -158,7 +163,7 @@ struct DetailedStatus: PodInfo, Equatable {
     // For most types, Ref: TT-VVVHH-IIIRR-FFF computed as {19|17}-{VV}{SSSS/60}-{NNNN/20}{RRRR/20}-PP
     var erosPdmRef: String? {
         let TT, VVV, HH, III, RR, FFF: UInt8
-    
+
         switch faultEventCode.faultType {
         case .noFaults, .reservoirEmpty, .exceededMaximumPodLife80Hrs:
             return nil      // no Eros PDM Ref # generated for these cases
@@ -179,12 +184,12 @@ struct DetailedStatus: PodInfo, Equatable {
             VVV = data[17]  // use the raw VV byte value
             FFF = faultEventCode.rawValue
         }
-    
+
         HH = UInt8(timeActive.hours)
         III = UInt8(totalInsulinDelivered)
-    
+
         RR = UInt8(self.reservoirLevel) // special 51.15 value used for > 50U will become 51 as needed
-    
+
         return String(format: "%02d-%03d%02d-%03d%02d-%03d", TT, VVV, HH, III, RR, FFF)
     }
 
