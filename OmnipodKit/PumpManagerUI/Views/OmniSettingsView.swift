@@ -421,14 +421,14 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
 
             Section() {
                 HStack {
-                    FrameworkLocalText("Pod Activated", comment: "Label for Pod Activated row")
+                    FrameworkLocalText("Activation", comment: "Label for Activation row")
                     Spacer()
                     Text(self.viewModel.activatedAtString)
                         .foregroundColor(Color.secondary)
                 }
 
                 HStack {
-                    FrameworkLocalText("Pod Expiration", comment: "Label for Pod Expiration row")
+                    FrameworkLocalText("Expiration", comment: "Label for Expiration row")
                     Spacer()
                     Text(self.viewModel.expiresAtString)
                         .foregroundColor(Color.secondary)
@@ -436,16 +436,13 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
 
                 HStack {
                     if viewModel.podDetails?.fault != nil {
-                        FrameworkLocalText("Pod Faulted", comment: "Label for Pod Faulted row")
-                        Spacer()
-                        Text(self.viewModel.faultedAtString)
-                            .foregroundColor(Color.secondary)
+                        FrameworkLocalText("Faulted", comment: "Label for Faulted row")
                     } else {
-                        FrameworkLocalText("Delivery Stops", comment: "Label for Delivery Stops row")
-                        Spacer()
-                        Text(self.viewModel.deliveryStopsAtString)
-                            .foregroundColor(Color.secondary)
+                        FrameworkLocalText("Shutdown", comment: "Label for Shutdown row")
                     }
+                    Spacer()
+                    Text(self.viewModel.deliveryStopsAtString)
+                        .foregroundColor(Color.secondary)
                 }
 
                 let localizedPodDetailsStr = LocalizedString("Pod Details", comment: "Text for Pod Details row and page")

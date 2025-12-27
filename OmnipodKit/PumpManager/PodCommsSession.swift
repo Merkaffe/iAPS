@@ -248,15 +248,30 @@ class PodCommsSession: MessageTransportDelegate {
         self.transport.delegate = self
     }
 
+    /// Sets the deliveryStoppedAt variable if not already set or is later than the
+    /// real time computed for the given podTime if provided or the current time.
+    private func setDeliverytoppedAt(podTime: TimeInterval? = nil) {
+        let computedStoppedAt: Date
+        if let podTime = podTime, let expiresAt = podState.expiresAt {
+            /// Use expiresAt which slides with pod clock skew to compute an adjusted activatedAt
+            /// that is then used to compute a clock time based on the given pod time
+            let adjustedActivatedAt = expiresAt - Pod.nominalPodLife
+            computedStoppedAt = adjustedActivatedAt + podTime
+        } else {
+            /// No podTime provided, so just use the current time
+            computedStoppedAt = currentDate
+        }
+        /// Set the podState's deliveryStoppedAt if it isn't set yet or if our computed value is earlier than the current value
+        if podState.deliveryStoppedAt == nil || computedStoppedAt < podState.deliveryStoppedAt! {
+            podState.deliveryStoppedAt = computedStoppedAt
+        }
+    }
+
     // Handles updating PodState on first pod fault seen
     private func handlePodFault(fault: DetailedStatus) {
         if podState.fault == nil {
             podState.fault = fault // save the first fault returned
-            if let activatedAt = podState.activatedAt {
-                podState.activeTime = currentDate.timeIntervalSince(activatedAt)
-            } else {
-                podState.activeTime = fault.faultEventTimeSinceActivation
-            }
+            setDeliverytoppedAt(podTime: fault.faultEventTimeSinceActivation)
             let derivedStatusResponse = StatusResponse(detailedStatus: fault)
             if podState.unacknowledgedCommand != nil {
                 // Process the pending unacknowledgeCommnd to handle any pending doses matters for an unacknowledged
@@ -573,7 +588,7 @@ class PodCommsSession: MessageTransportDelegate {
 
         let timeBetweenPulses = TimeInterval(seconds: Pod.secondsPerPrimePulse)
         let bolusScheduleCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, units: cannulaInsertionUnits, timeBetweenPulses: timeBetweenPulses)
-        
+
         podState.setupProgress = .startingInsertCannula
         let bolusExtraCommand = BolusExtraCommand(units: cannulaInsertionUnits, timeBetweenPulses: timeBetweenPulses)
         let status2: StatusResponse = try send([bolusScheduleCommand, bolusExtraCommand])
@@ -1080,15 +1095,12 @@ class PodCommsSession: MessageTransportDelegate {
                 // destroys any chance of correctly handling the unacknowledged command.
                 try? tryToResolvePendingCommand()
             }
-            
             let deactivatePod = DeactivatePodCommand(nonce: podState.currentNonce)
             let status: StatusResponse = try send([deactivatePod])
             podState.updateFromStatusResponse(status, at: currentDate)
-            
-            if podState.activeTime == nil, let activatedAt = podState.activatedAt {
-                podState.activeTime = currentDate.timeIntervalSince(activatedAt)
-            }
+            setDeliverytoppedAt(podTime: status.timeActive)
         } catch let error as PodCommsError {
+            setDeliverytoppedAt()
             switch error {
             case .podFault, .activationTimeExceeded, .unexpectedResponse:
                 break

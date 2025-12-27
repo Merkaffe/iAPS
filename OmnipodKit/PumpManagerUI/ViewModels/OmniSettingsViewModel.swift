@@ -62,14 +62,9 @@ class OmniSettingsViewModel: ObservableObject {
         }
     }
 
-    var faultedAtString: String {
-        if let faultEventTimeSinceActivation = pumpManager.podDetails?.fault?.faultEventTimeSinceActivation,
-           let expiresAt = expiresAt
-        {
-            // Use expiresAt which slides with pod clock skew to compute an adjusted activatedAt
-            let adjustedActivatedAt = expiresAt - Pod.nominalPodLife
-            let faultedAt = adjustedActivatedAt + faultEventTimeSinceActivation
-            return dateFormatter.string(from: faultedAt)
+    var deliveryStoppedAtString: String {
+        if let deliveryStoppedAt = pumpManager.podDetails?.deliveryStoppedAt {
+            return dateFormatter.string(from: deliveryStoppedAt)
         }
         return "—"
     }
@@ -625,7 +620,8 @@ extension OmniPumpManager {
             lastStatus: podState.lastInsulinMeasurements?.validTime,
             fault: podState.fault,
             activatedAt: podState.activatedAt,
-            activeTime: podState.activeTime,
+            deliveryStoppedAt: podState.deliveryStoppedAt,
+            podTime: podState.podTime,
         )
     }
 
