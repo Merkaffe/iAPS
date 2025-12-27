@@ -114,12 +114,7 @@ struct DetailedStatus: PodInfo, Equatable {
     // Returns an appropropriate DASH PDM style Ref string for DetailedStatus. DASH Ref codes are all of
     // the form Ref: TT-VVVHH-IIIRR-FFF computed as {14|15|16|17|19}-{VV}{SSSS/60}-{NNNN/20}{RRRR/20}-PP.
     var dashPdmRef: String? {
-        let TT: UInt8 // 14 (0x18 empty), 15 (0x29 auto-off), 16 (0x1C >80 hr), 17 (0x14 occlusion) or 19 (other)
-        let VVV: UInt8 = data[17] // raw DetailedStatus VV byte
-        let HH: UInt8 = UInt8(timeActive.hours) // # of pod hours
-        let III: UInt8 = UInt8(totalInsulinDelivered) // units of insulin
-        let RR: UInt8 = UInt8(self.reservoirLevel) // reservoir units, special 50+ U value becomes 51 as needed
-        let FFF: UInt8 = faultEventCode.rawValue // actual fault code value
+        let TT, VVV, HH, III, RR, FFF: UInt
 
         switch faultEventCode.faultType {
 
@@ -156,13 +151,19 @@ struct DetailedStatus: PodInfo, Equatable {
             TT = 19     // DASH PDM Ref: 19-VVVHH-IIIRR-FFF
         }
 
+        VVV = UInt(data[17]) // raw DetailedStatus VV byte
+        HH = UInt(timeActive.hours) // whole # of hours
+        III = UInt(totalInsulinDelivered) // whole units of insulin
+        RR = UInt(self.reservoirLevel) // whole reservoir units, special 51.15 value used for > 50U will become 51 as needed
+        FFF = UInt(faultEventCode.rawValue) // actual fault code value
+
         return String(format: "%02d-%03d%02d-%03d%02d-%03d", TT, VVV, HH, III, RR, FFF)
     }
 
     // Returns an appropropriate Eros PDM style Ref string for the Detailed Status.
     // For most types, Ref: TT-VVVHH-IIIRR-FFF computed as {19|17}-{VV}{SSSS/60}-{NNNN/20}{RRRR/20}-PP
     var erosPdmRef: String? {
-        let TT, VVV, HH, III, RR, FFF: UInt8
+        let TT, VVV, HH, III, RR, FFF: UInt
 
         switch faultEventCode.faultType {
         case .noFaults, .reservoirEmpty, .exceededMaximumPodLife80Hrs:
@@ -181,14 +182,13 @@ struct DetailedStatus: PodInfo, Equatable {
         default:
             // Ref: 19-VVVHH-IIIRR-FFF
             TT = 19         // pod fault Ref type
-            VVV = data[17]  // use the raw VV byte value
-            FFF = faultEventCode.rawValue
+            VVV = UInt(data[17]) // use the raw VV byte value
+            FFF = UInt(faultEventCode.rawValue)
         }
 
-        HH = UInt8(timeActive.hours)
-        III = UInt8(totalInsulinDelivered)
-
-        RR = UInt8(self.reservoirLevel) // special 51.15 value used for > 50U will become 51 as needed
+        HH = UInt(timeActive.hours) // whole # of hours
+        III = UInt(totalInsulinDelivered) // whole units of insulin
+        RR = UInt(self.reservoirLevel) // whole reservoir units, special 51.15 value used for > 50U will become 51 as needed
 
         return String(format: "%02d-%03d%02d-%03d%02d-%03d", TT, VVV, HH, III, RR, FFF)
     }
