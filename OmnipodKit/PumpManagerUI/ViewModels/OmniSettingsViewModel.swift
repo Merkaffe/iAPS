@@ -49,17 +49,15 @@ class OmniSettingsViewModel: ObservableObject {
     var activatedAtString: String {
         if let activatedAt = activatedAt {
             return dateFormatter.string(from: activatedAt)
-        } else {
-            return "—"
         }
+        return "—"
     }
 
     var expiresAtString: String {
         if let expiresAt = expiresAt {
             return dateFormatter.string(from: expiresAt)
-        } else {
-            return "—"
         }
+        return "—"
     }
 
     var deliveryStoppedAtString: String {
@@ -69,12 +67,12 @@ class OmniSettingsViewModel: ObservableObject {
         return "—"
     }
 
-    var deliveryStopsAtString: String {
+    var shutdownAtString: String {
         if let expiresAt = expiresAt {
             // Use expiresAt which slides with pod clock skew to compute an adjusted activatedAt
             let adjustedActivatedAt = expiresAt - Pod.nominalPodLife
-            let deliveryStopsAt = adjustedActivatedAt + Pod.serviceDuration
-            return dateFormatter.string(from: deliveryStopsAt)
+            let shutdownAt = adjustedActivatedAt + Pod.serviceDuration
+            return dateFormatter.string(from: shutdownAt)
         }
         return "—"
     }
@@ -539,10 +537,9 @@ extension OmniSettingsViewModel: PodStateObserver {
     func podConnectionStateDidChange(isConnected: Bool) {
         self.hasConnection = isConnected
     }
- }
- 
+}
 
- 
+
 extension OmniSettingsViewModel: PumpManagerStatusObserver {
     func pumpManager(_ pumpManager: PumpManager, didUpdate status: PumpManagerStatus, oldStatus: PumpManagerStatus) {
         basalDeliveryState = self.pumpManager.status.basalDeliveryState

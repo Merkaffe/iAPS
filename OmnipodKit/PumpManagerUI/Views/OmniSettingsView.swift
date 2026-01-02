@@ -437,12 +437,15 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
                 HStack {
                     if viewModel.podDetails?.fault != nil {
                         FrameworkLocalText("Faulted", comment: "Label for Faulted row")
+                        Spacer()
+                        Text(self.viewModel.deliveryStoppedAtString)
+                            .foregroundColor(Color.secondary)
                     } else {
                         FrameworkLocalText("Shutdown", comment: "Label for Shutdown row")
+                        Spacer()
+                        Text(self.viewModel.shutdownAtString)
+                            .foregroundColor(Color.secondary)
                     }
-                    Spacer()
-                    Text(self.viewModel.deliveryStopsAtString)
-                        .foregroundColor(Color.secondary)
                 }
 
                 let localizedPodDetailsStr = LocalizedString("Pod Details", comment: "Text for Pod Details row and page")
