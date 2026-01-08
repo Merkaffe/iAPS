@@ -441,7 +441,7 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
                         Text(self.viewModel.deliveryStoppedAtString)
                             .foregroundColor(Color.secondary)
                     } else {
-                        FrameworkLocalText("Shutdown", comment: "Label for Shutdown row")
+                        FrameworkLocalText("No Delivery", comment: "Label for No Delivery row")
                         Spacer()
                         Text(self.viewModel.shutdownAtString)
                             .foregroundColor(Color.secondary)
@@ -465,7 +465,7 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
                     }
                 }
 
-                let localizedPreviousPodDetailsStr = LocalizedString("Previous Pod Details", comment: "Text for Previous Pod Details row and page")
+                let localizedPreviousPodDetailsStr = LocalizedString("Previous Pod", comment: "Text for Previous Pod row and page")
                 if let previousPodDetails = viewModel.previousPodDetails {
                     NavigationLink(destination: PodDetailsView(podDetails: previousPodDetails,
                                                                title: localizedPreviousPodDetailsStr))
