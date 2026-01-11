@@ -443,7 +443,7 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
                     } else {
                         FrameworkLocalText("No Delivery", comment: "Label for No Delivery row")
                         Spacer()
-                        Text(self.viewModel.shutdownAtString)
+                        Text(self.viewModel.noDeliveryAtString)
                             .foregroundColor(Color.secondary)
                     }
                 }

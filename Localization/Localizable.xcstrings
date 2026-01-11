@@ -1834,6 +1834,9 @@
         }
       }
     },
+    "No Delivery" : {
+      "comment" : "Label for No Delivery row"
+    },
     "No faults" : {
       "comment" : "Description for Fault Event Code .noFaults",
       "localizations" : {
@@ -2387,6 +2390,7 @@
     },
     "Pod Active: %1$@" : {
       "comment" : "The format string for Pod Active: (1: formatted time)",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2664,6 +2668,9 @@
         }
       }
     },
+    "Pod Time: %1$@" : {
+      "comment" : "The format string for Pod Time: (1: formatted time)"
+    },
     "Pod Type" : {
       "comment" : "description label for pod type pod details row"
     },
@@ -2704,8 +2711,7 @@
       }
     },
     "Previous Pod" : {
-      "comment" : "title for previous pod page",
-      "extractionState" : "stale",
+      "comment" : "Text for Previous Pod row and page",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2717,6 +2723,7 @@
     },
     "Previous Pod Details" : {
       "comment" : "Text for Previous Pod Details row and page",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3137,9 +3144,6 @@
           }
         }
       }
-    },
-    "Shutdown" : {
-      "comment" : "Label for Shutdown row"
     },
     "Shutdown imminent" : {
       "comment" : "Description for shutdown imminent alert",

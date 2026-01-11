@@ -47,43 +47,44 @@ class OmniSettingsViewModel: ObservableObject {
     @Published var hasConnection: Bool // replaces both rileylinkConnected and isConnected
 
     var activatedAtString: String {
-        if let activatedAt = activatedAt {
-            return dateFormatter.string(from: activatedAt)
+        guard let activatedAt = activatedAt else {
+            return "—"
         }
-        return "—"
+        return dateFormatter.string(from: activatedAt)
     }
 
     var expiresAtString: String {
-        if let expiresAt = expiresAt {
-            return dateFormatter.string(from: expiresAt)
+        guard let expiresAt = expiresAt else {
+            return "—"
         }
-        return "—"
+        return dateFormatter.string(from: expiresAt)
     }
 
     var deliveryStoppedAtString: String {
-        if let deliveryStoppedAt = pumpManager.podDetails?.deliveryStoppedAt {
-            return dateFormatter.string(from: deliveryStoppedAt)
+        guard let deliveryStoppedAt = pumpManager.podDetails?.deliveryStoppedAt else {
+            return "—"
         }
-        return "—"
+        return dateFormatter.string(from: deliveryStoppedAt)
     }
 
-    var shutdownAtString: String {
-        if let expiresAt = expiresAt {
-            // Use expiresAt which slides with pod clock skew to compute an adjusted activatedAt
-            let adjustedActivatedAt = expiresAt - Pod.nominalPodLife
-            let shutdownAt = adjustedActivatedAt + Pod.serviceDuration
-            return dateFormatter.string(from: shutdownAt)
+    var noDeliveryAtString: String {
+        guard let expiresAt = expiresAt else {
+            return "—"
         }
-        return "—"
+        /// Compute an adjusted activatedAt based on expiresAt which varies with pod clock skew
+        let adjustedActivatedAt = expiresAt - Pod.nominalPodLife
+        /// Use adjustedActivatedAt to compute the current adjusted pod shutdown time
+        let noDeliveryAt = adjustedActivatedAt + Pod.serviceDuration
+        return dateFormatter.string(from: noDeliveryAt)
     }
 
     var serviceTimeRemainingString: String? {
-        if let serviceTimeRemaining = pumpManager.podServiceTimeRemaining,
-           let serviceTimeRemainingString = timeRemainingFormatter.string(from: serviceTimeRemaining)
+        guard let serviceTimeRemaining = pumpManager.podServiceTimeRemaining,
+           let serviceTimeRemainingString = timeRemainingFormatter.string(from: serviceTimeRemaining) else
         {
-            return serviceTimeRemainingString
+            return nil
         }
-        return nil
+        return serviceTimeRemainingString
     }
 
     // Expiration reminder date for current pod
