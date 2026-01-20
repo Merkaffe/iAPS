@@ -307,6 +307,9 @@
     "Access Omnipod Screen" : {
       "comment" : "Button title to access Omnipod screen if waiting for recovery from uncertain comms"
     },
+    "Activation" : {
+      "comment" : "Label for Activation row\ndescription label for activation pod details row"
+    },
     "Activation time exceeded" : {
       "comment" : "Format string for activation time exceeded\nPod state when activation not completed in the time allowed",
       "localizations" : {
@@ -320,6 +323,7 @@
     },
     "Active Time" : {
       "comment" : "description label for active time pod details row",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -923,8 +927,8 @@
         }
       }
     },
-    "Delivery Stops" : {
-      "comment" : "Label for Delivery Stops row"
+    "Deactivation" : {
+      "comment" : "description label for deactivation pod details row"
     },
     "Device Name" : {
       "comment" : "description label for device name pod details row",
@@ -1046,6 +1050,9 @@
           }
         }
       }
+    },
+    "Expiration" : {
+      "comment" : "Label for Expiration row"
     },
     "Expiration reminder" : {
       "comment" : "Description for expiration reminder alert",
@@ -1219,6 +1226,9 @@
           }
         }
       }
+    },
+    "Faulted" : {
+      "comment" : "Label for Faulted row\ndescription label for faulted pod details row"
     },
     "Fill a new %1$@ pod with U-100 Insulin (leave %2$@ needle cap on)." : {
       "comment" : "Label text for step 1 of non-Eros pair pod instructions (1: pod type name) (2: pod tab color"
@@ -1756,7 +1766,7 @@
       "comment" : "Recovery suggestion for PodCommsError.tooManyPodsFound"
     },
     "NA" : {
-      "comment" : "String shown on pod details for active time when conversion fails.\nString shown on pod details for last status date when not available.\nString shown on pod details for total delivery when not available.",
+      "comment" : "String shown on pod details for last status date when not available.\nString shown on pod details for total delivery when not available.",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1823,6 +1833,9 @@
           }
         }
       }
+    },
+    "No Delivery" : {
+      "comment" : "Label for No Delivery row"
     },
     "No faults" : {
       "comment" : "Description for Fault Event Code .noFaults",
@@ -2365,6 +2378,7 @@
     },
     "Pod Activated" : {
       "comment" : "Label for Pod Activated row\ndescription label for activated at time pod details row",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2376,6 +2390,7 @@
     },
     "Pod Active: %1$@" : {
       "comment" : "The format string for Pod Active: (1: formatted time)",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2439,9 +2454,6 @@
           }
         }
       }
-    },
-    "Pod Expiration" : {
-      "comment" : "Label for Pod Expiration row"
     },
     "Pod Expiration Reminder" : {
       "comment" : "Alert content title for userPodExpiration pod alert",
@@ -2543,8 +2555,8 @@
         }
       }
     },
-    "Pod Faulted" : {
-      "comment" : "Label for Pod Faulted row"
+    "Pod Hours" : {
+      "comment" : "description label for pod hours pod details row"
     },
     "Pod is not in a state ready for cannula insertion." : {
       "comment" : "Error message when cannula insertion fails because the pod is in an unexpected state",
@@ -2656,6 +2668,9 @@
         }
       }
     },
+    "Pod Time: %1$@" : {
+      "comment" : "The format string for Pod Time: (1: formatted time)"
+    },
     "Pod Type" : {
       "comment" : "description label for pod type pod details row"
     },
@@ -2696,8 +2711,7 @@
       }
     },
     "Previous Pod" : {
-      "comment" : "title for previous pod page",
-      "extractionState" : "stale",
+      "comment" : "Text for Previous Pod row and page",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2709,6 +2723,7 @@
     },
     "Previous Pod Details" : {
       "comment" : "Text for Previous Pod Details row and page",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {

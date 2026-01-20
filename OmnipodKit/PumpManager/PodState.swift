@@ -62,8 +62,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     // XXX these variables still needs be declared public with the current Trio implementation
     public var expiresAt: Date? // set based on timeActive and can change with Pod clock drift and/or system time change
     public var activatedAt: Date?
-
-    var activeTime: TimeInterval? // Useful after pod deactivated or faulted.
+    var deliveryStoppedAt: Date? // set on first pod fault or on pod deactivation
 
     var podTime: TimeInterval // pod time from the last response, always whole minute values
     var podTimeUpdated: Date? // time that the podTime value was last updated
@@ -497,14 +496,17 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             return nil
         }
 
-        self.activeTime = rawValue["activeTime"] as? TimeInterval
-
         if let activatedAt = rawValue["activatedAt"] as? Date {
             self.activatedAt = activatedAt
             if let expiresAt = rawValue["expiresAt"] as? Date {
                 self.expiresAt = expiresAt
             } else {
                 self.expiresAt = activatedAt + Pod.nominalPodLife
+            }
+            if let deliveryStoppedAt = rawValue["deliveryStoppedAt"] as? Date {
+                self.deliveryStoppedAt = deliveryStoppedAt
+            } else if let activeTime = rawValue["activeTime"] as? TimeInterval {
+                self.deliveryStoppedAt = activatedAt + activeTime
             }
         }
 
@@ -698,10 +700,10 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         rawValue["primeFinishTime"] = primeFinishTime
         rawValue["activatedAt"] = activatedAt
         rawValue["expiresAt"] = expiresAt
+        rawValue["deliveryStoppedAt"] = deliveryStoppedAt
         rawValue["podTime"] = podTime
         rawValue["podTimeUpdated"] = podTimeUpdated
         rawValue["setupUnitsDelivered"] = setupUnitsDelivered
-        rawValue["activeTime"] = activeTime
         
         if configuredAlerts.count > 0 {
             let rawConfiguredAlerts = Dictionary(uniqueKeysWithValues:
@@ -734,6 +736,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "* bleIdentifier: \(optionalString(bleIdentifier))",
             "* activatedAt: \(optionalString(activatedAt))",
             "* expiresAt: \(optionalString(expiresAt))",
+            "* deliveryStoppedAt: \(optionalString(deliveryStoppedAt))",
             "* podTime: \(podTime.timeIntervalStr)",
             "* podTimeUpdated: \(optionalString(podTimeUpdated))",
             "* setupUnitsDelivered: \(optionalInsulinString(setupUnitsDelivered))",

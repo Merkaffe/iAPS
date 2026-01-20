@@ -248,15 +248,29 @@ class PodCommsSession: MessageTransportDelegate {
         self.transport.delegate = self
     }
 
+    /// Sets the podState's deliveryStoppedAt if not already set or it is
+    /// later than the computed actual stopped time using the podTime.
+    private func setDeliverytoppedAt(podTime: TimeInterval?) {
+        let computedStoppedAt: Date
+        if let podTime = podTime, let expiresAt = podState.expiresAt {
+            /// Use expiresAt which slides with pod clock skew to compute an adjusted activatedAt
+            /// which can be then be used to compute the actual stopped at time based on pod time.
+            let adjustedActivatedAt = expiresAt - Pod.nominalPodLife
+            computedStoppedAt = adjustedActivatedAt + podTime
+        } else {
+            computedStoppedAt = currentDate
+        }
+        /// Set the podState's deliveryStoppedAt if it isn't set yet or if our computed value is earlier than the current value
+        if podState.deliveryStoppedAt == nil || computedStoppedAt < podState.deliveryStoppedAt! {
+            podState.deliveryStoppedAt = computedStoppedAt
+        }
+    }
+
     // Handles updating PodState on first pod fault seen
     private func handlePodFault(fault: DetailedStatus) {
         if podState.fault == nil {
             podState.fault = fault // save the first fault returned
-            if let activatedAt = podState.activatedAt {
-                podState.activeTime = currentDate.timeIntervalSince(activatedAt)
-            } else {
-                podState.activeTime = fault.faultEventTimeSinceActivation
-            }
+            setDeliverytoppedAt(podTime: fault.faultEventTimeSinceActivation)
             let derivedStatusResponse = StatusResponse(detailedStatus: fault)
             if podState.unacknowledgedCommand != nil {
                 // Process the pending unacknowledgeCommnd to handle any pending doses matters for an unacknowledged
@@ -562,7 +576,7 @@ class PodCommsSession: MessageTransportDelegate {
         } else {
             let elapsed: TimeInterval = -(podState.podTimeUpdated?.timeIntervalSinceNow ?? 0)
             let podTime = podState.podTime + elapsed
-            
+
             // Configure the mandatory Pod Alerts for shutdown imminent alert (79 hours) and pod expiration alert (72 hours) along with any optional alerts
             let shutdownImminentAlarm = PodAlert.shutdownImminent(offset: podTime, absAlertTime: Pod.serviceDuration - Pod.endOfServiceImminentWindow, silent: silent)
             let expirationAdvisoryAlarm = PodAlert.expired(offset: podTime, absAlertTime: Pod.nominalPodLife, duration: Pod.expirationAdvisoryWindow, silent: silent)
@@ -573,7 +587,7 @@ class PodCommsSession: MessageTransportDelegate {
 
         let timeBetweenPulses = TimeInterval(seconds: Pod.secondsPerPrimePulse)
         let bolusScheduleCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, units: cannulaInsertionUnits, timeBetweenPulses: timeBetweenPulses)
-        
+
         podState.setupProgress = .startingInsertCannula
         let bolusExtraCommand = BolusExtraCommand(units: cannulaInsertionUnits, timeBetweenPulses: timeBetweenPulses)
         let status2: StatusResponse = try send([bolusScheduleCommand, bolusExtraCommand])
@@ -606,7 +620,7 @@ class PodCommsSession: MessageTransportDelegate {
     }
 
     func bolus(units: Double, automatic: Bool = false, acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0, extendedUnits: Double = 0.0, extendedDuration: TimeInterval = 0) -> DeliveryCommandResult {
-        
+
         if podState.unacknowledgedCommand != nil {
             do {
                 try tryToResolvePendingCommand()
@@ -637,7 +651,7 @@ class PodCommsSession: MessageTransportDelegate {
                 return DeliveryCommandResult.certainFailure(error: .noResponse)
             }
         }
-        
+
         let bolusExtraCommand = BolusExtraCommand(units: units, timeBetweenPulses: timeBetweenPulses, extendedUnits: extendedUnits, extendedDuration: extendedDuration, acknowledgementBeep: acknowledgementBeep, completionBeep: completionBeep, programReminderInterval: programReminderInterval)
         do {
             podState.unacknowledgedCommand = PendingCommand.program(.bolus(volume: units, automatic: automatic), transport.messageNumber, currentDate)
@@ -802,7 +816,7 @@ class PodCommsSession: MessageTransportDelegate {
             let cancelDeliveryCommand = CancelDeliveryCommand(nonce: podState.currentNonce, deliveryType: deliveryType, beepType: beepType)
             let status: StatusResponse = try send([cancelDeliveryCommand], beepBlock: beepBlock)
             podState.unacknowledgedCommand = nil
-            
+
             let canceledDose = podState.handleCancelDosing(deliveryType: deliveryType, bolusNotDelivered: status.bolusNotDelivered, at: currentDate)
             podState.updateFromStatusResponse(status, at: currentDate)
 
@@ -894,7 +908,7 @@ class PodCommsSession: MessageTransportDelegate {
     // Throws PodCommsError
     func cancelNone(beepBlock: MessageBlock? = nil) throws -> StatusResponse {
         var statusResponse: StatusResponse
-        
+
         let cancelResult: CancelDeliveryResult = cancelDelivery(deliveryType: .none, beepBlock: beepBlock)
         switch cancelResult {
         case .certainFailure(let error):
@@ -913,7 +927,7 @@ class PodCommsSession: MessageTransportDelegate {
         // For noSeqSetStatus, use alternative noSeqStatus (type 7) request if not an Eros pod type instead of a normal (type 0) request
         let statusType: PodInfoResponseSubType = (noSeqGetStatus && podState.podType != erosType) ? .noSeqStatus : .normal
         let statusResponse: StatusResponse = try send([GetStatusCommand(podInfoType: statusType)], beepBlock: beepBlock)
-        
+
         if podState.unacknowledgedCommand != nil {
             recoverUnacknowledgedCommand(using: statusResponse)
         }
@@ -923,7 +937,7 @@ class PodCommsSession: MessageTransportDelegate {
 
     func getDetailedStatus(beepBlock: MessageBlock? = nil) throws -> DetailedStatus {
         let infoResponse: PodInfoResponse = try send([GetStatusCommand(podInfoType: .detailedStatus)], beepBlock: beepBlock)
-        
+
         guard let detailedStatus = infoResponse.podInfo as? DetailedStatus else {
             throw PodCommsError.unexpectedResponse(response: .podInfoResponse)
         }
@@ -1080,15 +1094,13 @@ class PodCommsSession: MessageTransportDelegate {
                 // destroys any chance of correctly handling the unacknowledged command.
                 try? tryToResolvePendingCommand()
             }
-            
             let deactivatePod = DeactivatePodCommand(nonce: podState.currentNonce)
             let status: StatusResponse = try send([deactivatePod])
             podState.updateFromStatusResponse(status, at: currentDate)
-            
-            if podState.activeTime == nil, let activatedAt = podState.activatedAt {
-                podState.activeTime = currentDate.timeIntervalSince(activatedAt)
-            }
+            setDeliverytoppedAt(podTime: status.timeActive)
         } catch let error as PodCommsError {
+            /// Don't set DeliveryStopped as we don't know if the pod was deactivated.
+            /// Instead, wait until a successful deactivation or the user discards the pod.
             switch error {
             case .podFault, .activationTimeExceeded, .unexpectedResponse:
                 break

@@ -421,14 +421,14 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
 
             Section() {
                 HStack {
-                    FrameworkLocalText("Pod Activated", comment: "Label for Pod Activated row")
+                    FrameworkLocalText("Activation", comment: "Label for Activation row")
                     Spacer()
                     Text(self.viewModel.activatedAtString)
                         .foregroundColor(Color.secondary)
                 }
 
                 HStack {
-                    FrameworkLocalText("Pod Expiration", comment: "Label for Pod Expiration row")
+                    FrameworkLocalText("Expiration", comment: "Label for Expiration row")
                     Spacer()
                     Text(self.viewModel.expiresAtString)
                         .foregroundColor(Color.secondary)
@@ -436,14 +436,14 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
 
                 HStack {
                     if viewModel.podDetails?.fault != nil {
-                        FrameworkLocalText("Pod Faulted", comment: "Label for Pod Faulted row")
+                        FrameworkLocalText("Faulted", comment: "Label for Faulted row")
                         Spacer()
-                        Text(self.viewModel.faultedAtString)
+                        Text(self.viewModel.deliveryStoppedAtString)
                             .foregroundColor(Color.secondary)
                     } else {
-                        FrameworkLocalText("Delivery Stops", comment: "Label for Delivery Stops row")
+                        FrameworkLocalText("No Delivery", comment: "Label for No Delivery row")
                         Spacer()
-                        Text(self.viewModel.deliveryStopsAtString)
+                        Text(self.viewModel.noDeliveryAtString)
                             .foregroundColor(Color.secondary)
                     }
                 }
@@ -465,7 +465,7 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
                     }
                 }
 
-                let localizedPreviousPodDetailsStr = LocalizedString("Previous Pod Details", comment: "Text for Previous Pod Details row and page")
+                let localizedPreviousPodDetailsStr = LocalizedString("Previous Pod", comment: "Text for Previous Pod row and page")
                 if let previousPodDetails = viewModel.previousPodDetails {
                     NavigationLink(destination: PodDetailsView(podDetails: previousPodDetails,
                                                                title: localizedPreviousPodDetailsStr))

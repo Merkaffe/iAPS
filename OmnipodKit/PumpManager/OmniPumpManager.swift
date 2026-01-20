@@ -932,13 +932,11 @@ extension OmniPumpManager {
             // Don't wipe out the previous PodState when switching pod types
             if let podState = state.podState {
                 state.previousPodState = podState
-                #if targetEnvironment(simulator)
-                if let activatedAt = state.previousPodState?.activatedAt {
-                    /// When using running on a simulator, initialize the prevous podState
-                    /// activeTime so that the Previous Pod Details view will look correct.
-                    state.previousPodState?.activeTime = Date().timeIntervalSince(activatedAt)
+                /// If deliveryStoppedAt hasn't been already set during pod fault handling or pod deactivation
+                /// (always the case for a simulator), set deliveryStoppedAt with the current time
+                if podState.deliveryStoppedAt == nil {
+                    state.previousPodState?.deliveryStoppedAt = Date()
                 }
-                #endif
             }
 
             switch podType {
@@ -1507,13 +1505,16 @@ extension OmniPumpManager {
     func setBasalSchedule(_ schedule: BasalSchedule, completion: @escaping (Error?) -> Void) {
         let shouldContinue = setStateWithResult({ (state) -> PumpManagerResult<Bool> in
 
-            // The Trio UI doesn't enforce the max basal rates for the basal schedule and
-            // doesn't prevent maximum basal rates settings based on the basal schedule.
-            for entry in schedule.entries {
-                guard entry.rate <= state.maxBasalRateUnitsPerHour else {
-                    return .failure(PumpManagerError.configuration(OmniPumpManagerError.invalidSetting))
-                }
-            }
+            /// Trio doesn't enforce the maximum basal rates for the basal schedule,
+            /// doesn't limit maximum basal rates settings based on the basal schedule,
+            /// and currently incorrectly displays "Trio could not communicate with your pump" for
+            /// any error returned from syncBasalRateSchedule() including out of limit basal rate.
+            /// So for now, just disable this enforcement for now as Omni{BLE,Kit} didn't do this.
+            //for entry in schedule.entries {
+            //    guard entry.rate <= state.maxBasalRateUnitsPerHour else {
+            //        return .failure(PumpManagerError.configuration(OmniPumpManagerError.invalidSetting))
+            //    }
+            //}
 
             guard state.hasActivePod else {
                 // If there's no active pod yet, save the basal schedule anyway

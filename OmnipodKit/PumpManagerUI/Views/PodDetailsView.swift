@@ -23,7 +23,8 @@ struct PodDetails {
     var lastStatus: Date?
     var fault: DetailedStatus?
     var activatedAt: Date?
-    var activeTime: TimeInterval?
+    var deliveryStoppedAt: Date?
+    var podTime: TimeInterval
 }
 
 struct PodDetailsView: View {
@@ -68,7 +69,7 @@ struct PodDetailsView: View {
                 .foregroundColor(.secondary)
         }
     }
-    
+
     var totalDeliveryText: String {
         if let delivery = podDetails.totalDelivery {
             return String(format: LocalizedString("%g U", comment: "Format string for total delivery on pod details screen"), delivery)
@@ -77,10 +78,19 @@ struct PodDetailsView: View {
         }
     }
 
-    func activeTimeText(_ duration: TimeInterval) -> String {
-        return activeTimeFormatter.string(from: duration) ?? LocalizedString("NA", comment: "String shown on pod details for active time when conversion fails.")
+    /// Returns the string for the number of hours pod was active
+    var podHoursText: String {
+        let podTime: TimeInterval
+
+        // If pod faulted, use the faultTime instead of podTime
+        if let fault = podDetails.fault, let faultTime = fault.faultEventTimeSinceActivation {
+            podTime = faultTime
+        } else {
+            podTime = podDetails.podTime
+        }
+        return String(format: "%.02f", podTime.hours)
     }
-    
+
     var lastStatusText: String {
         if let lastStatus = podDetails.lastStatus, let ageString = statusAgeFormatter.string(from: Date().timeIntervalSince(lastStatus)) {
             return String(format: LocalizedString("%@ ago", comment: "Format string for last status date on pod details screen"), ageString)
@@ -88,7 +98,7 @@ struct PodDetailsView: View {
             return LocalizedString("NA", comment: "String shown on pod details for last status date when not available.")
         }
     }
-    
+
     var body: some View {
         List {
             row(LocalizedString("Pod Type", comment: "description label for pod type pod details row"), value: String(describing: podDetails.podType.localizedDescription))
@@ -101,11 +111,16 @@ struct PodDetailsView: View {
             row(LocalizedString("Firmware Version", comment: "description label for firmware version pod details row"), value: podDetails.firmwareVersion)
             row(LocalizedString("BLE Firmware Version", comment: "description label for ble firmware version pod details row"), value: podDetails.bleFirmwareVersion)
             row(LocalizedString("Total Delivery", comment: "description label for total delivery pod details row"), value: totalDeliveryText)
+            row(LocalizedString("Pod Hours", comment: "description label for pod hours pod details row"), value: podHoursText)
             if let activatedAt = podDetails.activatedAt {
-                row(LocalizedString("Pod Activated", comment: "description label for activated at time pod details row"), value: dateFormatter.string(from: activatedAt))
+                row(LocalizedString("Activation", comment: "description label for activation pod details row"), value: dateFormatter.string(from: activatedAt))
             }
-            if let activeTime = podDetails.activeTime {
-                row(LocalizedString("Active Time", comment: "description label for active time pod details row"), value: activeTimeText(activeTime))
+            if let deliveryStoppedAt = podDetails.deliveryStoppedAt {
+                if podDetails.fault != nil {
+                    row(LocalizedString("Faulted", comment: "description label for faulted pod details row"), value: dateFormatter.string(from: deliveryStoppedAt))
+                } else {
+                    row(LocalizedString("Deactivation", comment: "description label for deactivation pod details row"), value: dateFormatter.string(from: deliveryStoppedAt))
+                }
             } else {
                 row(LocalizedString("Last Status", comment: "description label for last status date pod details row"), value: lastStatusText)
             }
@@ -132,6 +147,6 @@ struct PodDetailsView: View {
 
 struct PodDetailsView_Previews: PreviewProvider {
     static var previews: some View {
-        PodDetailsView(podDetails: PodDetails(podType: dashType, address: 0x17012345, lotNumber: 123456789, sequenceNumber: 1234567, firmwareVersion: "4.3.2", bleFirmwareVersion: "1.2.3", deviceName: "DashPreviewPod", totalDelivery: 99, lastStatus: Date(), fault: nil, activatedAt: Date().addingTimeInterval(.days(2))), title: "Pod Details")
+        PodDetailsView(podDetails: PodDetails(podType: dashType, address: 0x17012345, lotNumber: 123456789, sequenceNumber: 1234567, firmwareVersion: "4.3.2", bleFirmwareVersion: "1.2.3", deviceName: "DashPreviewPod", totalDelivery: 99, lastStatus: Date(), fault: nil, activatedAt: Date().addingTimeInterval(.days(2)), deliveryStoppedAt: nil, podTime: .days(2)), title: "Pod Details")
     }
 }

@@ -47,50 +47,44 @@ class OmniSettingsViewModel: ObservableObject {
     @Published var hasConnection: Bool // replaces both rileylinkConnected and isConnected
 
     var activatedAtString: String {
-        if let activatedAt = activatedAt {
-            return dateFormatter.string(from: activatedAt)
-        } else {
+        guard let activatedAt = activatedAt else {
             return "—"
         }
+        return dateFormatter.string(from: activatedAt)
     }
 
     var expiresAtString: String {
-        if let expiresAt = expiresAt {
-            return dateFormatter.string(from: expiresAt)
-        } else {
+        guard let expiresAt = expiresAt else {
             return "—"
         }
+        return dateFormatter.string(from: expiresAt)
     }
 
-    var faultedAtString: String {
-        if let faultEventTimeSinceActivation = pumpManager.podDetails?.fault?.faultEventTimeSinceActivation,
-           let expiresAt = expiresAt
-        {
-            // Use expiresAt which slides with pod clock skew to compute an adjusted activatedAt
-            let adjustedActivatedAt = expiresAt - Pod.nominalPodLife
-            let faultedAt = adjustedActivatedAt + faultEventTimeSinceActivation
-            return dateFormatter.string(from: faultedAt)
+    var deliveryStoppedAtString: String {
+        guard let deliveryStoppedAt = pumpManager.podDetails?.deliveryStoppedAt else {
+            return "—"
         }
-        return "—"
+        return dateFormatter.string(from: deliveryStoppedAt)
     }
 
-    var deliveryStopsAtString: String {
-        if let expiresAt = expiresAt {
-            // Use expiresAt which slides with pod clock skew to compute an adjusted activatedAt
-            let adjustedActivatedAt = expiresAt - Pod.nominalPodLife
-            let deliveryStopsAt = adjustedActivatedAt + Pod.serviceDuration
-            return dateFormatter.string(from: deliveryStopsAt)
+    var noDeliveryAtString: String {
+        guard let expiresAt = expiresAt else {
+            return "—"
         }
-        return "—"
+        /// Compute an adjusted activatedAt based on expiresAt which varies with pod clock skew
+        let adjustedActivatedAt = expiresAt - Pod.nominalPodLife
+        /// Use adjustedActivatedAt to compute the current adjusted pod shutdown time
+        let noDeliveryAt = adjustedActivatedAt + Pod.serviceDuration
+        return dateFormatter.string(from: noDeliveryAt)
     }
 
     var serviceTimeRemainingString: String? {
-        if let serviceTimeRemaining = pumpManager.podServiceTimeRemaining,
-           let serviceTimeRemainingString = timeRemainingFormatter.string(from: serviceTimeRemaining)
+        guard let serviceTimeRemaining = pumpManager.podServiceTimeRemaining,
+           let serviceTimeRemainingString = timeRemainingFormatter.string(from: serviceTimeRemaining) else
         {
-            return serviceTimeRemainingString
+            return nil
         }
-        return nil
+        return serviceTimeRemainingString
     }
 
     // Expiration reminder date for current pod
@@ -544,10 +538,9 @@ extension OmniSettingsViewModel: PodStateObserver {
     func podConnectionStateDidChange(isConnected: Bool) {
         self.hasConnection = isConnected
     }
- }
- 
+}
 
- 
+
 extension OmniSettingsViewModel: PumpManagerStatusObserver {
     func pumpManager(_ pumpManager: PumpManager, didUpdate status: PumpManagerStatus, oldStatus: PumpManagerStatus) {
         basalDeliveryState = self.pumpManager.status.basalDeliveryState
@@ -625,7 +618,8 @@ extension OmniPumpManager {
             lastStatus: podState.lastInsulinMeasurements?.validTime,
             fault: podState.fault,
             activatedAt: podState.activatedAt,
-            activeTime: podState.activeTime,
+            deliveryStoppedAt: podState.deliveryStoppedAt,
+            podTime: podState.podTime,
         )
     }
 

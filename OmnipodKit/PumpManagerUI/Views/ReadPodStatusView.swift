@@ -111,7 +111,7 @@ private func podStatusString(status: DetailedStatus) -> String {
     } else {
         str = String(format: LocalizedString("%1$@ minutes", comment: "The format string for minutes (1: number of minutes string)"), String(describing: Int(status.timeActive / 60)))
     }
-    result = String(format: LocalizedString("Pod Active: %1$@", comment: "The format string for Pod Active: (1: formatted time)"), str)
+    result = String(format: LocalizedString("Pod Time: %1$@", comment: "The format string for Pod Time: (1: formatted time)"), str)
 
     result += String(format: LocalizedString("\nPod Progress: %1$@", comment: "The format string for Pod Progress: (1: pod progress string)"), String(describing: status.podProgressStatus))
 
