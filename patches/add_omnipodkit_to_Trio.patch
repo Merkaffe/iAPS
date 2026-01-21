@@ -145,20 +145,6 @@ index 7d487be91..8c6dee912 100644
          if let simulatorPump = pumpManager as? MockPumpManager {
              broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
                  $0.pumpReservoirDidChange(Decimal(simulatorPump.state.reservoirUnitsRemaining))
-@@ -672,6 +715,13 @@ extension BaseDeviceDataManager: AlertObserver {
-                 }
-             }
- 
-+            if let omni = self.pumpManager as? OmniPumpManager {
-+                if omni.state.activeAlerts.isEmpty {
-+                    // force to ack alert in the alertStorage
-+                    self.alertHistoryStorage.ackAlert(alertIssueDate, nil)
-+                }
-+            }
-+
-             self.pumpManager?.acknowledgeAlert(alertIdentifier: alert.alertIdentifier) { error in
-                 if let error = error {
-                     self.alertHistoryStorage.ackAlert(alertIssueDate, error.localizedDescription)
 diff --git a/Trio/Sources/Modules/Home/View/HomeRootView.swift b/Trio/Sources/Modules/Home/View/HomeRootView.swift
 index 041337f32..f4569463b 100644
 --- a/Trio/Sources/Modules/Home/View/HomeRootView.swift
@@ -239,7 +225,7 @@ index 4f60532d6..8fb527796 100755
    RileyLinkKit, \
    OmniBLE, \
    MinimedKit, \
--  TidepoolService \
+-  TidepoolService, \
 -  DanaKit 
 +  TidepoolService, \
 +  DanaKit, \
