@@ -1,67 +1,75 @@
 # OmnipodKit
 
-OmnipodKit is a universal Omnipod pump manager to (eventually) handle all Insulet Omnipod pod types.
+OmnipodKit is a new universal Omnipod pump manager that
 
-A short-term goal of this effort is to replace both the OmniKit and OmniBLE pump managers
-with a single pump manager to
+* Handles both the Eros and DASH pod types
+* Hopefully will eventually support the Omnipod 5 (O5)
+* Simplifies future DIY Omnipod code maintenance
+* Has a number of improvements and updates
 
-* handle all Omnipod pod types
-* simplify future DIY Omnipod code maintenance
-* improve the user experience when switching between different Omnipod pod types
-
-The longer-term goal is that the OmnipodKit pump manager provide Omnipod 5 (O5) support as a third pod type option for both Loop and Trio when, and if, the O5 encryption is understood well enough to enable pairing a DIY app to an O5 pod.
-
-To use this new OmnipodKit pump manager, select "All Omnipod Types" when doing an "Add Pump".
-The actual Omnipod pod type will be selected during the pump manager initialization sequence.
+To select the new OmnipodKit pump manager,
+select `All Omnipod Types` when doing an `Add Pump`.
+The actual Omnipod pod type will be selected during
+the pump manager initialization setup sequence.
 After deactivating a pod when using the OmnipodKit pump manager,
-you can switch to either a different pod type OR another different pump manager
+you can switch to either a different pod type OR
+to another completely different pump manager
 by scrolling to the bottom of the pod settings view and tapping on
-"Switch to another pod or pump type".
+`Switch to another pod or pump type`.
 
-The "Omnipod" (OmniKit) and "Omnipod DASH" (OmniBLE) pump managers
-displayed with "Add Pump" are still the original unmodified
+The `Omnipod` (OmniKit) and `Omnipod DASH` (OmniBLE) pump managers
+currently displayed with `Add Pump` are the original unmodified
 pump managers which maintain their own separate pump manager state.
 Therefore if you already have an active pod session using a previous pump manager,
-you must select "Switch to other insulin delivery device" after deactivating any active pod
-before you can do an "Add Pump" to select "All Omnipod Types" for the OmnipodKit pump manager.
-Eventually the OmniKit and OmniBLE pump managers and their associated plugins
-should be totally replaced by OmnipodKit.
+you must select `Switch to other insulin delivery device`
+after deactivating any active pod before you can do an `Add Pump`
+to select `All Omnipod Types` for the OmnipodKit pump manager.
+Eventually the OmniKit and OmniBLE pump managers
+will be totally replaced by OmnipodKit.
+When this happens, OmnipodKit will handle any conversion of
+any OmniKit or OmniBLE state (including for a currently active pod)
+and the OmniKit and OmniBLE pump managers
+will no longer be available or supported.
 
-![Screen for changing pod or pump type](img/OmnipodKit_pod_selection.png)
 
-Note that OmnipodKit is still an evolving prototype -- use at your own risk!
+## Status as of January 20, 2026
 
-## Status
+Since the OmnipodKit repository is still private
+and limited to selected developers,
+`Omnipod 5` is available as a selection in the `Omnipod Type` view
+even though it is not working as the encryption used in the
+pairing sequence is not yet understood enough to do O5 pod pairing.
+The `Omnipod 5` choice should not be selected except
+for developers doing Omnipod 5 DIY development work.
+If OmnipodKit is made public before the O5 code
+is ready for possible limited test use,
+the `Omnipod Type` view will be modified to display
+only the `Omnipod Classic` and `Omnipod DASH` pod types.
 
-### 2025 May 22
 
-Update the README file after the open beta testing for Trio 0.5.x was made available 2025 May 17. 
-No other changes are needed to OmnipodKit.
+## Developer Notes
 
-### 2025 March 20
-
-At this time, there is nothing implementing Omnipod 5 communications.
-
-> The O5 selection option is a temporary placeholder. It uses the DASH
-transport and will work with both an actual DASH pod and with the [rPi DASH simulator](https://github.com/LoopKit/pod). This enables configuring Omnipod 5 UI additions
-(different text, pod tab color, etc)
-and using an alternate base pod id in the pod comms, while using the known transport for DASH pods.
-
-For DIY use, the Omnipod 5 pod ids will start with 0x15
-while the DIY DASH pod ids will start with 0x17.
+The Omnipod 5 pod ids (addresses) will start with 0x15
+while the DIY DASH pod ids will continue to start with 0x17.
 Eros addresses (pod ids) start with 0x1F for both DIY and PDM.
+The pump settings shows the name of the selected pod type.
+`Pod Diagnostics` -> `Pump Manager Details` can be used
+to examine details of attributes of the new unified
+Pump Manager and Pod state used by OmnipodKit.
 
-The pump settings show the name of the selected pod type.
-Pod Diagnostics -> Pump Manager Details can be used
-to examine the attributes of the new unified Pump Manager & pod state used by OmnipodKit.
+OmnipodKit/OmnipodKit/Bluetooth/BluetoothServices.swift
+currently has a number of total hacks to rapidly
+handle a number of DASH versus O5 Bluetooth differences.
+Eventually parts of OmnipodKit/OmnipodKit/Bluetooth
+will be refactored to a more reasonable form once more
+of the O5 communication differences are better understood.
+The setServicePodType() func currently is used to
+set a number of temporary variables that are used
+to control several aspects of the Bluetooth communications.
+The OmnipodKit/OmnipodKit/Bluetooth/Pair/O5LTKExchanger.swift
+file has code for the early part of what's understood
+about the O5 pairing sequence and will need to be extended.
 
-### To Do
-
-Figure out possible future migration aids to help transition pod use
-to OmnnipodKit while deprecating use of OmniKit and OmniBLE.
-
-Figure out the Omnipod 5 encryption and transport and
-update OmnpodKit to actually fully support this pod type!
 
 ## To Add to LoopWorkspace
 
@@ -87,8 +95,8 @@ xed .
 
 When Xcode opens, if questioned, select use the version on disk.
 
-After building Loop, be sure to select the new "All Omnipod Types"
-when doing an "Add Pump" to use the new OmnipodKit pump manager.
+After building Loop, be sure to select the new `All Omnipod Types`
+when doing an `Add Pump` to use the new OmnipodKit pump manager.
 
 ## To Add to the Public Beta for Trio
 
@@ -97,7 +105,7 @@ Included in the OmnipodKit repository is the patch to add OmnipodKit to a fresh 
 * This patch only works with the open beta, Trio 0.6.x, `dev` branch
 * This patch does not work with Trio 0.2.x, `main` branch
 
-The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio directory. 
+The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio directory.
 This patch handles all the Trio pump manager integration requirements to add the
 OmnipodKit (private repo) pump manager to the open-beta Trio, `dev` branch.
 
@@ -119,13 +127,14 @@ When Xcode opens, if questioned, select use the version on disk.
 
 After building with Xcode, this file will be modified as well: `Trio/Sources/Localizations/Main/Localizable.xcstrings`
 
-
+After building Loop, be sure to select the new `All Omnipod Types`
+when doing an `Add Pump` to use the new OmnipodKit pump manager.
 
 ## To Add to the Private Repository Trio-dev
 
 Included in the OmnipodKit repository is the patch to add OmnipodKit to a fresh clone of [Trio](https://github.com/nightscout/Trio-dev/). Because this is a private repository, most people will not have access to it.
 
-The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio directory. 
+The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio directory.
 This patch handles all the Trio pump manager integration requirements to add the
 OmnipodKit (private repo) pump manager to Trio-dev (private repo).
 
@@ -146,6 +155,9 @@ xed .
 When Xcode opens, if questioned, select use the version on disk.
 
 After building with Xcode, this file will be modified as well: `Trio/Sources/Localizations/Main/Localizable.xcstrings`
+
+After building Loop, be sure to select the new `All Omnipod Types`
+when doing an `Add Pump` to use the new OmnipodKit pump manager.
 
 ## Manually Add a Plugin to LoopWorkspace
 
@@ -185,7 +197,7 @@ To add the OmniTests to the LoopWorkspace tests in Xcode:
 
 This section is kept for future reference on how to add a new pump manager to Trio. **When you use the patch method, above, this section is not required.**
 
-Trio does not use the plugin features used by Loop. 
+Trio does not use the plugin features used by Loop.
 
 In addition, Trio requires editing multiple Trio source files to incorporate a Pump Manager,
 and even more edits are required for a successful addition of
@@ -216,7 +228,7 @@ At the current time, do not add the OmniTests to the Trio tests in Xcode; this w
 
 ```
 
-The following files must be edited for Trio to work with the new pump manager. 
+The following files must be edited for Trio to work with the new pump manager.
 Examine the `add_omnipodkit_to_Trio-dev.patch` to view the required changes.
 
 * Trio/Sources/APS/DeviceDataManager.swift
