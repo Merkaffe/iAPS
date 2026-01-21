@@ -1,45 +1,51 @@
+diff --git a/OmnipodKit b/OmnipodKit
+new file mode 160000
+index 000000000..35b902bb2
+--- /dev/null
++++ b/OmnipodKit
+@@ -0,0 +1 @@
++Subproject commit 35b902bb227375b2854f34e578769c5c1375a458
 diff --git a/Trio.xcodeproj/project.pbxproj b/Trio.xcodeproj/project.pbxproj
-index c5d56360b..d9751ed4d 100644
+index 1beabd3e0..a450e4f94 100644
 --- a/Trio.xcodeproj/project.pbxproj
 +++ b/Trio.xcodeproj/project.pbxproj
-@@ -327,6 +327,8 @@
+@@ -337,6 +337,8 @@
  		98641AF4F92123DA668AB931 /* CarbRatioEditorRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BDC6993C1087310EDFC428 /* CarbRatioEditorRootView.swift */; };
  		A33352ED40476125EBAC6EE0 /* CarbRatioEditorDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E22146D3DF4853786C78132 /* CarbRatioEditorDataFlow.swift */; };
  		AD3D2CD42CD01B9EB8F26522 /* PumpConfigDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF65DA88F972B56090AD6AC3 /* PumpConfigDataFlow.swift */; };
-+		B6DDCC072DA024C300AABBF7 /* OmnipodKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6DDCC062DA024C300AABBF7 /* OmnipodKit.framework */; };
-+		B6DDCC082DA024C300AABBF7 /* OmnipodKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B6DDCC062DA024C300AABBF7 /* OmnipodKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
++		B6E925132EB3932A0076D719 /* OmnipodKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6E925122EB3932A0076D719 /* OmnipodKit.framework */; };
++		B6E925142EB3932A0076D719 /* OmnipodKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B6E925122EB3932A0076D719 /* OmnipodKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
  		B7C465E9472624D8A2BE2A6A /* (null) in Sources */ = {isa = PBXBuildFile; };
  		B958F1B72BA0711600484851 /* MKRingProgressView in Frameworks */ = {isa = PBXBuildFile; productRef = B958F1B62BA0711600484851 /* MKRingProgressView */; };
  		BA00D96F7B2FF169A06FB530 /* CGMSettingsStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C018D1680307A31C9ED7120 /* CGMSettingsStateModel.swift */; };
-@@ -732,6 +734,7 @@
+@@ -798,6 +800,7 @@
  				3B4BA78B2D8DC0EC0069D5B8 /* ShareClient.framework in Embed Frameworks */,
  				3B4BA7912D8DC0EC0069D5B8 /* TidepoolServiceKitUI.framework in Embed Frameworks */,
  				CE95BF602BA7715800DC3DE3 /* MockKit.framework in Embed Frameworks */,
-+				B6DDCC082DA024C300AABBF7 /* OmnipodKit.framework in Embed Frameworks */,
++				B6E925142EB3932A0076D719 /* OmnipodKit.framework in Embed Frameworks */,
  				CE95BF5E2BA770C300DC3DE3 /* LoopKitUI.framework in Embed Frameworks */,
  			);
  			name = "Embed Frameworks";
-@@ -1090,6 +1093,7 @@
+@@ -1165,6 +1168,7 @@
  		AAFF91130F2FCCC7EBBA11AD /* BasalProfileEditorStateModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BasalProfileEditorStateModel.swift; sourceTree = "<group>"; };
  		AF65DA88F972B56090AD6AC3 /* PumpConfigDataFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PumpConfigDataFlow.swift; sourceTree = "<group>"; };
  		B5822B15939E719628E9FF7C /* SnoozeRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnoozeRootView.swift; sourceTree = "<group>"; };
-+		B6DDCC062DA024C300AABBF7 /* OmnipodKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = OmnipodKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
++		B6E925122EB3932A0076D719 /* OmnipodKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = OmnipodKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
  		B9B5C0607505A38F256BF99A /* CGMSettingsDataFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CGMSettingsDataFlow.swift; sourceTree = "<group>"; };
  		BA49538D56989D8DA6FCF538 /* TargetsEditorDataFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TargetsEditorDataFlow.swift; sourceTree = "<group>"; };
  		BD04ECCD2D299522008C5FEB /* BolusProgressOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BolusProgressOverlay.swift; sourceTree = "<group>"; };
-@@ -1465,6 +1469,7 @@
- 				CE95BF5F2BA7715800DC3DE3 /* MockKit.framework in Frameworks */,
- 				3BD9687F2D8DDD8800899469 /* CryptoSwift in Frameworks */,
- 				38DF1789276FC8C400B3528F /* SwiftMessages in Frameworks */,
-+				B6DDCC072DA024C300AABBF7 /* OmnipodKit.framework in Frameworks */,
- 				3B4BA7802D8DBD690069D5B8 /* OmniKitUI.framework in Frameworks */,
- 				3B4BA7842D8DBD690069D5B8 /* RileyLinkKit.framework in Frameworks */,
- 				CE95BF612BA7715900DC3DE3 /* MockKitUI.framework in Frameworks */,
-@@ -2038,6 +2043,7 @@
+@@ -1580,5 +1584,6 @@
+ 				3B4BA78A2D8DC0EC0069D5B8 /* ShareClient.framework in Frameworks */,
+ 				3B4BA77E2D8DBD690069D5B8 /* OmniKit.framework in Frameworks */,
++				B6E925132EB3932A0076D719 /* OmnipodKit.framework in Frameworks */,
+ 				3811DE1025C9D37700A708ED /* Swinject in Frameworks */,
+ 				3B4BA78E2D8DC0EC0069D5B8 /* TidepoolServiceKit.framework in Frameworks */,
+ 				B958F1B72BA0711600484851 /* MKRingProgressView in Frameworks */,
+@@ -2176,6 +2181,7 @@
  		3818AA48274C267000843DB3 /* Frameworks */ = {
  			isa = PBXGroup;
  			children = (
-+				B6DDCC062DA024C300AABBF7 /* OmnipodKit.framework */,
++				B6E925122EB3932A0076D719 /* OmnipodKit.framework */,
  				3B4BA7882D8DC0EC0069D5B8 /* TidepoolServiceKit.framework */,
  				3B4BA7892D8DC0EC0069D5B8 /* TidepoolServiceKitUI.framework */,
  				3B4BA75B2D8DBD690069D5B8 /* CGMBLEKit.framework */,
@@ -58,7 +64,7 @@ index 8035089c5..260f34e0a 100644
        location = "group:LibreTransmitter/LibreTransmitter.xcodeproj">
     </FileRef>
 diff --git a/Trio/Sources/APS/DeviceDataManager.swift b/Trio/Sources/APS/DeviceDataManager.swift
-index 821bb0baa..5a7f6f4d7 100644
+index 7d487be91..8c6dee912 100644
 --- a/Trio/Sources/APS/DeviceDataManager.swift
 +++ b/Trio/Sources/APS/DeviceDataManager.swift
 @@ -9,6 +9,7 @@ import MinimedKit
@@ -139,25 +145,11 @@ index 821bb0baa..5a7f6f4d7 100644
          if let simulatorPump = pumpManager as? MockPumpManager {
              broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
                  $0.pumpReservoirDidChange(Decimal(simulatorPump.state.reservoirUnitsRemaining))
-@@ -671,6 +714,13 @@ extension BaseDeviceDataManager: AlertObserver {
-                 }
-             }
- 
-+            if let omni = self.pumpManager as? OmniPumpManager {
-+                if omni.state.activeAlerts.isEmpty {
-+                    // force to ack alert in the alertStorage
-+                    self.alertHistoryStorage.ackAlert(alertIssueDate, nil)
-+                }
-+            }
-+
-             self.pumpManager?.acknowledgeAlert(alertIdentifier: alert.alertIdentifier) { error in
-                 if let error = error {
-                     self.alertHistoryStorage.ackAlert(alertIssueDate, error.localizedDescription)
 diff --git a/Trio/Sources/Modules/Home/View/HomeRootView.swift b/Trio/Sources/Modules/Home/View/HomeRootView.swift
-index e8d8cb392..7b4c60358 100644
+index 041337f32..f4569463b 100644
 --- a/Trio/Sources/Modules/Home/View/HomeRootView.swift
 +++ b/Trio/Sources/Modules/Home/View/HomeRootView.swift
-@@ -935,6 +935,7 @@ extension Home {
+@@ -948,6 +948,7 @@ extension Home {
              // PUMP RELATED
              .confirmationDialog("Pump Model", isPresented: $showPumpSelection) {
                  Button("Medtronic") { state.addPump(.minimed) }
@@ -178,10 +170,10 @@ index 68b921400..3a5114bd8 100644
          case simulator
      }
 diff --git a/Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift b/Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift
-index 262224839..5eb6b3cbd 100644
+index 975eec687..8591b32e2 100644
 --- a/Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift
 +++ b/Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift
-@@ -109,6 +109,7 @@ extension PumpConfig {
+@@ -115,6 +115,7 @@ extension PumpConfig {
                                  )
                                  VStack(alignment: .leading) {
                                      Text("• Medtronic")
@@ -189,7 +181,7 @@ index 262224839..5eb6b3cbd 100644
                                      Text("• Omnipod Eros")
                                      Text("• Omnipod DASH")
                                      Text("• Dana (RS/-i)")
-@@ -124,6 +125,7 @@ extension PumpConfig {
+@@ -130,6 +131,7 @@ extension PumpConfig {
                  }
                  .confirmationDialog("Pump Model", isPresented: $showPumpSelection) {
                      Button("Medtronic") { state.addPump(.minimed) }
@@ -226,12 +218,15 @@ index 3c4c6bb50..9d5da90c2 100644
                  setupViewController = DanaKitPumpManager.setupViewController(
                      initialSettings: initialSettings,
 diff --git a/scripts/swiftformat.sh b/scripts/swiftformat.sh
-index 6780ebe96..beaca510a 100755
+index 4f60532d6..8fb527796 100755
 --- a/scripts/swiftformat.sh
 +++ b/scripts/swiftformat.sh
-@@ -97,4 +97,4 @@ trailingClosures \
- --typeattributes same-line \
- --varattributes same-line \
- --wrapcollections before-first \
----exclude Pods,Generated,R.generated.swift,fastlane/swift,Dependencies, LoopKit, LibreTransmitter,G7SensorKit,OmniKit, dexcom-share-client-swift,CGMBLEKit,RileyLinkKit,OmniBLE,MinimedKit,TidepoolService
-+--exclude Pods,Generated,R.generated.swift,fastlane/swift,Dependencies, LoopKit, LibreTransmitter,G7SensorKit,OmniKit, dexcom-share-client-swift,CGMBLEKit,RileyLinkKit,OmniBLE,MinimedKit,TidepoolService,OmnipodKit
+@@ -110,5 +110,6 @@ trailingClosures \
+   RileyLinkKit, \
+   OmniBLE, \
+   MinimedKit, \
+-  TidepoolService \
+-  DanaKit 
++  TidepoolService, \
++  DanaKit, \
++  OmnipodKit
