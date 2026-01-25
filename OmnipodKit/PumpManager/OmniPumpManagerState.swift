@@ -14,8 +14,6 @@ import LoopKit
 public struct OmniPumpManagerState: RawRepresentable, Equatable {
     public typealias RawValue = PumpManager.RawStateValue
 
-    static let version = 4
-
     var isOnboarded: Bool = false
 
     // XXX still needs be declared public with the current Trio implementation
@@ -33,6 +31,8 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
     var unstoredDoses: [UnfinalizedDose]
 
     var silencePod: Bool
+
+    var silencePodEnd: Date? /// if set, the time at which Silence Pod Mode will automatically end
 
     var confirmationBeeps: BeepPreference
 
@@ -129,6 +129,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         self.maxBolusUnits = maxBolusUnits
         self.unstoredDoses = []
         self.silencePod = false
+        self.silencePodEnd = nil
         self.confirmationBeeps = .manualCommands
         self.lowReservoirReminderValue = Pod.defaultLowReservoirReminder
         self.podAttachmentConfirmed = false
@@ -158,10 +159,6 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
     }
 
     public init?(rawValue: RawValue) {
-
-        guard let version = rawValue["version"] as? Int else {
-            return nil
-        }
 
         let isOnboarded = rawValue["isOnboarded"] as? Bool ?? false
 
@@ -244,7 +241,20 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             self.unstoredDoses = []
         }
 
-        self.silencePod = rawValue["silencePod"] as? Bool ?? false
+        if let silencePodEnd = rawValue["silencePodEnd"] as? Date {
+            if Date() > silencePodEnd {
+                // already passed the Silence Pod End time, disable
+                self.silencePodEnd = nil
+                self.silencePod = false
+            } else {
+                // Silence Pod End time still in effect
+                self.silencePodEnd = silencePodEnd
+                self.silencePod = true
+            }
+        } else {
+            self.silencePodEnd = nil
+            self.silencePod = rawValue["silencePod"] as? Bool ?? false
+        }
 
         if let rawBeeps = rawValue["confirmationBeeps"] as? BeepPreference.RawValue, let confirmationBeeps = BeepPreference(rawValue: rawBeeps) {
             self.confirmationBeeps = confirmationBeeps
@@ -302,7 +312,6 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     public var rawValue: RawValue {
         var value: [String : Any] = [
-            "version": OmniPumpManagerState.version,
             "isOnboarded": isOnboarded,
             "timeZone": timeZone.secondsFromGMT(),
             "basalSchedule": basalSchedule.rawValue,
@@ -328,6 +337,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         value["defaultExpirationReminderOffset"] = defaultExpirationReminderOffset
         value["lowReservoirReminderValue"] = lowReservoirReminderValue
         value["lastPumpDataReportDate"] = lastPumpDataReportDate
+        value["silencePodEnd"] = silencePodEnd
         value["previousPodState"] = previousPodState?.rawValue
 
         return value
@@ -366,6 +376,7 @@ extension OmniPumpManagerState: CustomDebugStringConvertible {
             "* lastPumpDataReportDate: \(optionalString(lastPumpDataReportDate))",
             "* isPumpDataStale: \(String(describing: isPumpDataStale))",
             "* silencePod: \(String(describing: silencePod))",
+            "* silencePodEnd: \(optionalString(silencePodEnd))",
             "* confirmationBeeps: \(String(describing: confirmationBeeps))",
             "* insulinType: \(optionalString(insulinType))",
             "* scheduledExpirationReminderOffset: \(optionalString(scheduledExpirationReminderOffset?.timeIntervalStr))",

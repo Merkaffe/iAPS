@@ -498,6 +498,7 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
                     FrameworkLocalText("Notification Settings", comment: "Text for Notification Settings disclosure row")
                         .foregroundColor(Color.primary)
                 }
+
                 NavigationLink(destination: BeepPreferenceSelectionView(initialValue: viewModel.beepPreference, onSave: viewModel.setConfirmationBeeps)) {
                     HStack {
                         FrameworkLocalText("Confidence Reminders", comment: "Text for confidence reminders navigation link")
@@ -507,15 +508,29 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
                             .foregroundColor(.secondary)
                     }
                 }
-                NavigationLink(destination: SilencePodSelectionView(initialValue: viewModel.silencePodPreference, onSave: viewModel.setSilencePod)) {
+
+                NavigationLink(destination: SilencePodSelectionView(initialValue: viewModel.silencePodPreference,
+                                                                    initialSilenceTimeEndTime: viewModel.silencePodEnd,
+                                                                    onSave: viewModel.setSilencePod))
+                {
                     HStack {
-                        FrameworkLocalText("Silence Pod", comment: "Text for silence pod navigation link")
-                            .foregroundColor(Color.primary)
-                        Spacer()
-                        Text(viewModel.silencePodPreference.title)
-                            .foregroundColor(.secondary)
+                        /// If we have a silence mode end time, use an alternate row title giving the time
+                        if let endTime = viewModel.silencePodEnd, viewModel.silencePodPreference == .enabled {
+                            FrameworkLocalText("Silence Pod Ends", comment: "Text for Silence Pod Ends navigation link")
+                                .foregroundColor(Color.primary)
+                            Spacer()
+                            Text(viewModel.timeFormatter.string(from: endTime))
+                                .foregroundColor(.secondary)
+                        } else {
+                            FrameworkLocalText("Silence Pod", comment: "Text for silence pod navigation link")
+                                .foregroundColor(Color.primary)
+                            Spacer()
+                            Text(viewModel.silencePodPreference.title)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
+
                 NavigationLink(destination: InsulinTypeSetting(initialValue: viewModel.insulinType, supportedInsulinTypes: supportedInsulinTypes, allowUnsetInsulinType: false, didChange: viewModel.didChangeInsulinType)) {
                     HStack {
                         FrameworkLocalText("Insulin Type", comment: "Text for insulin type navigation link")

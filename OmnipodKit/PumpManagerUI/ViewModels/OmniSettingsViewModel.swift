@@ -44,6 +44,8 @@ class OmniSettingsViewModel: ObservableObject {
 
     @Published var silencePodPreference: SilencePodPreference
 
+    @Published var silencePodEnd: Date?
+
     @Published var hasConnection: Bool // replaces both rileylinkConnected and isConnected
 
     var activatedAtString: String {
@@ -255,6 +257,7 @@ class OmniSettingsViewModel: ObservableObject {
         podCommState = pumpManager.podCommState
         beepPreference = pumpManager.beepPreference
         silencePodPreference = pumpManager.silencePod ? .enabled : .disabled
+        silencePodEnd = pumpManager.silencePodEnd
         hasConnection = pumpManager.hasConnection
         insulinType = pumpManager.insulinType
         podDetails = pumpManager.podDetails
@@ -373,11 +376,15 @@ class OmniSettingsViewModel: ObservableObject {
         }
     }
 
-    func setSilencePod(_ silencePodPreference: SilencePodPreference, _ completion: @escaping (_ error: LocalizedError?) -> Void) {
-        pumpManager.setSilencePod(silencePod: silencePodPreference == .enabled) { error in
+    func setSilencePod(_ silencePodPreference: SilencePodPreference, silencePodEnd: Date?,
+                       _ completion: @escaping (_ error: LocalizedError?) -> Void)
+    {
+        pumpManager.setSilencePod(silencePod: silencePodPreference == .enabled,
+                                  silencePodEnd: silencePodEnd) { error in
             DispatchQueue.main.async {
                 if error == nil {
                     self.silencePodPreference = silencePodPreference
+                    self.silencePodEnd = silencePodEnd
                 }
                 completion(error)
             }

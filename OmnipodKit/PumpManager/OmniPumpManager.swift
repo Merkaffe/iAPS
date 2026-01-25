@@ -583,7 +583,7 @@ extension OmniPumpManager {
     // Returns a suitable beep command MessageBlock based the current beep preferences and
     // whether there is an unfinializedDose for a manual temp basal &/or a manual bolus.
     private func beepMessageBlock(beepType: BeepType) -> MessageBlock? {
-        guard self.beepPreference.shouldBeepForManualCommand && !self.silencePod else {
+        guard self.beepPreference.shouldBeepForManualCommand && !self.podSilenced else {
             return nil
         }
 
@@ -595,6 +595,29 @@ extension OmniPumpManager {
         )
 
         return beepMessageBlock
+    }
+
+    /// Returns true if silencePod is true and the silencePodEnd time has not been exceeded,
+    /// but will not attrempt to reprogram the pod alerts once silencePodEnd time has been reached.
+    private var podSilenced: Bool {
+        if self.state.silencePod, let silencePodEnd = self.state.silencePodEnd, Date() >= silencePodEnd {
+            /// Silence pod end time has been reached, but not yet disabled.
+            /// Just return false here and let checkSilenceEnd() handle the var resetting.
+            log.default("@@@ podSilenced: reached end time %@ without resetting alerts", String(describing: silencePodEnd))
+            return false
+        }
+        return self.state.silencePod
+    }
+
+    /// Attempts to disable pod silenced mode if the silencePodEnd time has been reached.
+    private func checkSilenceEnd() {
+        if self.state.silencePod, let silencePodEnd = self.state.silencePodEnd, Date() >= silencePodEnd {
+            log.default("@@@ Silence pod end time %@ reached, attempting disable using setSilencePod()", String(describing: silencePodEnd))
+            /// Use setSilencePod() to handle resetting pod alerts to use audio beeps.
+            /// On success, the silencePod and silencePodEnd vars will be reset.
+            /// On error, the vars are not updated, but podSilenced will still be false.
+            setSilencePod(silencePod: false, silencePodEnd: nil) { error in }
+        }
     }
 
     private func podCommState(for state: OmniPumpManagerState) -> PodCommState {
@@ -668,7 +691,17 @@ extension OmniPumpManager {
 
     var silencePod: Bool {
         get {
-            return state.silencePod
+            /// Use podSilenced instead of state.silencePod to returns false if silencePodEnd time has
+            /// been reached but pod alerts and silencePod and silencePodEnd vars are not yet reset.
+            return podSilenced
+        }
+    }
+
+    var silencePodEnd: Date? {
+        get {
+            /// Use podSilenced test to return nil if silencePodEnd time has been reached
+            /// but pod alerts and silencePod and silencePodEnd vars are not yet reset.
+            return podSilenced ? state.silencePodEnd : nil
         }
     }
 
@@ -1271,11 +1304,11 @@ extension OmniPumpManager {
 
                     let expirationReminderTime = Pod.nominalPodLife - self.state.defaultExpirationReminderOffset
                     let alerts: [PodAlert] = [
-                        .expirationReminder(offset: self.podTime, absAlertTime: self.state.defaultExpirationReminderOffset > 0 ? expirationReminderTime : 0, silent: self.state.silencePod),
-                        .lowReservoir(units: self.lowReservoirReminderValue, silent: self.state.silencePod)
+                        .expirationReminder(offset: self.podTime, absAlertTime: self.state.defaultExpirationReminderOffset > 0 ? expirationReminderTime : 0, silent: self.podSilenced),
+                        .lowReservoir(units: self.lowReservoirReminderValue, silent: self.podSilenced)
                     ]
 
-                    let finishWait = try session.insertCannula(optionalAlerts: alerts, silent: self.state.silencePod)
+                    let finishWait = try session.insertCannula(optionalAlerts: alerts, silent: self.podSilenced)
                     completion(.success(finishWait))
                 } catch let error {
                     completion(.failure(.communication(error)))
@@ -1375,6 +1408,8 @@ extension OmniPumpManager {
             return
         }
 
+        checkSilenceEnd()
+
         self.runSession(withName: "Get pod status") { (result) in
             do {
                 switch result {
@@ -1403,6 +1438,8 @@ extension OmniPumpManager {
             throw PumpManagerError.configuration(OmniPumpManagerError.noPodPaired)
         }
 
+        checkSilenceEnd()
+
         return try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Get detailed status") { (result) in
                 do {
@@ -1430,6 +1467,8 @@ extension OmniPumpManager {
             completion(nil)
             return
         }
+
+        checkSilenceEnd()
 
         self.runSession(withName: "Acknowledge Alerts") { (result) in
             let session: PodCommsSession
@@ -1476,6 +1515,8 @@ extension OmniPumpManager {
             return
         }
 
+        checkSilenceEnd()
+
         guard podState.unfinalizedBolus?.isFinished() != false else {
             completion(.state(PodCommsError.unfinalizedBolus))
             return
@@ -1485,7 +1526,7 @@ extension OmniPumpManager {
             switch result {
             case .success(let session):
                 do {
-                    let beep = self.silencePod ? false : self.beepPreference.shouldBeepForManualCommand
+                    let beep = self.podSilenced ? false : self.beepPreference.shouldBeepForManualCommand
                     let _ = try session.setTime(timeZone: timeZone, basalSchedule: self.state.basalSchedule, date: Date(), acknowledgementBeep: beep)
                     self.clearSuspendReminder()
                     self.setState { (state) in
@@ -1503,45 +1544,34 @@ extension OmniPumpManager {
     }
 
     func setBasalSchedule(_ schedule: BasalSchedule, completion: @escaping (Error?) -> Void) {
-        let shouldContinue = setStateWithResult({ (state) -> PumpManagerResult<Bool> in
+        /// Trio doesn't enforce the maximum basal rates for the basal schedule and
+        /// doesn't limit maximum basal rates settings based on the basal schedule.
+        /// For now just disable this enforcement to match the previous behavior.
+        //for entry in schedule.entries {
+        //    guard entry.rate <= state.maxBasalRateUnitsPerHour else {
+        //        return .failure(PumpManagerError.configuration(OmniPumpManagerError.invalidSetting))
+        //    }
+        //}
 
-            /// Trio doesn't enforce the maximum basal rates for the basal schedule,
-            /// doesn't limit maximum basal rates settings based on the basal schedule,
-            /// and currently incorrectly displays "Trio could not communicate with your pump" for
-            /// any error returned from syncBasalRateSchedule() including out of limit basal rate.
-            /// So for now, just disable this enforcement for now as Omni{BLE,Kit} didn't do this.
-            //for entry in schedule.entries {
-            //    guard entry.rate <= state.maxBasalRateUnitsPerHour else {
-            //        return .failure(PumpManagerError.configuration(OmniPumpManagerError.invalidSetting))
-            //    }
-            //}
-
-            guard state.hasActivePod else {
-                // If there's no active pod yet, save the basal schedule anyway
+        guard state.hasActivePod else {
+            // If there's no active pod yet, just save the basal schedule
+            self.setState { (state) in
                 state.basalSchedule = schedule
-                return .success(false)
             }
-
-            guard state.podState?.setupProgress == .completed else {
-                // A cancel delivery command before pod setup is complete will fault the pod
-                return .failure(PumpManagerError.deviceState(PodCommsError.setupNotComplete))
-            }
-
-            guard state.podState?.unfinalizedBolus?.isFinished() != false else {
-                return .failure(PumpManagerError.deviceState(PodCommsError.unfinalizedBolus))
-            }
-
-            return .success(true)
-        })
-
-        switch shouldContinue {
-        case .success(true):
-            break
-        case .success(false):
             completion(nil)
             return
-        case .failure(let error):
-            completion(error)
+        }
+
+        guard state.podState?.setupProgress == .completed else {
+            // A cancel delivery command before pod setup is complete will fault the pod
+            completion(PumpManagerError.deviceState(PodCommsError.setupNotComplete))
+            return
+        }
+
+        checkSilenceEnd()
+
+        guard state.podState?.unfinalizedBolus?.isFinished() != false else {
+            completion(PumpManagerError.deviceState(PodCommsError.unfinalizedBolus))
             return
         }
 
@@ -1566,7 +1596,7 @@ extension OmniPumpManager {
                     case .success:
                         break
                     }
-                    let beep = self.silencePod ? false : self.beepPreference.shouldBeepForManualCommand
+                    let beep = self.podSilenced ? false : self.beepPreference.shouldBeepForManualCommand
                     let _ = try session.setBasalSchedule(schedule: schedule, scheduleOffset: scheduleOffset, acknowledgementBeep: beep)
                     self.clearSuspendReminder()
 
@@ -1623,12 +1653,14 @@ extension OmniPumpManager {
             throw PodCommsError.unfinalizedBolus
         }
 
+        checkSilenceEnd()
+
         try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Play Test Beeps") { (result) in
                 switch result {
                 case .success(let session):
                     // preserve the pod's completion beep state which gets reset playing beeps
-                    let enabled: Bool = self.silencePod ? false : self.beepPreference.shouldBeepForManualCommand
+                    let enabled: Bool = self.podSilenced ? false : self.beepPreference.shouldBeepForManualCommand
                     let result = session.beepConfig(
                         beepType: .bipBeepBipBeepBipBeepBipBeep,
                         tempBasalCompletionBeep: enabled && self.hasUnfinalizedManualTempBasal,
@@ -1659,6 +1691,8 @@ extension OmniPumpManager {
             self.log.info("Skipping Read Pulse Log due to bolus still in progress.")
             throw PodCommsError.unfinalizedBolus
         }
+
+        checkSilenceEnd()
 
         return try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Read Pulse Log") { (result) in
@@ -1696,6 +1730,8 @@ extension OmniPumpManager {
             throw PodCommsError.unfinalizedBolus
         }
 
+        checkSilenceEnd()
+
         return try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Read Pulse Log Plus") { (result) in
                 do {
@@ -1724,6 +1760,8 @@ extension OmniPumpManager {
         guard self.hasSetupPod else {
             throw OmniPumpManagerError.noPodPaired
         }
+
+        checkSilenceEnd()
 
         return try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Read Activation Time") { (result) in
@@ -1754,6 +1792,8 @@ extension OmniPumpManager {
             throw OmniPumpManagerError.noPodPaired
         }
 
+        checkSilenceEnd()
+
         return try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Read Triggered Alerts") { (result) in
                 do {
@@ -1783,7 +1823,7 @@ extension OmniPumpManager {
         let justUpdateState = true
         #else
         // Just update the pump manager state if there is no active Pod or if currently silenced
-        let justUpdateState = !self.hasActivePod || self.silencePod
+        let justUpdateState = !self.hasActivePod || self.podSilenced
         #endif
 
         let name = String(format: "Set Beep Preference to %@", String(describing: newPreference))
@@ -1829,8 +1869,9 @@ extension OmniPumpManager {
     }
 
     // Reconfigures all active alerts in pod to be silent or not as well as sets/clears the
-    // self.silencePod state variable which silences all confirmation beeping when enabled.
-    func setSilencePod(silencePod: Bool, completion: @escaping (OmniPumpManagerError?) -> Void) {
+    // self.silencePod state variable which silences all confirmation beeping when enabled
+    // until silencePodEnd time (if given) has been reached after which the alerts can revert to audio mode.
+    func setSilencePod(silencePod: Bool, silencePodEnd: Date?, completion: @escaping (OmniPumpManagerError?) -> Void) {
 
         #if targetEnvironment(simulator)
         let justUpdateState = true
@@ -1844,6 +1885,7 @@ extension OmniPumpManager {
             self.log.default("%{public}@", name)
             self.setState { state in
                 state.silencePod = silencePod
+                state.silencePodEnd = silencePodEnd
             }
             completion(nil)
             return
@@ -1899,6 +1941,7 @@ extension OmniPumpManager {
                 try session.configureAlerts(podAlerts, acknowledgeAll: acknowledgeAll, beepBlock: beepBlock)
                 self.setState { (state) in
                     state.silencePod = silencePod
+                    state.silencePodEnd = silencePodEnd
                 }
                 completion(nil)
             } catch {
@@ -2060,6 +2103,8 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
+        checkSilenceEnd()
+
         self.runSession(withName: "Suspend") { (result) in
 
             let session: PodCommsSession
@@ -2087,7 +2132,7 @@ extension OmniPumpManager: PumpManager {
 
             // Use a beepBlock for the confirmation beep to avoid getting 3 beeps using cancel command beeps!
             let beepBlock = self.beepMessageBlock(beepType: .beeeeeep)
-            let result = session.suspendDelivery(suspendReminder: suspendReminder, silent: self.silencePod, beepBlock: beepBlock)
+            let result = session.suspendDelivery(suspendReminder: suspendReminder, silent: self.podSilenced, beepBlock: beepBlock)
             switch result {
             case .certainFailure(let error):
                 self.log.error("Failed to suspend: %{public}@", String(describing: error))
@@ -2109,6 +2154,8 @@ extension OmniPumpManager: PumpManager {
             completion(OmniPumpManagerError.noPodPaired)
             return
         }
+
+        checkSilenceEnd()
 
         self.runSession(withName: "Resume") { (result) in
 
@@ -2138,7 +2185,7 @@ extension OmniPumpManager: PumpManager {
 
             do {
                 let scheduleOffset = self.state.timeZone.scheduleOffset(forDate: Date())
-                let beep = self.silencePod ? false : self.beepPreference.shouldBeepForManualCommand
+                let beep = self.podSilenced ? false : self.beepPreference.shouldBeepForManualCommand
                 let _ = try session.resumeBasal(schedule: self.state.basalSchedule, scheduleOffset: scheduleOffset, acknowledgementBeep: beep)
                 self.clearSuspendReminder()
                 session.dosesForStorage() { (doses) -> Bool in
@@ -2174,6 +2221,8 @@ extension OmniPumpManager: PumpManager {
 
             return state.isPumpDataStale
         }
+
+        checkSilenceEnd()
 
         if state.podType.usesRileyLink {
             checkRileyLinkBattery()
@@ -2214,13 +2263,15 @@ extension OmniPumpManager: PumpManager {
     // MARK: - Programming Delivery
 
     public func enactBolus(units: Double, activationType: BolusActivationType, completion: @escaping (PumpManagerError?) -> Void) {
-        guard units <= state.maxBolusUnits else {
-            completion(.configuration(OmniPumpManagerError.invalidSetting))
+        guard self.hasActivePod else {
+            completion(.configuration(OmniPumpManagerError.noPodPaired))
             return
         }
 
-        guard self.hasActivePod else {
-            completion(.configuration(OmniPumpManagerError.noPodPaired))
+        checkSilenceEnd()
+
+        guard units <= state.maxBolusUnits else {
+            completion(.configuration(OmniPumpManagerError.invalidSetting))
             return
         }
 
@@ -2228,7 +2279,7 @@ extension OmniPumpManager: PumpManager {
         let enactUnits = roundToSupportedBolusVolume(units: units)
 
         let acknowledgementBeep, completionBeep: Bool
-        if self.silencePod {
+        if self.podSilenced {
             acknowledgementBeep = false
             completionBeep = false
         } else {
@@ -2305,6 +2356,8 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
+        checkSilenceEnd()
+
         self.runSession(withName: "Cancel Bolus") { (result) in
 
             let session: PodCommsSession
@@ -2336,7 +2389,7 @@ extension OmniPumpManager: PumpManager {
                 }
 
                 // when cancelling a bolus use the built-in type 6 beeeeeep to match PDM if confirmation beeps are enabled
-                let beepType: BeepType = self.beepPreference.shouldBeepForManualCommand && !self.silencePod ? .beeeeeep : .noBeepCancel
+                let beepType: BeepType = self.beepPreference.shouldBeepForManualCommand && !self.podSilenced ? .beeeeeep : .noBeepCancel
                 let result = session.cancelDelivery(deliveryType: .bolus, beepType: beepType)
                 switch result {
                 case .certainFailure(let error):
@@ -2379,6 +2432,8 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
+        checkSilenceEnd()
+
         // Legal duration values are [virtual] zero (to cancel current temp basal) or between 30 min and 12 hours
         guard duration < .ulpOfOne || (duration >= .minutes(30) && duration <= .hours(12)) else {
             completion(.configuration(OmniPumpManagerError.invalidSetting))
@@ -2389,7 +2444,7 @@ extension OmniPumpManager: PumpManager {
         let rate = roundToSupportedBasalRate(unitsPerHour: unitsPerHour)
 
         let acknowledgementBeep, completionBeep: Bool
-        if self.silencePod {
+        if self.podSilenced {
             acknowledgementBeep = false
             completionBeep = false
         } else {
@@ -2562,6 +2617,8 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
+        checkSilenceEnd()
+
         self.runSession(withName: "Update Expiration Reminder") { (result) in
 
             let session: PodCommsSession
@@ -2587,7 +2644,7 @@ extension OmniPumpManager: PumpManager {
                 }
             }
 
-            let expirationReminder = PodAlert.expirationReminder(offset: podTime, absAlertTime: expirationReminderPodTime, silent: self.silencePod)
+            let expirationReminder = PodAlert.expirationReminder(offset: podTime, absAlertTime: expirationReminderPodTime, silent: self.podSilenced)
             do {
                 let beepBlock = self.beepMessageBlock(beepType: .beep)
                 try session.configureAlerts([expirationReminder], beepBlock: beepBlock)
@@ -2646,6 +2703,8 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
+        checkSilenceEnd()
+
         guard let currentReservoirLevel = self.reservoirLevel?.rawValue, currentReservoirLevel > supportedValue else {
             // Since the new low reservoir alert level is not below the current reservoir value,
             // just set the internal state for the next pod to prevent an immediate low reservoir alert.
@@ -2664,7 +2723,7 @@ extension OmniPumpManager: PumpManager {
                 return
             }
 
-            let lowReservoirReminder = PodAlert.lowReservoir(units: supportedValue, silent: self.silencePod)
+            let lowReservoirReminder = PodAlert.lowReservoir(units: supportedValue, silent: self.podSilenced)
             do {
                 let beepBlock = self.beepMessageBlock(beepType: .beep)
                 try session.configureAlerts([lowReservoirReminder], beepBlock: beepBlock)
@@ -2863,6 +2922,9 @@ extension OmniPumpManager: PodCommsDelegate {
 
     // Not used for Eros pods
     func podCommsDidEstablishSession(_ podComms: PodComms) {
+
+        checkSilenceEnd()
+
         self.runSession(withName: "Post-connect status fetch") { result in
             switch result {
             case .success(let session):
@@ -2941,6 +3003,8 @@ extension OmniPumpManager {
             completion(nil)
             return
         }
+
+        checkSilenceEnd()
 
         var found = false
         for alert in state.activeAlerts {
