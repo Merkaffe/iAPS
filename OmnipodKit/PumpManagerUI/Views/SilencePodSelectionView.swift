@@ -122,12 +122,7 @@ struct SilencePodSelectionView: View {
             .background(Color(UIColor.secondarySystemGroupedBackground).shadow(radius: 5))
         }
         .insetGroupedListStyle()
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text(LocalizedString("Silence Pod", comment: "navigation title for Silence Pod"))
-                    .font(.headline)
-            }
-        }
+        .navigationTitle(LocalizedString("Silence Pod", comment: "navigation title for Silence Pod"))
         .navigationBarTitleDisplayMode(.inline)
         .alert(isPresented: $alertIsPresented, content: { alert(error: error) })
     }
