@@ -266,6 +266,8 @@ class OmniSettingsViewModel: ObservableObject {
         pumpManager.addPodStateObserver(self, queue: DispatchQueue.main)
         pumpManager.addStatusObserver(self, queue: DispatchQueue.main)
 
+        pumpManager.setSyncSilencePodState(syncSilencePodState)
+
         // Trigger refresh
         pumpManager.getPodStatus() { _ in }
 
@@ -373,6 +375,14 @@ class OmniSettingsViewModel: ObservableObject {
                 }
                 completion(error)
             }
+        }
+    }
+
+    /// Called by the Omni pump manager after the silencePodEnd reached and silence pod mode disabled.
+    func syncSilencePodState(_ silencePod: Bool, _ silencePodEnd: Date?) {
+        DispatchQueue.main.async {
+            self.silencePodPreference = silencePod ? .enabled : .disabled
+            self.silencePodEnd = silencePodEnd
         }
     }
 

@@ -3186,7 +3186,7 @@
       "comment" : "Silence End label"
     },
     "Silence Pod" : {
-      "comment" : "Text for silence pod navigation link\nnavigation title for Silence Pod",
+      "comment" : "Text for Silence Pod navigation link\nnavigation title for Silence Pod",
       "localizations" : {
         "fr" : {
           "stringUnit" : {

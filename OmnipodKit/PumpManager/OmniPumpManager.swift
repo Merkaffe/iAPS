@@ -359,6 +359,16 @@ public class OmniPumpManager: RileyLinkPumpManager {
         }
     }
 
+    typealias syncSilencePodStateFuncType = (_ silencePod: Bool, _ silencePodEnd: Date?) -> Void
+
+    /// Function to be called when silencePod variables are updated
+    private var syncSilencePodState: syncSilencePodStateFuncType?
+
+    /// Initializes the resetSilencePodState var for callbacks when silence pod mode has changed
+    func setSyncSilencePodState(_ callbackFunc: @escaping syncSilencePodStateFuncType) {
+        syncSilencePodState = callbackFunc
+    }
+
 
     // MARK: - RileyLink specific vars and funcs
 
@@ -583,7 +593,7 @@ extension OmniPumpManager {
     // Returns a suitable beep command MessageBlock based the current beep preferences and
     // whether there is an unfinializedDose for a manual temp basal &/or a manual bolus.
     private func beepMessageBlock(beepType: BeepType) -> MessageBlock? {
-        guard self.beepPreference.shouldBeepForManualCommand && !self.podSilenced else {
+        guard self.beepPreference.shouldBeepForManualCommand && !self.silencePod else {
             return nil
         }
 
@@ -597,26 +607,22 @@ extension OmniPumpManager {
         return beepMessageBlock
     }
 
-    /// Returns true if silencePod is true and the silencePodEnd time has not been exceeded,
-    /// but will not attrempt to reprogram the pod alerts once silencePodEnd time has been reached.
-    private var podSilenced: Bool {
-        if self.state.silencePod, let silencePodEnd = self.state.silencePodEnd, Date() >= silencePodEnd {
-            /// Silence pod end time has been reached, but not yet disabled.
-            /// Just return false here and let checkSilenceEnd() handle the var resetting.
-            log.default("@@@ podSilenced: reached end time %@ without resetting alerts", String(describing: silencePodEnd))
-            return false
-        }
-        return self.state.silencePod
-    }
+    /// Handles reconfiguring the pod for audible alerts and getting all the silencePod
+    /// related variables updated when the silencePodEnd time has been reached.
+    private func handleSilencePodEnd(session: PodCommsSession) {
+        if let silencePodEnd = state.silencePodEnd, Date() >= silencePodEnd {
+            log.default("@@@ handleSilencePodEnd: end time %{public}@ reached, disabling silence mode", String(describing: silencePodEnd))
 
-    /// Attempts to disable pod silenced mode if the silencePodEnd time has been reached.
-    private func checkSilenceEnd() {
-        if self.state.silencePod, let silencePodEnd = self.state.silencePodEnd, Date() >= silencePodEnd {
-            log.default("@@@ Silence pod end time %@ reached, attempting disable using setSilencePod()", String(describing: silencePodEnd))
-            /// Use setSilencePod() to handle resetting pod alerts to use audio beeps.
-            /// On success, the silencePod and silencePodEnd vars will be reset.
-            /// On error, the vars are not updated, but podSilenced will still be false.
-            setSilencePod(silencePod: false, silencePodEnd: nil) { error in }
+            /// Use doSetSilencePod() to do all the hard work of resetting pod alerts to use audio beeps
+            /// and updating the pod completion beep state for any active manual insulin delivery if needed.
+            doSetSilencePod(session: session, silencePod: false, silencePodEnd: nil) { error in
+                if let error = error {
+                    self.log.default("@@@ handleSilencePodEnd: disable silence mode failed: %{public}@", error.localizedDescription)
+                } else {
+                    // Call back to sync the UI silence pod state variables
+                    self.syncSilencePodState?(false, nil)
+                }
+            }
         }
     }
 
@@ -691,17 +697,13 @@ extension OmniPumpManager {
 
     var silencePod: Bool {
         get {
-            /// Use podSilenced instead of state.silencePod to returns false if silencePodEnd time has
-            /// been reached but pod alerts and silencePod and silencePodEnd vars are not yet reset.
-            return podSilenced
+            return state.silencePod
         }
     }
 
     var silencePodEnd: Date? {
         get {
-            /// Use podSilenced test to return nil if silencePodEnd time has been reached
-            /// but pod alerts and silencePod and silencePodEnd vars are not yet reset.
-            return podSilenced ? state.silencePodEnd : nil
+            return state.silencePodEnd
         }
     }
 
@@ -1304,11 +1306,11 @@ extension OmniPumpManager {
 
                     let expirationReminderTime = Pod.nominalPodLife - self.state.defaultExpirationReminderOffset
                     let alerts: [PodAlert] = [
-                        .expirationReminder(offset: self.podTime, absAlertTime: self.state.defaultExpirationReminderOffset > 0 ? expirationReminderTime : 0, silent: self.podSilenced),
-                        .lowReservoir(units: self.lowReservoirReminderValue, silent: self.podSilenced)
+                        .expirationReminder(offset: self.podTime, absAlertTime: self.defaultExpirationReminderOffset > 0 ? expirationReminderTime : 0, silent: self.silencePod),
+                        .lowReservoir(units: self.lowReservoirReminderValue, silent: self.silencePod)
                     ]
 
-                    let finishWait = try session.insertCannula(optionalAlerts: alerts, silent: self.podSilenced)
+                    let finishWait = try session.insertCannula(optionalAlerts: alerts, silent: self.silencePod)
                     completion(.success(finishWait))
                 } catch let error {
                     completion(.failure(.communication(error)))
@@ -1408,12 +1410,12 @@ extension OmniPumpManager {
             return
         }
 
-        checkSilenceEnd()
-
         self.runSession(withName: "Get pod status") { (result) in
             do {
                 switch result {
                 case .success(let session):
+                    self.handleSilencePodEnd(session: session)
+
                     let status = try session.getStatus(noSeqGetStatus: true)
                     session.dosesForStorage({ (doses) -> Bool in
                         self.store(doses: doses, in: session)
@@ -1438,13 +1440,13 @@ extension OmniPumpManager {
             throw PumpManagerError.configuration(OmniPumpManagerError.noPodPaired)
         }
 
-        checkSilenceEnd()
-
         return try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Get detailed status") { (result) in
                 do {
                     switch result {
                     case .success(let session):
+                        self.handleSilencePodEnd(session: session)
+
                         let beepBlock = self.beepMessageBlock(beepType: .bipBip)
                         let detailedStatus = try session.getDetailedStatus(beepBlock: beepBlock)
                         session.dosesForStorage({ (doses) -> Bool in
@@ -1468,8 +1470,6 @@ extension OmniPumpManager {
             return
         }
 
-        checkSilenceEnd()
-
         self.runSession(withName: "Acknowledge Alerts") { (result) in
             let session: PodCommsSession
             switch result {
@@ -1480,6 +1480,7 @@ extension OmniPumpManager {
                 return
             }
 
+            self.handleSilencePodEnd(session: session)
             do {
                 let beepBlock = self.beepMessageBlock(beepType: .bipBip)
                 let alerts = try session.acknowledgeAlerts(alerts: alertsToAcknowledge, beepBlock: beepBlock)
@@ -1515,8 +1516,6 @@ extension OmniPumpManager {
             return
         }
 
-        checkSilenceEnd()
-
         guard podState.unfinalizedBolus?.isFinished() != false else {
             completion(.state(PodCommsError.unfinalizedBolus))
             return
@@ -1526,7 +1525,9 @@ extension OmniPumpManager {
             switch result {
             case .success(let session):
                 do {
-                    let beep = self.podSilenced ? false : self.beepPreference.shouldBeepForManualCommand
+                    self.handleSilencePodEnd(session: session)
+
+                    let beep = self.silencePod ? false : self.beepPreference.shouldBeepForManualCommand
                     let _ = try session.setTime(timeZone: timeZone, basalSchedule: self.state.basalSchedule, date: Date(), acknowledgementBeep: beep)
                     self.clearSuspendReminder()
                     self.setState { (state) in
@@ -1568,8 +1569,6 @@ extension OmniPumpManager {
             return
         }
 
-        checkSilenceEnd()
-
         guard state.podState?.unfinalizedBolus?.isFinished() != false else {
             completion(PumpManagerError.deviceState(PodCommsError.unfinalizedBolus))
             return
@@ -1586,6 +1585,8 @@ extension OmniPumpManager {
                         return 
                     }
 
+                    self.handleSilencePodEnd(session: session)
+
                     let scheduleOffset = timeZone.scheduleOffset(forDate: Date())
                     let result = session.cancelDelivery(deliveryType: .all)
                     switch result {
@@ -1596,7 +1597,7 @@ extension OmniPumpManager {
                     case .success:
                         break
                     }
-                    let beep = self.podSilenced ? false : self.beepPreference.shouldBeepForManualCommand
+                    let beep = self.silencePod ? false : self.beepPreference.shouldBeepForManualCommand
                     let _ = try session.setBasalSchedule(schedule: schedule, scheduleOffset: scheduleOffset, acknowledgementBeep: beep)
                     self.clearSuspendReminder()
 
@@ -1653,14 +1654,14 @@ extension OmniPumpManager {
             throw PodCommsError.unfinalizedBolus
         }
 
-        checkSilenceEnd()
-
         try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Play Test Beeps") { (result) in
                 switch result {
                 case .success(let session):
+                    self.handleSilencePodEnd(session: session)
+
                     // preserve the pod's completion beep state which gets reset playing beeps
-                    let enabled: Bool = self.podSilenced ? false : self.beepPreference.shouldBeepForManualCommand
+                    let enabled: Bool = self.silencePod ? false : self.beepPreference.shouldBeepForManualCommand
                     let result = session.beepConfig(
                         beepType: .bipBeepBipBeepBipBeepBipBeep,
                         tempBasalCompletionBeep: enabled && self.hasUnfinalizedManualTempBasal,
@@ -1692,12 +1693,12 @@ extension OmniPumpManager {
             throw PodCommsError.unfinalizedBolus
         }
 
-        checkSilenceEnd()
-
         return try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Read Pulse Log") { (result) in
                 switch result {
                 case .success(let session):
+                    self.handleSilencePodEnd(session: session)
+
                     do {
                         // read the most recent 50 entries from the pulse log
                         let beepBlock = self.beepMessageBlock(beepType: .bipBeeeeep)
@@ -1730,13 +1731,13 @@ extension OmniPumpManager {
             throw PodCommsError.unfinalizedBolus
         }
 
-        checkSilenceEnd()
-
         return try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Read Pulse Log Plus") { (result) in
                 do {
                     switch result {
                     case .success(let session):
+                        self.handleSilencePodEnd(session: session)
+
                         let beepBlock = self.beepMessageBlock(beepType: .bipBeeeeep)
                         let podInfoResponse = try session.readPodInfo(podInfoResponseSubType: .pulseLogPlus, beepBlock: beepBlock)
                         guard let podInfoPulseLogPlus = podInfoResponse.podInfo as? PodInfoPulseLogPlus else {
@@ -1761,13 +1762,13 @@ extension OmniPumpManager {
             throw OmniPumpManagerError.noPodPaired
         }
 
-        checkSilenceEnd()
-
         return try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Read Activation Time") { (result) in
                 do {
                     switch result {
                     case .success(let session):
+                        self.handleSilencePodEnd(session: session)
+
                         let beepBlock = self.beepMessageBlock(beepType: .beepBeep)
                         let podInfoResponse = try session.readPodInfo(podInfoResponseSubType: .activationTime, beepBlock: beepBlock)
                         guard let podInfoActivationTime = podInfoResponse.podInfo as? PodInfoActivationTime else {
@@ -1792,13 +1793,13 @@ extension OmniPumpManager {
             throw OmniPumpManagerError.noPodPaired
         }
 
-        checkSilenceEnd()
-
         return try await withCheckedThrowingContinuation { continuation in
             self.runSession(withName: "Read Triggered Alerts") { (result) in
                 do {
                     switch result {
                     case .success(let session):
+                        self.handleSilencePodEnd(session: session)
+
                         let beepBlock = self.beepMessageBlock(beepType: .beepBeep)
                         let podInfoResponse = try session.readPodInfo(podInfoResponseSubType: .triggeredAlerts, beepBlock: beepBlock)
                         guard let podInfoTriggeredAlerts = podInfoResponse.podInfo as? PodInfoTriggeredAlerts else {
@@ -1823,7 +1824,7 @@ extension OmniPumpManager {
         let justUpdateState = true
         #else
         // Just update the pump manager state if there is no active Pod or if currently silenced
-        let justUpdateState = !self.hasActivePod || self.podSilenced
+        let justUpdateState = !self.hasActivePod || self.silencePod
         #endif
 
         let name = String(format: "Set Beep Preference to %@", String(describing: newPreference))
@@ -1843,24 +1844,21 @@ extension OmniPumpManager {
                     completion(.communication(error))
                     return 
                 }
-    
-                // enable/disable Pod completion beep state for any unfinalized manual insulin delivery
-                let enabled = newPreference.shouldBeepForManualCommand
-                let beepType: BeepType = enabled ? .bipBip : .noBeepNonCancel
-                let result = session.beepConfig(
-                    beepType: beepType,
-                    tempBasalCompletionBeep: enabled && self.hasUnfinalizedManualTempBasal,
-                    bolusCompletionBeep: enabled && self.hasUnfinalizedManualBolus
-                )
 
-                switch result {
-                case .success:
-                    self.setState { state in
-                        state.confirmationBeeps = newPreference
+                self.handleSilencePodEnd(session: session)
+
+                /// If not currently silenced, update pod beep state for any in progress manual insulin delivery based on newPreference.
+                /// If currently silenced, no need to do anything as any in progress manual insulin completion beeping is already disabled.
+                if !self.silencePod {
+                    let enabled = newPreference.shouldBeepForManualCommand
+                    if let error = self.updateManualInsulinBeepState(session: session, enabled: enabled) {
+                        completion(.communication(error))
+                    } else {
+                        self.setState { state in
+                            state.confirmationBeeps = newPreference
+                        }
+                        completion(nil)
                     }
-                    completion(nil)
-                case .failure(let error):
-                    completion(.communication(error))
                 }
             case .failure(let error):
                 completion(.communication(error))
@@ -1868,16 +1866,42 @@ extension OmniPumpManager {
         }
     }
 
-    // Reconfigures all active alerts in pod to be silent or not as well as sets/clears the
-    // self.silencePod state variable which silences all confirmation beeping when enabled
-    // until silencePodEnd time (if given) has been reached after which the alerts can revert to audio mode.
+    /// Enable/disable the Pod completion beep state for any in program unfinalized manual insulin delivery as needed
+    private func updateManualInsulinBeepState(session: PodCommsSession, enabled: Bool) -> Error? {
+        guard self.hasUnfinalizedManualTempBasal || self.hasUnfinalizedManualBolus else {
+            return nil // no in progress manual insulin delivery, no updates needed
+        }
+
+        let result = session.beepConfig(
+            beepType: enabled ?  .bipBip : .noBeepNonCancel,
+            tempBasalCompletionBeep: enabled && self.hasUnfinalizedManualTempBasal,
+            bolusCompletionBeep: enabled && self.hasUnfinalizedManualBolus
+        )
+
+        switch result {
+        case .success:
+            return nil
+        case .failure(let error):
+            return error
+        }
+    }
+
+    /// Called from UI when Silence Pod mode or the Silence Pod End time has changed.
+    /// When the Silence Pod mode changes, handles reconfiguring all active pod alerts.
     func setSilencePod(silencePod: Bool, silencePodEnd: Date?, completion: @escaping (OmniPumpManagerError?) -> Void) {
+
+        /// If a silencePodEnd is given, it must be in the future and silencePod must be enabled
+        if let silencePodEnd = silencePodEnd, !(silencePodEnd > Date() && silencePod) {
+            completion(OmniPumpManagerError.invalidSetting)
+            return
+        }
 
         #if targetEnvironment(simulator)
         let justUpdateState = true
         #else
         // Just update the pump manager state if there is no active Pod
-        let justUpdateState = !self.hasActivePod
+        // or if the Silence Pod state will not be changing.
+        let justUpdateState = !self.hasActivePod || state.silencePod == silencePod
         #endif
 
         let name = String(format: "%@ Pod", silencePod ? "Silence" : "Unsilence")
@@ -1907,47 +1931,64 @@ extension OmniPumpManager {
                 return 
             }
     
-            guard let configuredAlerts = self.state.podState?.configuredAlerts,
-                  let activeAlertSlots = self.state.podState?.activeAlertSlots,
-                  let reservoirLevel = self.state.podState?.lastInsulinMeasurements?.reservoirLevel?.rawValue else
-            {
-                self.log.error("Missing podState") // should never happen
-                completion(OmniPumpManagerError.noPodPaired)
-                return
-            }
+            self.doSetSilencePod(session: session, silencePod: silencePod, silencePodEnd: silencePodEnd, completion: completion)
+        }
+    }
 
-            let beepBlock: MessageBlock?
-            if !self.beepPreference.shouldBeepForManualCommand {
-                // No enabled completion beeps to worry about for any in-progress manual delivery
-                beepBlock = nil
-            } else if silencePod {
-                // Disable completion beeps for any in-progress manual delivery w/o beeping
-                beepBlock = BeepConfigCommand(beepType: .noBeepNonCancel)
-            } else {
-                // Emit a confirmation beep and enable completion beeps for any in-progress manual delivery
-                beepBlock = BeepConfigCommand(
-                    beepType: .bipBip,
-                    tempBasalCompletionBeep: self.hasUnfinalizedManualTempBasal,
-                    bolusCompletionBeep: self.hasUnfinalizedManualBolus
-                )
-            }
+    /// Do the actual work for setting or resetting Silence Pod mode which involves reprogramming all active pod alerts
+    /// to either silence or audiable mode and updating the internal pump manager Silence Pod variables. Will also handle
+    /// updating the pod's internal beep completion beep state for any in progress manual insulin delivery if needed.
+    private func doSetSilencePod(session: PodCommsSession,
+                                 silencePod: Bool,
+                                 silencePodEnd: Date?,
+                                 completion: @escaping (OmniPumpManagerError?) -> Void)
+    {
+        guard let configuredAlerts = self.state.podState?.configuredAlerts,
+              let activeAlertSlots = self.state.podState?.activeAlertSlots,
+              let reservoirLevel = self.state.podState?.lastInsulinMeasurements?.reservoirLevel?.rawValue else
+        {
+            self.log.error("Missing pod state!") // should never happen
+            completion(OmniPumpManagerError.noPodPaired)
+            return
+        }
 
-            let podAlerts = regeneratePodAlerts(silent: silencePod, configuredAlerts: configuredAlerts, activeAlertSlots: activeAlertSlots, currentPodTime: self.podTime, currentReservoirLevel: reservoirLevel)
-            do {
-                // Since non-responsive pod comms are currently only resolved for insulin related commands,
-                // it's possible that a response from a previous successful pod alert configuration can be lost
-                // and thus the alert won't get reset here when reconfiguring pod alerts with a new silence pod state.
-                let acknowledgeAll = true   // protect against lost alert configuration response related issues
-                try session.configureAlerts(podAlerts, acknowledgeAll: acknowledgeAll, beepBlock: beepBlock)
-                self.setState { (state) in
-                    state.silencePod = silencePod
-                    state.silencePodEnd = silencePodEnd
-                }
-                completion(nil)
-            } catch {
-                self.log.error("Configure alerts %{public}@ failed: %{public}@", String(describing: podAlerts), String(describing: error))
-                completion(.communication(error))
+        let beepBlock: MessageBlock?
+        if !self.beepPreference.shouldBeepForManualCommand {
+            // No enabled completion beeps to worry about for any in-progress manual delivery
+            beepBlock = nil
+        } else if silencePod {
+            // Disable completion beeps for any in-progress manual delivery w/o beeping
+            beepBlock = BeepConfigCommand(beepType: .noBeepNonCancel)
+        } else {
+            // Emit a confirmation beep and enable completion beeps for any in-progress manual delivery
+            beepBlock = BeepConfigCommand(
+                beepType: .bipBip,
+                tempBasalCompletionBeep: self.hasUnfinalizedManualTempBasal,
+                bolusCompletionBeep: self.hasUnfinalizedManualBolus
+            )
+        }
+
+        let podAlerts = regeneratePodAlerts(silent: silencePod, configuredAlerts: configuredAlerts, activeAlertSlots: activeAlertSlots, currentPodTime: self.podTime, currentReservoirLevel: reservoirLevel)
+
+        do {
+            // Since non-responsive pod comms are currently only resolved for insulin related commands,
+            // it's possible that a response from a previous successful pod alert configuration can be lost
+            // and thus the alert won't get reset here when reconfiguring pod alerts with a new silence pod state.
+            let acknowledgeAll = true   // protect against lost alert configuration response related issues
+            try session.configureAlerts(podAlerts, acknowledgeAll: acknowledgeAll, beepBlock: beepBlock)
+            self.setState { (state) in
+                state.silencePod = silencePod
+                state.silencePodEnd = silencePodEnd
             }
+            /// If beepPreference is currently set to beep for manual commands, update the internal pod beep completion
+            /// state for any in progress manual insulin delivery based on the value of the new Silence Pod state just set.
+            if self.beepPreference.shouldBeepForManualCommand {
+                _ = updateManualInsulinBeepState(session: session, enabled: !silencePod)
+            }
+            completion(nil)
+        } catch {
+            self.log.error("Configure alerts %{public}@ failed: %{public}@", String(describing: podAlerts), String(describing: error))
+            completion(.communication(error))
         }
     }
 }
@@ -2103,8 +2144,6 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
-        checkSilenceEnd()
-
         self.runSession(withName: "Suspend") { (result) in
 
             let session: PodCommsSession
@@ -2130,9 +2169,11 @@ extension OmniPumpManager: PumpManager {
                 return
             }
 
+            self.handleSilencePodEnd(session: session)
+
             // Use a beepBlock for the confirmation beep to avoid getting 3 beeps using cancel command beeps!
             let beepBlock = self.beepMessageBlock(beepType: .beeeeeep)
-            let result = session.suspendDelivery(suspendReminder: suspendReminder, silent: self.podSilenced, beepBlock: beepBlock)
+            let result = session.suspendDelivery(suspendReminder: suspendReminder, silent: self.silencePod, beepBlock: beepBlock)
             switch result {
             case .certainFailure(let error):
                 self.log.error("Failed to suspend: %{public}@", String(describing: error))
@@ -2154,8 +2195,6 @@ extension OmniPumpManager: PumpManager {
             completion(OmniPumpManagerError.noPodPaired)
             return
         }
-
-        checkSilenceEnd()
 
         self.runSession(withName: "Resume") { (result) in
 
@@ -2183,9 +2222,11 @@ extension OmniPumpManager: PumpManager {
                 return 
             }
 
+            self.handleSilencePodEnd(session: session)
+
             do {
                 let scheduleOffset = self.state.timeZone.scheduleOffset(forDate: Date())
-                let beep = self.podSilenced ? false : self.beepPreference.shouldBeepForManualCommand
+                let beep = self.silencePod ? false : self.beepPreference.shouldBeepForManualCommand
                 let _ = try session.resumeBasal(schedule: self.state.basalSchedule, scheduleOffset: scheduleOffset, acknowledgementBeep: beep)
                 self.clearSuspendReminder()
                 session.dosesForStorage() { (doses) -> Bool in
@@ -2221,8 +2262,6 @@ extension OmniPumpManager: PumpManager {
 
             return state.isPumpDataStale
         }
-
-        checkSilenceEnd()
 
         if state.podType.usesRileyLink {
             checkRileyLinkBattery()
@@ -2268,8 +2307,6 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
-        checkSilenceEnd()
-
         guard units <= state.maxBolusUnits else {
             completion(.configuration(OmniPumpManagerError.invalidSetting))
             return
@@ -2277,15 +2314,6 @@ extension OmniPumpManager: PumpManager {
 
         // Round to nearest supported volume
         let enactUnits = roundToSupportedBolusVolume(units: units)
-
-        let acknowledgementBeep, completionBeep: Bool
-        if self.podSilenced {
-            acknowledgementBeep = false
-            completionBeep = false
-        } else {
-            acknowledgementBeep = self.beepPreference.shouldBeepForCommand(automatic: activationType.isAutomatic)
-            completionBeep = beepPreference.shouldBeepForManualCommand && !activationType.isAutomatic
-        }
 
         self.runSession(withName: "Bolus") { (result) in
             let session: PodCommsSession
@@ -2309,6 +2337,17 @@ extension OmniPumpManager: PumpManager {
             if let error = self.tryToValidateComms(session: session) {
                 completion(.communication(error))
                 return
+            }
+
+            self.handleSilencePodEnd(session: session)
+
+            let acknowledgementBeep, completionBeep: Bool
+            if self.silencePod {
+                acknowledgementBeep = false
+                completionBeep = false
+            } else {
+                acknowledgementBeep = self.beepPreference.shouldBeepForCommand(automatic: activationType.isAutomatic)
+                completionBeep = self.beepPreference.shouldBeepForManualCommand && !activationType.isAutomatic
             }
 
             // Use a lastDeliveryStatusReceived?.suspended != true test here to not return a pod suspended failure if
@@ -2356,8 +2395,6 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
-        checkSilenceEnd()
-
         self.runSession(withName: "Cancel Bolus") { (result) in
 
             let session: PodCommsSession
@@ -2388,8 +2425,10 @@ extension OmniPumpManager: PumpManager {
                     }
                 }
 
+                self.handleSilencePodEnd(session: session)
+
                 // when cancelling a bolus use the built-in type 6 beeeeeep to match PDM if confirmation beeps are enabled
-                let beepType: BeepType = self.beepPreference.shouldBeepForManualCommand && !self.podSilenced ? .beeeeeep : .noBeepCancel
+                let beepType: BeepType = self.beepPreference.shouldBeepForManualCommand && !self.silencePod ? .beeeeeep : .noBeepCancel
                 let result = session.cancelDelivery(deliveryType: .bolus, beepType: beepType)
                 switch result {
                 case .certainFailure(let error):
@@ -2432,8 +2471,6 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
-        checkSilenceEnd()
-
         // Legal duration values are [virtual] zero (to cancel current temp basal) or between 30 min and 12 hours
         guard duration < .ulpOfOne || (duration >= .minutes(30) && duration <= .hours(12)) else {
             completion(.configuration(OmniPumpManagerError.invalidSetting))
@@ -2442,15 +2479,6 @@ extension OmniPumpManager: PumpManager {
 
         // Round to nearest supported rate
         let rate = roundToSupportedBasalRate(unitsPerHour: unitsPerHour)
-
-        let acknowledgementBeep, completionBeep: Bool
-        if self.podSilenced {
-            acknowledgementBeep = false
-            completionBeep = false
-        } else {
-            acknowledgementBeep = beepPreference.shouldBeepForCommand(automatic: automatic)
-            completionBeep = beepPreference.shouldBeepForManualCommand && !automatic
-        }
 
         self.runSession(withName: "Enact Temp Basal") { (result) in
             self.log.info("Enact temp basal %.03fU/hr for %ds", rate, Int(duration))
@@ -2466,6 +2494,17 @@ extension OmniPumpManager: PumpManager {
             if let error = self.tryToValidateComms(session: session) {
                 completion(.communication(error))
                 return
+            }
+
+            self.handleSilencePodEnd(session: session)
+
+            let acknowledgementBeep, completionBeep: Bool
+            if self.silencePod {
+                acknowledgementBeep = false
+                completionBeep = false
+            } else {
+                acknowledgementBeep = self.beepPreference.shouldBeepForCommand(automatic: automatic)
+                completionBeep = self.beepPreference.shouldBeepForManualCommand && !automatic
             }
 
             // Use a lastDeliveryStatusReceived?.suspended != true test here to not return a pod suspended failure if
@@ -2617,8 +2656,6 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
-        checkSilenceEnd()
-
         self.runSession(withName: "Update Expiration Reminder") { (result) in
 
             let session: PodCommsSession
@@ -2629,6 +2666,8 @@ extension OmniPumpManager: PumpManager {
                 completion(.communication(error))
                 return
             }
+
+            self.handleSilencePodEnd(session: session)
 
             let podTime = self.podTime
             var expirationReminderPodTime: TimeInterval = 0 // default to expiration reminder alert inactive
@@ -2644,7 +2683,7 @@ extension OmniPumpManager: PumpManager {
                 }
             }
 
-            let expirationReminder = PodAlert.expirationReminder(offset: podTime, absAlertTime: expirationReminderPodTime, silent: self.podSilenced)
+            let expirationReminder = PodAlert.expirationReminder(offset: podTime, absAlertTime: expirationReminderPodTime, silent: self.silencePod)
             do {
                 let beepBlock = self.beepMessageBlock(beepType: .beep)
                 try session.configureAlerts([expirationReminder], beepBlock: beepBlock)
@@ -2703,8 +2742,6 @@ extension OmniPumpManager: PumpManager {
             return
         }
 
-        checkSilenceEnd()
-
         guard let currentReservoirLevel = self.reservoirLevel?.rawValue, currentReservoirLevel > supportedValue else {
             // Since the new low reservoir alert level is not below the current reservoir value,
             // just set the internal state for the next pod to prevent an immediate low reservoir alert.
@@ -2723,7 +2760,9 @@ extension OmniPumpManager: PumpManager {
                 return
             }
 
-            let lowReservoirReminder = PodAlert.lowReservoir(units: supportedValue, silent: self.podSilenced)
+            self.handleSilencePodEnd(session: session)
+
+            let lowReservoirReminder = PodAlert.lowReservoir(units: supportedValue, silent: self.silencePod)
             do {
                 let beepBlock = self.beepMessageBlock(beepType: .beep)
                 try session.configureAlerts([lowReservoirReminder], beepBlock: beepBlock)
@@ -2923,11 +2962,11 @@ extension OmniPumpManager: PodCommsDelegate {
     // Not used for Eros pods
     func podCommsDidEstablishSession(_ podComms: PodComms) {
 
-        checkSilenceEnd()
-
         self.runSession(withName: "Post-connect status fetch") { result in
             switch result {
             case .success(let session):
+                self.handleSilencePodEnd(session: session)
+
                 let _ = try? session.getStatus(noSeqGetStatus: true)
                 self.silenceAcknowledgedAlerts()
                 session.dosesForStorage() { (doses) -> Bool in
@@ -3004,8 +3043,6 @@ extension OmniPumpManager {
             return
         }
 
-        checkSilenceEnd()
-
         var found = false
         for alert in state.activeAlerts {
             if alert.alertIdentifier == alertIdentifier || alert.repeatingAlertIdentifier == alertIdentifier {
@@ -3027,6 +3064,8 @@ extension OmniPumpManager {
                     self.runSession(withName: "Acknowledge Alert") { (result) in
                         switch result {
                         case .success(let session):
+                            self.handleSilencePodEnd(session: session)
+
                             do {
                                 let beepBlock = self.beepMessageBlock(beepType: .beep)
                                 let _ = try session.acknowledgeAlerts(alerts: AlertSet(slots: [slot]), beepBlock: beepBlock)

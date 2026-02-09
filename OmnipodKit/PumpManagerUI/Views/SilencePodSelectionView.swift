@@ -11,13 +11,7 @@ import SwiftUI
 import LoopKit
 import LoopKitUI
 
-let dateFormatter: DateFormatter = {
-    let dateFormatter = DateFormatter()
-    dateFormatter.timeStyle = .short
-    dateFormatter.dateStyle = .medium
-    dateFormatter.doesRelativeDateFormatting = true
-    return dateFormatter
-}()
+private let minimumSilenceModeTime: TimeInterval = .seconds(30)
 
 struct SilencePodSelectionView: View {
 
@@ -30,8 +24,7 @@ struct SilencePodSelectionView: View {
     private var initialEndTimeValue: Date?
     @State private var endTimeValue: Date?
 
-    private var onSave: ((_ selectedValue: SilencePodPreference, _ selectedSilenceEnd: Date?, _ completion: @escaping (_ error: LocalizedError?) -> Void) -> Void)?
-    private var onSaveSilencePodEndTime: ((_ selectedDate: Date?, _ completion: @escaping (_ error: Error?) -> Void) -> Void)?
+    private var onSave: ((_ selectedValue: SilencePodPreference, _ selectedSilenceEnd: Date?, _ completion: @escaping (_ error: LocalizedError?) -> Void) -> Void)
 
     @State private var alertIsPresented: Bool = false
     @State private var error: LocalizedError?
@@ -44,16 +37,13 @@ struct SilencePodSelectionView: View {
                            _ selectedSilenceEnd: Date?,
                            _ completion: @escaping (_ error: LocalizedError?) -> Void) -> Void)
     {
-        /// Add code here to check if Silence Pod auto expiration
-        /// time has passed and if so rewrite to disabled?
-        /// No -- should probably be done beforehand in OmniSettingsView so
-        /// that it automatically shows disabled or the auto disabled time in that view?
-        /// Do it here as well to handle changing conditions during switchover?
         self.initialValue = initialValue
         self._preference = State(initialValue: initialValue)
-        self.onSave = onSave
+
         self.initialEndTimeValue = initialSilenceTimeEndTime
         self._endTimeValue = State(initialValue: initialSilenceTimeEndTime)
+
+        self.onSave = onSave
     }
 
     var body: some View {
@@ -99,18 +89,7 @@ struct SilencePodSelectionView: View {
             }
             VStack {
                 Button(action: {
-                    saving = true
-                    // Don't save a silence end time when disabled
-                    let endTimeToSave: Date? = preference == .disabled ? nil : endTimeValue
-                    onSave?(preference, endTimeToSave) { (error) in
-                        saving = false
-                        if let error = error {
-                            self.error = error
-                            self.alertIsPresented = true
-                        } else {
-                            self.presentationMode.wrappedValue.dismiss()
-                        }
-                    }
+                    doSave(preference, endTimeValue, dismissOnSuccess: true)
                 }) {
                     Text(saveButtonText)
                         .actionButtonStyle(.primary)
@@ -121,10 +100,59 @@ struct SilencePodSelectionView: View {
             .padding(self.horizontalSizeClass == .regular ? .bottom : [])
             .background(Color(UIColor.secondarySystemGroupedBackground).shadow(radius: 5))
         }
+        .onChange(of: preference) { _ in
+            /// Clear endTimeValue on any change of preference for hopefully a more consistent UX experience
+            if let endTime = endTimeValue {
+                print("@@@ onChange clearing silence end time \(endTime))")
+                endTimeValue = nil
+            }
+        }
+        .onAppear {
+            /// If the endTimeValue is no longer valid at the current time,
+            /// reset the affected variables and save the updated values.
+            if let endTime = endTimeValue, endTime <= earliestAllowedEndTime {
+                print("@@@ .onAppear invalid end time \(endTime) detected, disabling...")
+                preference = .disabled
+                endTimeValue = nil
+                doSave(preference, endTimeValue, dismissOnSuccess: false)
+            }
+        }
         .insetGroupedListStyle()
         .navigationTitle(LocalizedString("Silence Pod", comment: "navigation title for Silence Pod"))
         .navigationBarTitleDisplayMode(.inline)
         .alert(isPresented: $alertIsPresented, content: { alert(error: error) })
+    }
+
+    /// Save the given values to the onSave function after checking values
+    private func doSave(_ selectedValue: SilencePodPreference, _ selectedSilenceEnd: Date?, dismissOnSuccess: Bool) {
+        saving = true
+
+        /// Make sure that a set of reasonable values for the current time will be saved
+        let preferenceToSave: SilencePodPreference
+        let endTimeToSave: Date?
+        if preference == .disabled {
+            preferenceToSave = .disabled
+            endTimeToSave = nil
+        } else if let endTime = endTimeValue, endTime <= earliestAllowedEndTime {
+            /// endtime isn't past the earliestEndTimeAllowed, so switch to disabled mode
+            print("@@@ Disabling Silence Pod on save as end time \(endTime) isn't past \(earliestAllowedEndTime)")
+            preferenceToSave = .disabled
+            endTimeToSave = nil
+        } else {
+            /// preference == .enabled && (endTimeValue == nil (untimed)  OR
+            /// endTimeValue! > earliestAllowedEndTime (valid timed))
+            preferenceToSave = .enabled
+            endTimeToSave = endTimeValue
+        }
+        onSave(preferenceToSave, endTimeToSave) { (error) in
+            saving = false
+            if let error = error {
+                self.error = error
+                self.alertIsPresented = true
+            } else if dismissOnSuccess {
+                self.presentationMode.wrappedValue.dismiss()
+            }
+        }
     }
 
     private var contentWithCancel: some View {
@@ -148,7 +176,7 @@ struct SilencePodSelectionView: View {
         }
     }
 
-    var saveButtonText: String {
+    private var saveButtonText: String {
         if saving {
             return LocalizedString("Saving...", comment: "button title for saving silence pod preference while saving")
         } else {
@@ -158,6 +186,11 @@ struct SilencePodSelectionView: View {
 
     private var valueChanged: Bool {
         return preference != initialValue || endTimeValue != initialEndTimeValue
+    }
+
+    /// N.B., Reevaluated on each reference
+    private var earliestAllowedEndTime: Date {
+        return Date().addingTimeInterval(minimumSilenceModeTime)
     }
 
     private func alert(error: Error?) -> SwiftUI.Alert {
@@ -171,9 +204,7 @@ struct SilencePodSelectionView: View {
 struct SilencePodSelectionView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            SilencePodSelectionView(initialValue: .disabled,
-                                    initialSilenceTimeEndTime: nil
-            ){ selectedValue, selectedSilenceEnd, completion in
+            SilencePodSelectionView(initialValue: .disabled, initialSilenceTimeEndTime: nil) { selectedValue, selectedSilenceEnd, completion in
                 print("Selected: \(selectedValue), end: \(String(describing: selectedSilenceEnd))")
                 completion(nil)
             }
@@ -181,14 +212,20 @@ struct SilencePodSelectionView_Previews: PreviewProvider {
     }
 }
 
+
 struct OptionalDatePicker: View {
     let title: String
     let footnote: String
     @Binding var selection: Date?
 
-    let nowProvider: () -> Date = { Date() }
+    private let minimumInterval: TimeInterval = .minutes(1)
+    /// a bit more than 1/2 day allows for a AM/PM flip from the base time when using a 12 hour time
+    private let maximumInterval: TimeInterval = .hours(13) + .minutes(1)
 
-    private var now: Date { nowProvider() }
+    private var now: Date
+    private var earliestAllowedEndTime: Date
+    private var minimumDate: Date
+    private var maximumDate: Date
 
     private let defaultOffset: TimeInterval = .hours(1)
 
@@ -206,21 +243,15 @@ struct OptionalDatePicker: View {
         self.footnote = footnote
         self._selection = selection
 
-        let now = nowProvider()
-        let initial = selection.wrappedValue ?? now.addingTimeInterval(defaultOffset)
+        now = Date()
+        earliestAllowedEndTime = now.addingTimeInterval(minimumSilenceModeTime)
+        minimumDate = now.addingTimeInterval(minimumInterval)
+        maximumDate = now.addingTimeInterval(maximumInterval)
 
+        let initial = selection.wrappedValue ?? now.addingTimeInterval(defaultOffset)
         _pickerDate = State(initialValue: initial)
         _lastCommittedDate = State(initialValue: selection.wrappedValue)
     }
-
-    // MARK: - Date Bounds
-
-    private let minimumInterval: TimeInterval = .minutes(1)
-    /// a bit more than 1/2 day which allows for a AM/PM flip from the base time
-    private let maximumInterval: TimeInterval = .hours(13) + .minutes(1)
-
-    private var minimumDate: Date { now.addingTimeInterval(minimumInterval) }
-    private var maximumDate: Date { now.addingTimeInterval(maximumInterval) }
 
     // MARK: - View
 
@@ -262,7 +293,9 @@ struct OptionalDatePicker: View {
                 .buttonStyle(.plain)
             }
         }
-        .onChange(of: selection) { newValue in syncFromBinding(newValue) }
+        .onChange(of: selection) {
+            newValue in syncFromBinding(newValue)
+        }
 
         Text(footnote)
             .font(.caption)
@@ -308,23 +341,26 @@ struct OptionalDatePicker: View {
 
         // Forward wrap: 23:59 → 00:00
         if delta <= -halfDay {
-            candidate = calendar.date(byAdding: .day, value: 1, to: candidate)!
+            candidate = calendar.date(byAdding: .day, value: 1, to: candidate) ?? candidate
         }
         // Backward wrap: 00:00 → 23:59
         else if delta >= halfDay {
-            candidate = calendar.date(byAdding: .day, value: -1, to: candidate)!
+            candidate = calendar.date(byAdding: .day, value: -1, to: candidate) ?? candidate
         }
         // else: same day (includes all midday transitions)
 
+        let clamped: Date
         if candidate < minimumDate {
-            pickerDate = minimumDate
+            clamped = minimumDate
         } else if candidate > maximumDate {
-            pickerDate = maximumDate
+            clamped = maximumDate
+        } else {
+            clamped = candidate
         }
 
-        pickerDate = candidate
-        selection = candidate
-        lastCommittedDate = candidate
+        pickerDate = clamped
+        selection = clamped
+        lastCommittedDate = clamped
     }
 
 
