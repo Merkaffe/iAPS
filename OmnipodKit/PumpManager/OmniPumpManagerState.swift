@@ -242,15 +242,10 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         }
 
         if let silencePodEnd = rawValue["silencePodEnd"] as? Date {
-            if Date() > silencePodEnd {
-                // already passed the Silence Pod End time, disable
-                self.silencePodEnd = nil
-                self.silencePod = false
-            } else {
-                // Silence Pod End time still in effect
-                self.silencePodEnd = silencePodEnd
-                self.silencePod = true
-            }
+            /// Don't do anything here if silencePodEnd time has been reached so that
+            /// the pod will be reprogrammed to use audible beeps on the next pod op.
+            self.silencePodEnd = silencePodEnd
+            self.silencePod = true /// must be true with a silence end time
         } else {
             self.silencePodEnd = nil
             self.silencePod = rawValue["silencePod"] as? Bool ?? false
