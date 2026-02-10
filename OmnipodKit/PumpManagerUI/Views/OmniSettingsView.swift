@@ -337,7 +337,7 @@ struct OmniSettingsView: View  {
                         .disabled(!self.viewModel.podOk)
                     if self.viewModel.podOk, case .suspended(let suspendDate) = self.viewModel.basalDeliveryState {
                         HStack {
-FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
+                            FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
                             Spacer()
                             Text(self.viewModel.timeFormatter.string(from: suspendDate))
                                 .foregroundColor(Color.secondary)
@@ -498,6 +498,7 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
                     FrameworkLocalText("Notification Settings", comment: "Text for Notification Settings disclosure row")
                         .foregroundColor(Color.primary)
                 }
+
                 NavigationLink(destination: BeepPreferenceSelectionView(initialValue: viewModel.beepPreference, onSave: viewModel.setConfirmationBeeps)) {
                     HStack {
                         FrameworkLocalText("Confidence Reminders", comment: "Text for confidence reminders navigation link")
@@ -507,15 +508,31 @@ FrameworkLocalText("Suspended At", comment: "Label for suspended at time")
                             .foregroundColor(.secondary)
                     }
                 }
-                NavigationLink(destination: SilencePodSelectionView(initialValue: viewModel.silencePodPreference, onSave: viewModel.setSilencePod)) {
+
+                NavigationLink(destination: SilencePodSelectionView(initialValue: viewModel.silencePodPreference,
+                                                                    initialSilenceTimeEndTime: viewModel.silencePodEnd,
+                                                                    onSave: viewModel.setSilencePod))
+                {
                     HStack {
-                        FrameworkLocalText("Silence Pod", comment: "Text for silence pod navigation link")
-                            .foregroundColor(Color.primary)
-                        Spacer()
-                        Text(viewModel.silencePodPreference.title)
-                            .foregroundColor(.secondary)
+                        /// If we have a silence pod end time, use an alternate row title and display this time.
+                        /// This time may be in the past if the pump manager hasn't yet disabled silence mode
+                        /// which will then callback to reset the silencePod & silencePodEnd ViewModel variables.
+                        if let endTime = viewModel.silencePodEnd {
+                            FrameworkLocalText("Silence Pod Ends", comment: "Text for Silence Pod Ends navigation link")
+                                .foregroundColor(Color.primary)
+                            Spacer()
+                            Text(viewModel.timeFormatter.string(from: endTime))
+                                .foregroundColor(.secondary)
+                        } else {
+                            FrameworkLocalText("Silence Pod", comment: "Text for Silence Pod navigation link")
+                                .foregroundColor(Color.primary)
+                            Spacer()
+                            Text(viewModel.silencePodPreference.title)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
+
                 NavigationLink(destination: InsulinTypeSetting(initialValue: viewModel.insulinType, supportedInsulinTypes: supportedInsulinTypes, allowUnsetInsulinType: false, didChange: viewModel.didChangeInsulinType)) {
                     HStack {
                         FrameworkLocalText("Insulin Type", comment: "Text for insulin type navigation link")

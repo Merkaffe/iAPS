@@ -44,6 +44,8 @@ class OmniSettingsViewModel: ObservableObject {
 
     @Published var silencePodPreference: SilencePodPreference
 
+    @Published var silencePodEnd: Date?
+
     @Published var hasConnection: Bool // replaces both rileylinkConnected and isConnected
 
     var activatedAtString: String {
@@ -255,6 +257,7 @@ class OmniSettingsViewModel: ObservableObject {
         podCommState = pumpManager.podCommState
         beepPreference = pumpManager.beepPreference
         silencePodPreference = pumpManager.silencePod ? .enabled : .disabled
+        silencePodEnd = pumpManager.silencePodEnd
         hasConnection = pumpManager.hasConnection
         insulinType = pumpManager.insulinType
         podDetails = pumpManager.podDetails
@@ -262,6 +265,8 @@ class OmniSettingsViewModel: ObservableObject {
 
         pumpManager.addPodStateObserver(self, queue: DispatchQueue.main)
         pumpManager.addStatusObserver(self, queue: DispatchQueue.main)
+
+        pumpManager.setSyncSilencePodState(syncSilencePodState)
 
         // Trigger refresh
         pumpManager.getPodStatus() { _ in }
@@ -373,11 +378,23 @@ class OmniSettingsViewModel: ObservableObject {
         }
     }
 
-    func setSilencePod(_ silencePodPreference: SilencePodPreference, _ completion: @escaping (_ error: LocalizedError?) -> Void) {
-        pumpManager.setSilencePod(silencePod: silencePodPreference == .enabled) { error in
+    /// Called by the Omni pump manager after the silencePodEnd reached and silence pod mode disabled.
+    func syncSilencePodState(_ silencePod: Bool, _ silencePodEnd: Date?) {
+        DispatchQueue.main.async {
+            self.silencePodPreference = silencePod ? .enabled : .disabled
+            self.silencePodEnd = silencePodEnd
+        }
+    }
+
+    func setSilencePod(_ silencePodPreference: SilencePodPreference, silencePodEnd: Date?,
+                       _ completion: @escaping (_ error: LocalizedError?) -> Void)
+    {
+        pumpManager.setSilencePod(silencePod: silencePodPreference == .enabled,
+                                  silencePodEnd: silencePodEnd) { error in
             DispatchQueue.main.async {
                 if error == nil {
                     self.silencePodPreference = silencePodPreference
+                    self.silencePodEnd = silencePodEnd
                 }
                 completion(error)
             }
