@@ -593,7 +593,7 @@ extension OmniPumpManager {
     // Returns a suitable beep command MessageBlock based the current beep preferences and
     // whether there is an unfinializedDose for a manual temp basal &/or a manual bolus.
     private func beepMessageBlock(beepType: BeepType) -> MessageBlock? {
-        guard self.beepPreference.shouldBeepForManualCommand && !self.silencePod else {
+        guard state.confirmationBeeps.shouldBeepForManualCommand && !state.silencePod else {
             return nil
         }
 
@@ -1271,10 +1271,18 @@ extension OmniPumpManager {
                 return .notReadyForCannulaInsertion
             }
 
+            if !podState.setupProgress.needsCannulaInsertion {
+                self.log.debug("### Skipping return of unneeded 'Pod already paired' error")
+            }
+
             state.scheduledExpirationReminderOffset = state.defaultExpirationReminderOffset
 
-            guard podState.setupProgress.needsCannulaInsertion else {
-                return .podAlreadyPaired
+            if let silencePodEnd = state.silencePodEnd, silencePodEnd <= Date() {
+                /// The silencePodEnd time has been reached before we are about to the
+                /// cannula insertion which does the initial alert programming for the new pod.
+                /// Update our silencePod state and the pod will be initialized for non-silent alerts.
+                state.silencePod = false
+                state.silencePodEnd = nil
             }
 
             return nil
@@ -1824,7 +1832,7 @@ extension OmniPumpManager {
         let justUpdateState = true
         #else
         // Just update the pump manager state if there is no active Pod or if currently silenced
-        let justUpdateState = !self.hasActivePod || self.silencePod
+        let justUpdateState = !state.hasActivePod || state.silencePod
         #endif
 
         let name = String(format: "Set Beep Preference to %@", String(describing: newPreference))
@@ -2961,6 +2969,11 @@ extension OmniPumpManager: PodCommsDelegate {
 
     // Not used for Eros pods
     func podCommsDidEstablishSession(_ podComms: PodComms) {
+
+        guard podComms.podState?.isSetupComplete == true else {
+            self.log.debug("### Skipping post-connect processing with incomplete setup")
+            return
+        }
 
         self.runSession(withName: "Post-connect status fetch") { result in
             switch result {

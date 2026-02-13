@@ -216,7 +216,13 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
             didFinish?()
         case .error(let error):
             if error.recoverable {
-                insertCannula()
+                if cannulaInserter.cannulaInsertionSuccessfullyStarted {
+                    print("### InsertCannulaViewModel calling checkCannulaInsertionFinished after error \(error.localizedDescription)")
+                    checkCannulaInsertionFinished()
+                } else {
+                    print("### InsertCannulaViewModel calling insertCannula after error \(error.localizedDescription)")
+                    insertCannula()
+                }
             } else {
                 didRequestDeactivation?()
             }
