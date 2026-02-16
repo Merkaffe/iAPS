@@ -31,7 +31,6 @@ enum PodCommState: Equatable {
 
 enum OmniPumpManagerError: Error {
     case noPodPaired
-    case podAlreadyPaired
     case insulinTypeNotConfigured
     case notReadyForCannulaInsertion
     case invalidSetting
@@ -45,8 +44,6 @@ extension OmniPumpManagerError: LocalizedError {
         switch self {
         case .noPodPaired:
             return LocalizedString("No pod paired", comment: "Error message shown when no pod is paired")
-        case .podAlreadyPaired:
-            return LocalizedString("Pod already paired", comment: "Error message shown when user cannot pair because pod is already paired")
         case .insulinTypeNotConfigured:
             return LocalizedString("Insulin type not configured", comment: "Error description for insulin type not configured")
         case .notReadyForCannulaInsertion:
@@ -748,6 +745,17 @@ extension OmniPumpManager {
         }
     }
 
+    var defaultLowReservoirReminderValue: Double {
+        set {
+            setState { (state) in
+                state.defaultLowReservoirReminderValue = newValue
+            }
+        }
+        get {
+            state.defaultLowReservoirReminderValue
+        }
+    }
+
     var podAttachmentConfirmed: Bool {
         set {
             setState { (state) in
@@ -1276,6 +1284,7 @@ extension OmniPumpManager {
             }
 
             state.scheduledExpirationReminderOffset = state.defaultExpirationReminderOffset
+            state.lowReservoirReminderValue = state.defaultLowReservoirReminderValue
 
             if let silencePodEnd = state.silencePodEnd, silencePodEnd <= Date() {
                 /// The silencePodEnd time has been reached before we are about to the
@@ -1312,13 +1321,16 @@ extension OmniPumpManager {
                         }
                     }
 
-                    let expirationReminderTime = Pod.nominalPodLife - self.state.defaultExpirationReminderOffset
-                    let alerts: [PodAlert] = [
-                        .expirationReminder(offset: self.podTime, absAlertTime: self.defaultExpirationReminderOffset > 0 ? expirationReminderTime : 0, silent: self.silencePod),
-                        .lowReservoir(units: self.lowReservoirReminderValue, silent: self.silencePod)
-                    ]
-
-                    let finishWait = try session.insertCannula(optionalAlerts: alerts, silent: self.silencePod)
+                    var alerts: [PodAlert] = []
+                    let silencePod = self.state.silencePod
+                    if self.state.defaultExpirationReminderOffset > 0 {
+                        let expirationReminderTime = Pod.nominalPodLife - self.state.defaultExpirationReminderOffset
+                        alerts.append(.expirationReminder(offset: self.podTime, absAlertTime: expirationReminderTime, silent: silencePod))
+                    }
+                    if self.state.lowReservoirReminderValue > 0 {
+                        alerts.append(.lowReservoir(units: self.state.lowReservoirReminderValue, silent: silencePod))
+                    }
+                    let finishWait = try session.insertCannula(optionalAlerts: alerts, silent: silencePod)
                     completion(.success(finishWait))
                 } catch let error {
                     completion(.failure(.communication(error)))
@@ -2734,26 +2746,19 @@ extension OmniPumpManager: PumpManager {
         return expiration.addingTimeInterval(-.hours(round(offset.hours)))
     }
 
-    // Updates the low reservior reminder value both for the current pod (when applicable) and for future pods
+    // Updates the low reservior reminder value for the current pod
     func updateLowReservoirReminder(_ value: Int, completion: @escaping (OmniPumpManagerError?) -> Void) {
 
-        let supportedValue = min(max(0, Double(value)), Pod.maximumReservoirReading)
-        let setLowReservoirReminderValue = {
-            self.log.default("Set Low Reservoir Reminder to %d U", value)
-            self.lowReservoirReminderValue = supportedValue
-            completion(nil)
-        }
-
         guard self.hasActivePod else {
-            // no active pod, just set the internal state for the next pod
-            setLowReservoirReminderValue()
+            completion(OmniPumpManagerError.noPodPaired)
             return
         }
 
+        let supportedValue = min(max(0, Double(value)), Pod.maximumReservoirReading)
         guard let currentReservoirLevel = self.reservoirLevel?.rawValue, currentReservoirLevel > supportedValue else {
             // Since the new low reservoir alert level is not below the current reservoir value,
-            // just set the internal state for the next pod to prevent an immediate low reservoir alert.
-            setLowReservoirReminderValue()
+            // just return an error as setting this alert will cause an immediate low reservoir alert.
+            completion(OmniPumpManagerError.invalidSetting)
             return
         }
 
@@ -2775,12 +2780,21 @@ extension OmniPumpManager: PumpManager {
                 let beepBlock = self.beepMessageBlock(beepType: .beep)
                 try session.configureAlerts([lowReservoirReminder], beepBlock: beepBlock)
                 self.lowReservoirReminderValue = supportedValue
+                self.log.default("Set Low Reservoir Reminder for current pod to %d U", value)
                 completion(nil)
             } catch {
                 completion(.communication(error))
                 return
             }
         }
+    }
+
+    // Updates the default low reservior reminder value for future pods
+    func updateLowReservoirDefaultReminder(_ value: Int, completion: @escaping (OmniPumpManagerError?) -> Void) {
+        let supportedValue = min(max(0, Double(value)), Pod.maximumReservoirReading)
+        self.log.default("Set Default Low Reservoir Reminder to %d U", value)
+        self.defaultLowReservoirReminderValue = supportedValue
+        completion(nil)
     }
 
     func issueAlert(alert: PumpManagerAlert) {

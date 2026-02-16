@@ -70,7 +70,6 @@ struct InsertCannulaView: View {
                 if (self.viewModel.error == nil || self.viewModel.error?.recoverable == true) {
                     actionButton
                     .disabled(self.viewModel.state.isProcessing)
-                    .animation(nil)
                     .zIndex(1)
                         
                 }
@@ -78,9 +77,9 @@ struct InsertCannulaView: View {
             .transition(AnyTransition.opacity.combined(with: .move(edge: .bottom)))
             .padding()
         }
-        .animation(.default)
         .alert(isPresented: $cancelModalIsPresented) { cancelPairingModal }
-        .navigationBarTitle(LocalizedString("Insert Cannula", comment: "navigation bar title for insert cannula"), displayMode: .automatic)
+        .navigationTitle(LocalizedString("Insert Cannula", comment: "navigation bar title for insert cannula"))
+        .navigationBarTitleDisplayMode(.automatic)
         .navigationBarBackButtonHidden(true)
         .navigationBarItems(trailing: cancelButton)
     }
@@ -134,18 +133,12 @@ struct InsertCannulaView: View {
 
 class MockCannulaInserter: CannulaInserter {
     let mockError: Bool = false
-    let mockPodAlreadyPairedError: Bool = false
 
     func insertCannula(completion: @escaping (Result<TimeInterval,OmniPumpManagerError>) -> Void) {
         let result :Result<TimeInterval, OmniPumpManagerError>
         if mockError {
-            if mockPodAlreadyPairedError {
-                // A podAlreadyPaired "error" should be treated as an immediate success
-                result = .failure(OmniPumpManagerError.podAlreadyPaired)
-            } else {
-                // Others should display the error text and show Deactivate Pod & Retry options
-                result = .failure(OmniPumpManagerError.noPodPaired)
-            }
+            // Display the error text and show Deactivate Pod & Retry options
+            result = .failure(OmniPumpManagerError.noPodPaired)
         } else {
             let mockDelay = TimeInterval(seconds: 3)
             result = .success(mockDelay)

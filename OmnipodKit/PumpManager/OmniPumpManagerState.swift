@@ -42,6 +42,8 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     var lowReservoirReminderValue: Double
 
+    var defaultLowReservoirReminderValue: Double
+
     var podAttachmentConfirmed: Bool
 
     var activeAlerts: Set<PumpManagerAlert>
@@ -132,6 +134,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         self.silencePodEnd = nil
         self.confirmationBeeps = .manualCommands
         self.lowReservoirReminderValue = Pod.defaultLowReservoirReminder
+        self.defaultLowReservoirReminderValue = Pod.defaultLowReservoirReminder
         self.podAttachmentConfirmed = false
         self.acknowledgedTimeOffsetAlert = false
         self.activeAlerts = []
@@ -263,6 +266,8 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
     
         self.lowReservoirReminderValue = rawValue["lowReservoirReminderValue"] as? Double ?? Pod.defaultLowReservoirReminder
 
+        self.defaultLowReservoirReminderValue = rawValue["defaultLowReservoirReminderValue"] as? Double ?? self.lowReservoirReminderValue
+
         self.podAttachmentConfirmed = rawValue["podAttachmentConfirmed"] as? Bool ?? false
 
         self.initialConfigurationCompleted = rawValue["initialConfigurationCompleted"] as? Bool ?? true
@@ -331,6 +336,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         value["scheduledExpirationReminderOffset"] = scheduledExpirationReminderOffset
         value["defaultExpirationReminderOffset"] = defaultExpirationReminderOffset
         value["lowReservoirReminderValue"] = lowReservoirReminderValue
+        value["defaultLowReservoirReminderValue"] = defaultLowReservoirReminderValue
         value["lastPumpDataReportDate"] = lastPumpDataReportDate
         value["silencePodEnd"] = silencePodEnd
         value["previousPodState"] = previousPodState?.rawValue
@@ -377,6 +383,7 @@ extension OmniPumpManagerState: CustomDebugStringConvertible {
             "* scheduledExpirationReminderOffset: \(optionalString(scheduledExpirationReminderOffset?.timeIntervalStr))",
             "* defaultExpirationReminderOffset: \(defaultExpirationReminderOffset.timeIntervalStr)",
             "* lowReservoirReminderValue: \(lowReservoirReminderValue)",
+            "* defaultLowReservoirReminderValue: \(defaultLowReservoirReminderValue)",
             "* podAttachmentConfirmed: \(podAttachmentConfirmed)",
             "* activeAlerts: \(activeAlerts)",
             "* alertsWithPendingAcknowledgment: \(alertsWithPendingAcknowledgment)",

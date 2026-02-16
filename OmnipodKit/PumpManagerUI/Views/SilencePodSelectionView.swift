@@ -102,16 +102,12 @@ struct SilencePodSelectionView: View {
         }
         .onChange(of: preference) { _ in
             /// Clear endTimeValue on any change of preference for hopefully a more consistent UX experience
-            if let endTime = endTimeValue {
-                print("@@@ onChange clearing silence end time \(endTime))")
-                endTimeValue = nil
-            }
+            endTimeValue = nil
         }
         .onAppear {
             /// If the endTimeValue is no longer valid at the current time,
             /// reset the affected variables and save the updated values.
             if let endTime = endTimeValue, endTime <= earliestAllowedEndTime {
-                print("@@@ .onAppear invalid end time \(endTime) detected, disabling...")
                 preference = .disabled
                 endTimeValue = nil
                 doSave(preference, endTimeValue, dismissOnSuccess: false)
@@ -135,7 +131,6 @@ struct SilencePodSelectionView: View {
             endTimeToSave = nil
         } else if let endTime = endTimeValue, endTime <= earliestAllowedEndTime {
             /// endtime isn't past the earliestEndTimeAllowed, so switch to disabled mode
-            print("@@@ Disabling Silence Pod on save as end time \(endTime) isn't past \(earliestAllowedEndTime)")
             preferenceToSave = .disabled
             endTimeToSave = nil
         } else {

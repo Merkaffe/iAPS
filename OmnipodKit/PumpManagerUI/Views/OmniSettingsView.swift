@@ -317,7 +317,7 @@ struct OmniSettingsView: View  {
             }
 
             let lifeState = self.viewModel.lifeState
-            Section(header: SectionHeader(label: LocalizedString("Activity", comment: "Section header for activity section"))) {
+            Section(header: SectionHeader(label: LocalizedString("Actions", comment: "Section header for Actions section"))) {
                 // If need to pair a pod, display this as the only action
                 if lifeState.nextPodLifecycleAction == .pairAndPrime {
                     Section() {
@@ -485,15 +485,21 @@ struct OmniSettingsView: View  {
 
             Section(header: SectionHeader(label: LocalizedString("Configuration", comment: "Section header for configuration section")))
             {
+                let reservoirLevel = viewModel.reservoirLevel?.rawValue ?? Pod.reservoirCapacity + Pod.pulseSize
                 NavigationLink(destination:
                                 NotificationSettingsView(
                                     dateFormatter: self.viewModel.dateFormatter,
                                     expirationReminderDefault: self.$viewModel.expirationReminderDefault,
                                     scheduledReminderDate: self.viewModel.expirationReminderDate,
                                     allowedScheduledReminderDates: self.viewModel.allowedScheduledReminderDates,
+                                    lowReservoirReminderDefaultValue: self.viewModel.defaultLowReservoirAlertValue,
                                     lowReservoirReminderValue: self.viewModel.lowReservoirAlertValue,
+                                    reservoirLevel: reservoirLevel,
+                                    hasActivePod: !viewModel.noPod,
                                     onSaveScheduledExpirationReminder: self.viewModel.saveScheduledExpirationReminder,
-                                    onSaveLowReservoirReminder: self.viewModel.saveLowReservoirReminder))
+                                    onSaveLowReservoir: self.viewModel.saveLowReservoirReminder,
+                                    onSaveLowReservoirDefault: self.viewModel.saveDefaultLowReservoirReminder)
+                               )
                 {
                     FrameworkLocalText("Notification Settings", comment: "Text for Notification Settings disclosure row")
                         .foregroundColor(Color.primary)

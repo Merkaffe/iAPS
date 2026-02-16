@@ -16,59 +16,109 @@ import HealthKit
 struct NotificationSettingsView: View {
 
     var dateFormatter: DateFormatter
-    
+
     @Binding var expirationReminderDefault: Int
-    
+
     @State private var showingHourPicker: Bool = false
-    
+
     var scheduledReminderDate: Date?
-    
+
     var allowedScheduledReminderDates: [Date]?
-    
+
+    var lowReservoirReminderDefaultValue: Int
+
     var lowReservoirReminderValue: Int
-    
+
+    let reservoirLevel: Double
+
+    let hasActivePod: Bool
+
     var onSaveScheduledExpirationReminder: ((_ selectedDate: Date?, _ completion: @escaping (_ error: Error?) -> Void) -> Void)?
-    
-    var onSaveLowReservoirReminder: ((_ selectedValue: Int, _ completion: @escaping (_ error: Error?) -> Void) -> Void)?
-    
+
+    var onSaveLowReservoir: ((_ selectedValue: Int, _ completion: @escaping (_ error: Error?) -> Void) -> Void)?
+
+    var onSaveLowReservoirDefault: ((_ selectedValue: Int, _ completion: @escaping (_ error: Error?) -> Void) -> Void)?
+
     var insulinQuantityFormatter = QuantityFormatter(for: .internationalUnit())
 
     var body: some View {
         RoundedCardScrollView {
-            RoundedCard(
-                title: LocalizedString("Omnipod Reminders", comment: "Title for omnipod reminders section"),
-                footer: LocalizedString("A reminder is configured during Pod setup to notify you in advance of Pod expiration. Set the number of hours advance notice you would like to configure by default when pairing a new Pod.", comment: "Footer text for omnipod reminders section")
-            ) {
-                ExpirationReminderPickerView(expirationReminderDefault: $expirationReminderDefault)
-            }
 
-            if let allowedDates = allowedScheduledReminderDates {
-                RoundedCard(
-                    footer: LocalizedString("Expiration reminder time for the current Pod.", comment: "Footer text for scheduled reminder area"))
-                {
-                    Text(LocalizedString("Scheduled Reminder", comment: "Title of scheduled reminder card on NotificationSettingsView"))
-                    Divider()
-                    scheduledReminderRow(scheduledDate: scheduledReminderDate, allowedDates: allowedDates)
+            /// Only display options to set the expiration reminder and low reservoir alerts if we have an active pod
+            if hasActivePod {
+
+                RoundedCard<EmptyView>(
+                    title: LocalizedString("Current Pod Alerts", comment: "Title for Current Pod Alerts section"),
+                    footer: LocalizedString("Current Reminders configured for the active Pod.", comment: "Footer text for Current Pod Alerts section")
+                )
+
+                if let allowedDates = allowedScheduledReminderDates {
+                    RoundedCard(
+                        footer: LocalizedString("Expiration reminder time for the current Pod.", comment: "Footer text for scheduled reminder area")
+                    ) {
+                        scheduledReminderRow(
+                            scheduledDate: scheduledReminderDate,
+                            allowedDates: allowedDates
+                        )
+                    }
                 }
-            }
 
-            RoundedCard(footer: LocalizedString("You will be notified when the amount of insulin in the Pod reaches this level.", comment: "Footer text for low reservoir value row")) {
-                lowReservoirValueRow
+                RoundedCard(
+                    footer: LocalizedString("Low reservoir alert value for the current Pod.", comment: "Footer text for Low Reservoir value row"
+                    )
+                ) {
+                    /// If reservoirLevel 1.05 to 2.0 -> maxValue 1.0
+                    let maxValue = floor(reservoirLevel - (Pod.pulseSize/10))
+                    lowReservoirRow(
+                        currentValue: lowReservoirReminderValue,
+                        maxValue: maxValue
+                    )
+                }
+
+                Spacer()
             }
 
             RoundedCard<EmptyView>(
+                title: LocalizedString("Default Alerts", comment: "Title for Default Alerts section"),
+                footer: LocalizedString("These default alerts will be configured when pairing a new Pod.", comment: "Footer text for the Notifications Settings Default Pod Alerts section"
+                )
+            )
+
+            RoundedCard(
+                footer: LocalizedString("The default number of hours advance notice to configure when pairing a new Pod.", comment: "Footer text for the Expiration Reminder Default row")
+            ) {
+                ExpirationReminderPickerView(
+                    expirationReminderDefault: $expirationReminderDefault
+                )
+            }
+
+            RoundedCard(
+                footer: LocalizedString("The default number of units to configure for the low reservoir alert level when pairing a new Pod.", comment: "Footer text for Low Reservoir Default row")
+            ) {
+                lowReservoirDefaultRow
+            }
+
+            Spacer()
+
+            RoundedCard<EmptyView>(
                 title: LocalizedString("Critical Alerts", comment: "Title for critical alerts description"),
-                footer: LocalizedString("The reminders above will not sound on your device when it is in Silent or Do Not Disturb mode. There are other critical Pod alerts that will sound on your device even when set to Silent or Do Not Disturb mode.\n\nThe Pod will also use audible beeps for all Pod reminders and alerts except when the Pod is Silenced.", comment: "Description text for critical alerts")
+                footer: LocalizedString("These alerts will not sound on your device when it is in Silent or Do Not Disturb mode. There are other critical Pod alerts that will sound on your device even when set to Silent or Do Not Disturb mode.\n\nThe Pod will also use audible beeps for all Pod alerts except when the Pod is Silenced.",
+                comment: "Description text for Critical Alerts section")
             )
         }
-        .navigationBarTitle(LocalizedString("Notification Settings", comment: "navigation title for notification settings"))
+        .navigationTitle(
+            LocalizedString("Notification Settings", comment: "navigation title for notification settings")
+        )
     }
-    
-    @State private var scheduleReminderDateEditViewIsShown: Bool = false
-    
-    private func scheduledReminderRow(scheduledDate: Date?, allowedDates: [Date]) -> some View {
+
+    @State private var scheduledReminderDateEditViewIsShown: Bool = false
+
+    private func scheduledReminderRow(
+        scheduledDate: Date?,
+        allowedDates: [Date]
+    ) -> some View {
         Group {
-            // Make the expiration reminder time read-only if there aren't any more available times.
+            /// Make the expiration reminder time read-only for the current pod if there aren't any more available times.
             if allowedDates.isEmpty {
                 scheduledReminderRowContents(disclosure: false)
             } else {
@@ -78,24 +128,27 @@ struct NotificationSettingsView: View {
                         allowedDates: allowedDates,
                         dateFormatter: dateFormatter,
                         onSave: onSaveScheduledExpirationReminder,
-                        onFinish: { scheduleReminderDateEditViewIsShown = false }),
-                    isActive: $scheduleReminderDateEditViewIsShown)
-                {
+                        onFinish: {
+                            scheduledReminderDateEditViewIsShown = false
+                        }
+                    ),
+                    isActive: $scheduledReminderDateEditViewIsShown
+                ) {
                     scheduledReminderRowContents(disclosure: true)
                 }
             }
         }
     }
-    
+
     private func scheduledReminderRowContents(disclosure: Bool) -> some View {
         RoundedCardValueRow(
-            label: LocalizedString("Time", comment: "Label for scheduled reminder value row"),
+            label: LocalizedString("Expiration Reminder", comment: "Label for Expiration Reminder value row"),
             value: scheduledReminderDateString(scheduledReminderDate),
             highlightValue: false,
             disclosure: disclosure
         )
     }
-    
+
     private func scheduledReminderDateString(_ scheduledDate: Date?) -> String {
         if let scheduledDate = scheduledDate {
             return dateFormatter.string(from: scheduledDate)
@@ -104,24 +157,61 @@ struct NotificationSettingsView: View {
         }
     }
 
-    @State private var lowReservoirReminderEditViewIsShown: Bool = false
+    @State private var lowReservoirDefaultIsShown: Bool = false
 
-    var lowReservoirValueRow: some View {
+    var lowReservoirDefaultRow: some View {
         NavigationLink(
-            destination: LowReservoirReminderEditView(
-                lowReservoirReminderValue: lowReservoirReminderValue,
-                insulinQuantityFormatter: insulinQuantityFormatter,
-                onSave: onSaveLowReservoirReminder,
-                onFinish: { lowReservoirReminderEditViewIsShown = false }),
-            isActive: $lowReservoirReminderEditViewIsShown)
+            destination: LowReservoirView(
+                reservoirLevel: reservoirLevel,
+                setDefault: true,
+                initialValue: lowReservoirReminderDefaultValue,
+                onSave: onSaveLowReservoirDefault,
+                onFinish: { lowReservoirDefaultIsShown = false }
+            ),
+            isActive: $lowReservoirDefaultIsShown)
         {
             RoundedCardValueRow(
-                label: LocalizedString("Low Reservoir Reminder", comment: "Label for low reservoir reminder row"),
-                value: insulinQuantityFormatter.string(from: HKQuantity(unit: .internationalUnit(), doubleValue: Double(lowReservoirReminderValue))) ?? "",
+                label: LocalizedString("Low Reservoir Default", comment: "Label for Low Reservoir Default value row"),
+                value: formatLowReservoirAlertValue(lowReservoirReminderDefaultValue),
                 highlightValue: false,
-                disclosure: true)
+                disclosure: true
+            )
         }
     }
+
+    @State private var lowReservoirRowIsShown: Bool = false
+
+    private func lowReservoirRow(
+        currentValue: Int,
+        maxValue: Double
+    ) -> some View {
+        NavigationLink(
+            destination: LowReservoirView(
+                reservoirLevel: reservoirLevel,
+                setDefault: false,
+                initialValue: lowReservoirReminderValue,
+                onSave: onSaveLowReservoir,
+                onFinish: { lowReservoirRowIsShown = false }
+            ),
+            isActive: $lowReservoirRowIsShown
+        ) {
+            RoundedCardValueRow(
+                label: LocalizedString("Low Reservoir", comment: "Label for Low Reservoir alert value row"),
+                value: formatLowReservoirAlertValue(lowReservoirReminderValue),
+                highlightValue: false,
+                disclosure: true
+            )
+        }
+        //.disabled(maxValue < 1.0) don't do this so that a No Alert value can still be set?
+    }
+}
+
+// Display a 0 low reservoir alert value as "No Alert"
+func formatLowReservoirAlertValue(_ value: Int) -> String {
+    if value == 0 {
+        return LocalizedString("No Alert", comment: "No Alert low reservoir value")
+    }
+    return String(value)
 }
 
 struct NotificationSettingsView_Previews: PreviewProvider {
@@ -129,16 +219,42 @@ struct NotificationSettingsView_Previews: PreviewProvider {
         return Group {
             let now = Date()
             NavigationView {
-                NotificationSettingsView(dateFormatter: DateFormatter(), expirationReminderDefault: .constant(2), scheduledReminderDate: now + TimeInterval(hours: 1), allowedScheduledReminderDates: [now, now - TimeInterval(hours: 2), now - TimeInterval(hours: 3)], lowReservoirReminderValue: 20)
-                    .previewDevice(PreviewDevice(rawValue:"iPod touch (7th generation)"))
-                    .previewDisplayName("iPod touch (7th generation)")
+                NotificationSettingsView(
+                    dateFormatter: DateFormatter(),
+                    expirationReminderDefault: .constant(1),
+                    scheduledReminderDate: now + TimeInterval(hours: 1),
+                    allowedScheduledReminderDates: [
+                        now, now - TimeInterval(hours: 2),
+                        now - TimeInterval(hours: 3),
+                    ],
+                    lowReservoirReminderDefaultValue: Int(Pod.defaultLowReservoirReminder),
+                    lowReservoirReminderValue: 5,
+                    reservoirLevel: Pod.maximumReservoirReading,
+                    hasActivePod: true,
+                )
+                .previewDevice(
+                    PreviewDevice(rawValue: "iPod touch (7th generation)")
+                )
+                .previewDisplayName("iPod touch (7th generation)")
             }
 
             NavigationView {
-                NotificationSettingsView(dateFormatter: DateFormatter(), expirationReminderDefault: .constant(2), scheduledReminderDate: now + TimeInterval(hours: 1), allowedScheduledReminderDates: [now, now - TimeInterval(hours: 2), now - TimeInterval(hours: 3)], lowReservoirReminderValue: 20)
-                    .colorScheme(.dark)
-                    .previewDevice(PreviewDevice(rawValue: "iPhone XS Max"))
-                    .previewDisplayName("iPhone XS Max - Dark")
+                NotificationSettingsView(
+                    dateFormatter: DateFormatter(),
+                    expirationReminderDefault: .constant(2),
+                    scheduledReminderDate: now + TimeInterval(hours: 1),
+                    allowedScheduledReminderDates: [
+                        now, now - TimeInterval(hours: 2),
+                        now - TimeInterval(hours: 3),
+                    ],
+                    lowReservoirReminderDefaultValue: Int(Pod.defaultLowReservoirReminder),
+                    lowReservoirReminderValue: Int(Pod.defaultLowReservoirReminder),
+                    reservoirLevel: Pod.maximumReservoirReading,
+                    hasActivePod: false,
+                )
+                .colorScheme(.dark)
+                .previewDevice(PreviewDevice(rawValue: "iPhone XS Max"))
+                .previewDisplayName("iPhone XS Max - Dark")
             }
         }
     }

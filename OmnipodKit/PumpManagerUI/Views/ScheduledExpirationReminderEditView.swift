@@ -70,7 +70,8 @@ struct ScheduledExpirationReminderEditView: View {
             }
             .disabled(saving || !valueChanged)
         }
-        .navigationBarTitle("", displayMode: .inline)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .alert(isPresented: $alertIsPresented, content: { alert(error: error) })
     }
 
