@@ -18,8 +18,6 @@ import RileyLinkKit
 import RileyLinkBLEKit
 import RileyLinkKitUI
 
-fileprivate var delayInit = true
-
 enum OmniUIScreen {
     case firstRunScreen
     case expirationReminderSetup
@@ -113,7 +111,9 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                                         self.pumpManager.completeOnboard()
                                         self.completionDelegate?.completionNotifyingDidComplete(self)
                                     })
-            return hostingController(rootView: view)
+            let controller = hostingController(rootView: view)
+            controller.navigationItem.title = pumpManager.localizedTitle
+            return controller
 
         case .expirationReminderSetup:
             var view = ExpirationReminderSetupView(expirationReminderDefault: Int(pumpManager.defaultExpirationReminderOffset.hours))
@@ -136,9 +136,13 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             return hostedView
 
         case .lowReservoirReminderSetup:
-            var view = LowReservoirReminderSetupView(lowReservoirReminderValue: Int(pumpManager.lowReservoirReminderValue))
-            view.valueChanged = { [weak self] value in
-                self?.pumpManager.lowReservoirReminderValue = Double(value)
+            var view = LowReservoirView(
+                reservoirLevel: Pod.reservoirLevelAboveThresholdMagicNumber,
+                setDefault: true,
+                initialValue: Int(pumpManager.defaultLowReservoirReminderValue),
+            )
+            view.valueUpdated = { [weak self] value in
+                self?.pumpManager.defaultLowReservoirReminderValue = Double(value)
             }
             view.continueButtonTapped = { [weak self] in
                 self?.pumpManager.initialConfigurationCompleted = true
@@ -148,7 +152,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 self?.setupCanceled()
             }
             let hostedView = hostingController(rootView: view)
-            hostedView.navigationItem.title = LocalizedString("Low Reservoir", comment: "Title for LowReservoirReminderSetupView")
+            hostedView.navigationItem.title = LocalizedString("Low Reservoir", comment: "Title for LowReservoirView")
             hostedView.navigationItem.backButtonDisplayMode = .generic
             return hostedView
 
@@ -190,7 +194,9 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             view.cancelButtonTapped = { [weak self] in
                  self?.setupCanceled()
             }
-            return hostingController(rootView: view)
+            let controller = hostingController(rootView: view)
+            controller.navigationItem.title = pumpManager.localizedTitle
+            return controller
 
         case .deactivate:
             let viewModel = DeactivatePodViewModel(podDeactivator: pumpManager, podAttachedToBody: pumpManager.podAttachmentConfirmed, fault: pumpManager.state.podState?.fault)
@@ -234,7 +240,9 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             }
 
             let view = OmniSettingsView(viewModel: viewModel, rileyLinkListDataSource: rileyLinkListDataSource, handleRileyLinkSelection: handleRileyLinkSelection, supportedInsulinTypes: allowedInsulinTypes)
-            return hostingController(rootView: view)
+            let controller = hostingController(rootView: view)
+            controller.navigationItem.title = pumpManager.localizedTitle
+            return controller
 
         case .pairAndPrime:
             pumpManagerOnboardingDelegate?.pumpManagerOnboarding(didCreatePumpManager: pumpManager)

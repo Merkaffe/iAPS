@@ -86,7 +86,6 @@ struct PairPodView: View {
                             .actionButtonStyle(.primary)
                     }
                     .disabled(self.viewModel.state.isProcessing)
-                    .animation(nil)
                     .zIndex(1)
                 }
 
@@ -98,17 +97,16 @@ struct PairPodView: View {
                             .actionButtonStyle(.primary)
                     }
                     .disabled(false)
-                    .animation(nil)
                     .zIndex(1)
                 }
             }
             .transition(AnyTransition.opacity.combined(with: .move(edge: .bottom)))
             .padding()
         }
-        .animation(.default)
         .alert(isPresented: $cancelModalIsPresented) { cancelPairingModal }
 
-        .navigationBarTitle(String(format: LocalizedString("Pair %1$@ Pod", comment: "Title for pod pairing screen (1: pod type brief name)"), self.viewModel.podType.briefName), displayMode: .automatic)
+        .navigationTitle(String(format: LocalizedString("Pair %1$@ Pod", comment: "Title for pod pairing screen (1: pod type brief name)"), self.viewModel.podType.briefName))
+        .navigationBarTitleDisplayMode(.automatic)
         .navigationBarBackButtonHidden(self.viewModel.backButtonHidden)
         .navigationBarItems(trailing: self.viewModel.state.navBarVisible ? cancelButton : nil)
 

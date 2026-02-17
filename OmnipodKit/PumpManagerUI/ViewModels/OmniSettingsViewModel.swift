@@ -106,6 +106,9 @@ class OmniSettingsViewModel: ObservableObject {
     // Units to alert at
     @Published var lowReservoirAlertValue: Int
 
+    // Default low reservoir alert value for new pods
+    @Published var defaultLowReservoirAlertValue: Int
+
     @Published var basalDeliveryState: PumpManagerStatus.BasalDeliveryState?
 
     @Published var basalDeliveryRate: Double?
@@ -129,7 +132,7 @@ class OmniSettingsViewModel: ObservableObject {
     @Published var reservoirLevel: ReservoirLevel?
 
     @Published var reservoirLevelHighlightState: ReservoirLevelHighlightState?
-    
+
     @Published var synchronizingTime: Bool = false
 
     @Published var podCommState: PodCommState
@@ -254,6 +257,7 @@ class OmniSettingsViewModel: ObservableObject {
         expirationReminderDate = pumpManager.scheduledExpirationReminder
         expirationReminderDefault = Int(pumpManager.defaultExpirationReminderOffset.hours)
         lowReservoirAlertValue = Int(pumpManager.state.lowReservoirReminderValue)
+        defaultLowReservoirAlertValue = Int(pumpManager.state.defaultLowReservoirReminderValue)
         podCommState = pumpManager.podCommState
         beepPreference = pumpManager.beepPreference
         silencePodPreference = pumpManager.silencePod ? .enabled : .disabled
@@ -288,7 +292,7 @@ class OmniSettingsViewModel: ObservableObject {
             }
         }
     }
-    
+
     func doneTapped() {
         self.didFinish?()
     }
@@ -320,7 +324,7 @@ class OmniSettingsViewModel: ObservableObject {
             }
         }
     }
-    
+
     func resumeDelivery() {
         pumpManager.resumeDelivery { (error) in
             DispatchQueue.main.async {
@@ -357,6 +361,17 @@ class OmniSettingsViewModel: ObservableObject {
             DispatchQueue.main.async {
                 if error == nil {
                     self.lowReservoirAlertValue = selectedValue
+                }
+                completion(error)
+            }
+        }
+    }
+
+    func saveDefaultLowReservoirReminder(_ selectedValue: Int, _ completion: @escaping (Error?) -> Void) {
+        pumpManager.updateLowReservoirDefaultReminder(selectedValue) { (error) in
+            DispatchQueue.main.async {
+                if error == nil {
+                    self.defaultLowReservoirAlertValue = selectedValue
                 }
                 completion(error)
             }
@@ -404,7 +419,7 @@ class OmniSettingsViewModel: ObservableObject {
     func didChangeInsulinType(_ newType: InsulinType?) {
         self.pumpManager.insulinType = newType
     }
-    
+
     var podOk: Bool {
         guard basalDeliveryState != nil else { return false }
 
@@ -415,7 +430,7 @@ class OmniSettingsViewModel: ObservableObject {
             return true
         }
     }
-    
+
     var noPod: Bool {
         return podCommState == .noPod
     }
@@ -447,7 +462,7 @@ class OmniSettingsViewModel: ObservableObject {
             return nil
         }
     }
-    
+
     func reservoirText(for level: ReservoirLevel) -> String {
         switch level {
         case .aboveThreshold:

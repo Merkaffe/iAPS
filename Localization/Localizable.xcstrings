@@ -298,14 +298,14 @@
         }
       }
     },
-    "A reminder is configured during Pod setup to notify you in advance of Pod expiration. Set the number of hours advance notice you would like to configure by default when pairing a new Pod." : {
-      "comment" : "Footer text for omnipod reminders section"
-    },
     "Abort" : {
 
     },
     "Access Omnipod Screen" : {
       "comment" : "Button title to access Omnipod screen if waiting for recovery from uncertain comms"
+    },
+    "Actions" : {
+      "comment" : "Section header for Actions section"
     },
     "Activation" : {
       "comment" : "Label for Activation row\ndescription label for activation pod details row"
@@ -335,6 +335,7 @@
     },
     "Activity" : {
       "comment" : "Section header for activity section",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -578,7 +579,7 @@
       }
     },
     "Cancel" : {
-      "comment" : "Button title for cancelling confidence reminders edit\nButton title for cancelling low reservoir reminder edit\nButton title for cancelling scheduled reminder date edit\nButton title for cancelling silence pod edit\nCancel button text in navigation bar on insert cannula screen\nCancel button text in navigation bar on pair pod UI\nCancel button title\nPairing interface navigation bar button text for cancel action",
+      "comment" : "Button title for cancelling confidence reminders edit\nButton title for cancelling low reservoir edit\nButton title for cancelling scheduled reminder date edit\nButton title for cancelling silence pod edit\nCancel button text in navigation bar on insert cannula screen\nCancel button text in navigation bar on pair pod UI\nCancel button title\nPairing interface navigation bar button text for cancel action",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -666,7 +667,7 @@
       }
     },
     "Check Cannula" : {
-      "comment" : "Title for check cannula screen\nnavigation bar title for check cannula",
+      "comment" : "Title for check cannula screen\nnavigation title for Check Cannula",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -724,7 +725,7 @@
       }
     },
     "Comms Recovered" : {
-      "comment" : "Title for uncertainty recovered screen\nnavigation bar title for comms recovered",
+      "comment" : "Title for uncertainty recovered screen\nnavigation title for comms recovered",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -861,6 +862,12 @@
         }
       }
     },
+    "Current Pod Alerts" : {
+      "comment" : "Title for Current Pod Alerts section"
+    },
+    "Current Reminders configured for the active Pod." : {
+      "comment" : "Footer text for Current Pod Alerts section"
+    },
     "day" : {
       "comment" : "Unit for singular day in pod life remaining",
       "localizations" : {
@@ -884,7 +891,7 @@
       }
     },
     "Deactivate Pod" : {
-      "comment" : "Button text for deactivate pod button\nDeactivate pod action button accessibility label while ready to deactivate\nSettings page link description when next lifecycle action is to deactivate pod\nTitle for deactivate pod screen\nnavigation bar title for deactivate pod",
+      "comment" : "Button text for deactivate pod button\nDeactivate pod action button accessibility label while ready to deactivate\nSettings page link description when next lifecycle action is to deactivate pod\nTitle for deactivate pod screen\nnavigation title for Deactivate Pod",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -929,6 +936,9 @@
     },
     "Deactivation" : {
       "comment" : "description label for deactivation pod details row"
+    },
+    "Default Alerts" : {
+      "comment" : "Title for Default Alerts section"
     },
     "Device Name" : {
       "comment" : "description label for device name pod details row",
@@ -1066,7 +1076,7 @@
       }
     },
     "Expiration Reminder" : {
-      "comment" : "Title for ExpirationReminderSetupView\nnavigation bar title for expiration reminder",
+      "comment" : "Label for Expiration Reminder value row\nTitle for ExpirationReminderSetupView\nnavigation title for Expiration Reminder",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1204,6 +1214,7 @@
     },
     "Failed to Update Low Reservoir Reminder" : {
       "comment" : "Alert title for error when updating low reservoir reminder",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1212,6 +1223,9 @@
           }
         }
       }
+    },
+    "Failed to Update Low Reservoir Value" : {
+      "comment" : "Alert title for error when updating low reservoir value"
     },
     "Failed to update silence pod preference" : {
       "comment" : "Alert title for error when updating silence pod preference"
@@ -1636,7 +1650,7 @@
       }
     },
     "Low Reservoir" : {
-      "comment" : "Alert content title for lowReservoir pod alert\nLabel text for low reservoir value row\nTitle for LowReservoirReminderSetupView\nnavigation bar title for low reservoir",
+      "comment" : "Alert content title for lowReservoir pod alert\nLabel for Low Reservoir alert value row\nTitle for LowReservoirView",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1646,8 +1660,15 @@
         }
       }
     },
+    "Low reservoir alert value for the current Pod." : {
+      "comment" : "Footer text for Low Reservoir value row"
+    },
+    "Low Reservoir Default" : {
+      "comment" : "Label for Low Reservoir Default value row"
+    },
     "Low Reservoir Reminder" : {
       "comment" : "Label for low reservoir reminder row\nTitle for low reservoir reminder edit page",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1780,7 +1801,7 @@
       "comment" : "Error message description for PeripheralManagerError.nack"
     },
     "Next" : {
-      "comment" : "Text of continue button on ExpirationReminderSetupView",
+      "comment" : "Text of Next button on LowReservoirView\nText of continue button on ExpirationReminderSetupView",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1811,6 +1832,9 @@
           }
         }
       }
+    },
+    "No Alert" : {
+      "comment" : "No Alert low reservoir value"
     },
     "No alerts" : {
       "comment" : "Pod alert state when no alerts are active",
@@ -2099,6 +2123,7 @@
     },
     "Omnipod Reminders" : {
       "comment" : "Title for omnipod reminders section",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2406,6 +2431,7 @@
     },
     "Pod already paired" : {
       "comment" : "Error message shown when user cannot pair because pod is already paired",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3037,7 +3063,7 @@
       }
     },
     "Save" : {
-      "comment" : "button title for saving confidence reminder\nbutton title for saving low reservoir reminder\nbutton title for saving scheduled reminder\nbutton title for saving silence pod preference",
+      "comment" : "button title for saving confidence reminder\nbutton title for saving low reservoir alert value\nbutton title for saving scheduled reminder\nbutton title for saving silence pod preference",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3048,7 +3074,7 @@
       }
     },
     "Saving..." : {
-      "comment" : "button title for saving confidence reminder while saving\nbutton title for saving low reservoir reminder while saving\nbutton title for saving scheduled reminder while saving\nbutton title for saving silence pod preference while saving",
+      "comment" : "button title for saving confidence reminder while saving\nbutton title for saving low reservoir alert value while saving\nbutton title for saving scheduled reminder while saving\nbutton title for saving silence pod preference while saving",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3081,7 +3107,7 @@
       }
     },
     "Scheduled Reminder" : {
-      "comment" : "Card title for scheduled reminder\nScheduled reminder card title on SetupCompleteView\nTitle for scheduled expiration reminder edit page\nTitle of scheduled reminder card on NotificationSettingsView",
+      "comment" : "Card title for scheduled reminder\nScheduled reminder card title on SetupCompleteView\nTitle for scheduled expiration reminder edit page",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3477,6 +3503,12 @@
         }
       }
     },
+    "The default number of hours advance notice to configure when pairing a new Pod." : {
+      "comment" : "Footer text for the Expiration Reminder Default row"
+    },
+    "The default number of units to configure for the low reservoir alert level when pairing a new Pod." : {
+      "comment" : "Footer text for Low Reservoir Default row"
+    },
     "The insulin suspension period has ended.\n\nYou can resume delivery from the banner on the home screen or from your pump settings screen. You will be reminded again in 15 minutes." : {
       "comment" : "Alert content body for suspendEnded pod alert",
       "localizations" : {
@@ -3490,6 +3522,7 @@
     },
     "The reminders above will not sound on your device when it is in Silent or Do Not Disturb mode. There are other critical Pod alerts that will sound on your device even when set to Silent or Do Not Disturb mode.\n\nThe Pod will also use audible beeps for all Pod reminders and alerts except when the Pod is Silenced." : {
       "comment" : "Description text for critical alerts",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3554,6 +3587,12 @@
         }
       }
     },
+    "These alerts will not sound on your device when it is in Silent or Do Not Disturb mode. There are other critical Pod alerts that will sound on your device even when set to Silent or Do Not Disturb mode.\n\nThe Pod will also use audible beeps for all Pod alerts except when the Pod is Silenced." : {
+      "comment" : "Description text for Critical Alerts section"
+    },
+    "These default alerts will be configured when pairing a new Pod." : {
+      "comment" : "Footer text for the Notifications Settings Default Pod Alerts section"
+    },
     "This PumpManager has not been configured with a maximum basal rate because it was added before manual temp basal was a feature. Please set a new maximum basal rate." : {
       "comment" : "Alert format string for missing temp basal configuration."
     },
@@ -3569,7 +3608,7 @@
       }
     },
     "Time" : {
-      "comment" : "Label for expiration reminder row\nLabel for scheduled expiration reminder row\nLabel for scheduled reminder value row",
+      "comment" : "Label for expiration reminder row\nLabel for scheduled expiration reminder row",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3923,6 +3962,12 @@
         }
       }
     },
+    "You can be optionally notified when the amount of insulin in the current Pod drops to a selected level below the current reservoir value of %1$@ units.\n\nSet the low reservoir alert level for the current Pod." : {
+      "comment" : "Description text on LowReservoirView for the current Pod (1: current reservoir value"
+    },
+    "You can be optionally notified when the amount of insulin remaining in the reservoir reaches a selected level (1 - %1$d units).\n\nSet the default low reservoir alert level to configure when pairing a Pod." : {
+      "comment" : "Description text on LowReservoirView Default value (1: max value)"
+    },
     "You will be notified in advance of Pod expiration.\n\nScroll to set the number of hours advance notice you would like to have." : {
       "comment" : "Description text on ExpirationReminderSetupView",
       "localizations" : {
@@ -3936,6 +3981,7 @@
     },
     "You will be notified when the amount of insulin in the Pod reaches a selected level.\n\nScroll to set the number of units (1 to 50) at which you would like to be reminded." : {
       "comment" : "Description text on LowReservoirReminderSetupView",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3947,6 +3993,7 @@
     },
     "You will be notified when the amount of insulin in the Pod reaches this level." : {
       "comment" : "Footer text for low reservoir value row",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
