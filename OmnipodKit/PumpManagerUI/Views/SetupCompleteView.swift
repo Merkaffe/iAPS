@@ -42,7 +42,7 @@ struct SetupCompleteView: View {
         GuidePage(content: {
             VStack {
                 LeadingImage("Pod")
-                Text(LocalizedString("Your Pod is ready for use.\n\nThe default reminder was scheduled for this Pod at setup. You can change the reminder to a more convenient time in Pod Notification Settings.", comment: "Format string for instructions for setup complete view"))
+                Text(LocalizedString("Your Pod is ready for use.\n\nThe default expiration reminder and low reservoir alerts have been configured. You can change the alerts for the current Pod in the Notification Settings.", comment: "Format string for instructions for setup complete view"))
                     .fixedSize(horizontal: false, vertical: true)
                 Divider()
                 VStack(alignment: .leading) {

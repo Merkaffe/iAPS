@@ -202,7 +202,6 @@ struct NotificationSettingsView: View {
                 disclosure: true
             )
         }
-        //.disabled(maxValue < 1.0) don't do this so that a No Alert value can still be set?
     }
 }
 
