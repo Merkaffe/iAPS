@@ -704,6 +704,7 @@
     },
     "Command error %1$u" : {
       "comment" : "Format string for invalid message error code (1: error code number)",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -712,6 +713,9 @@
           }
         }
       }
+    },
+    "Command error %1$u: %2$@" : {
+      "comment" : "Format string for invalid message error code (1: error code number) (2: error description)"
     },
     "Comms Issue" : {
       "comment" : "Status highlight that delivery is uncertain.",
@@ -4017,8 +4021,12 @@
         }
       }
     },
+    "Your Pod is ready for use.\n\nThe default expiration reminder and low reservoir alerts have been configured. You can change the alerts for the current Pod in the Notification Settings." : {
+      "comment" : "Format string for instructions for setup complete view"
+    },
     "Your Pod is ready for use.\n\nThe default reminder was scheduled for this Pod at setup. You can change the reminder to a more convenient time in Pod Notification Settings." : {
       "comment" : "Format string for instructions for setup complete view",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {

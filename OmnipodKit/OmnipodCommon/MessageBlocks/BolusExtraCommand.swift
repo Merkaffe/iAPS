@@ -9,6 +9,19 @@
 
 import Foundation
 
+// O5 only additional BolusExtraCommand data
+struct BolusInfo {
+    let bolusSource: Int8 // typically 1
+    let mealUnits: Double // O for prime and cannula insert boluses
+    let correctionUnits: Double
+
+    init(bolusSource: Int8 = 1, mealUnits: Double = 0.0, correctionUnits: Double = 0.0) {
+        self.bolusSource = bolusSource
+        self.mealUnits = mealUnits
+        self.correctionUnits = correctionUnits
+    }
+}
+
 struct BolusExtraCommand: MessageBlock {
     let blockType: MessageBlockType = .bolusExtra
 
@@ -19,15 +32,22 @@ struct BolusExtraCommand: MessageBlock {
     let timeBetweenPulses: TimeInterval
     let extendedUnits: Double
     let extendedDuration: TimeInterval
+    let bolusInfo: BolusInfo? // O5 only, nil for Eros or Dash
 
+    // 17 LL BO NNNN XXXXXXXX YYYY ZZZZZZZZ (Eros/Dash)
     // 17 0d 7c 1770 00030d40 0000 00000000
-    // 0  1  2  3    5        9    13
+
+    // 17 LL BO NNNN XXXXXXXX YYYY ZZZZZZZZ BB MMMM CCCC (O5)
+    // 17 12 7c 0208 000186a0 0000 00000000 01 0000 0000 (O5 prime bolus)
+    // 17 12 7c 00c8 00030d40 0000 00000000 01 00c8 0000 (O5 1.0U bolus)
+
+
     var data: Data {
         let beepOptions = (UInt8(programReminderInterval.minutes) & 0x3f) + (completionBeep ? (1<<6) : 0) + (acknowledgementBeep ? (1<<7) : 0)
 
         var data = Data([
             blockType.rawValue,
-            0x0d,
+            bolusInfo != nil ? 0x12 : 0x0d, // O5 has additional 5 bytes of bolus info
             beepOptions
             ])
 
@@ -39,11 +59,21 @@ struct BolusExtraCommand: MessageBlock {
 
         let timeBetweenExtendedPulses = pulseCountX10 > 0 ? extendedDuration / (Double(pulseCountX10) / 10) : 0
         data.appendBigEndian(UInt32(timeBetweenExtendedPulses.hundredthsOfMilliseconds))
+
+        if let bolusInfo = bolusInfo {
+            // O5 specific added bolus info
+            data.append(UInt8(bolusInfo.bolusSource))
+            let mealUnits = UInt16(round(bolusInfo.mealUnits * Pod.pulsesPerUnit * 10))
+            data.appendBigEndian(mealUnits)
+            let correctionUnits = UInt16(round(bolusInfo.correctionUnits * Pod.pulsesPerUnit * 10))
+            data.appendBigEndian(correctionUnits)
+        }
+
         return data
     }
 
     init(encodedData: Data) throws {
-        if encodedData.count < 15 {
+        if encodedData.count < 15 || (encodedData[1] == 0x12 && encodedData.count < 20) {
             throw MessageBlockError.notEnoughData
         }
 
@@ -62,9 +92,28 @@ struct BolusExtraCommand: MessageBlock {
         let intervalCounts = encodedData[11...].toBigEndian(UInt32.self)
         let timeBetweenExtendedPulses = TimeInterval(hundredthsOfMilliseconds: Double(intervalCounts))
         extendedDuration = timeBetweenExtendedPulses * (Double(pulseCountX10) / 10)
+
+        if encodedData[1] == 0x12 {
+            // Extended O5 version with extra bolus info
+            let bolusSource = Int8(encodedData[15])
+            let mealUnits = Double(encodedData[16...].toBigEndian(UInt16.self)) / (Pod.pulsesPerUnit * 10)
+            let correctionUnits = Double(encodedData[18...].toBigEndian(UInt16.self)) / (Pod.pulsesPerUnit * 10)
+            bolusInfo = BolusInfo(bolusSource: bolusSource, mealUnits: mealUnits, correctionUnits: correctionUnits)
+        } else {
+            // Standard Eros or DASH version with no additional bolus info
+            bolusInfo = nil
+        }
     }
 
-    init(units: Double = 0, timeBetweenPulses: TimeInterval = Pod.secondsPerBolusPulse, extendedUnits: Double = 0.0, extendedDuration: TimeInterval = 0, acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0) {
+    init(units: Double = 0,
+         timeBetweenPulses: TimeInterval = Pod.secondsPerBolusPulse,
+         extendedUnits: Double = 0.0,
+         extendedDuration: TimeInterval = 0,
+         acknowledgementBeep: Bool = false,
+         completionBeep: Bool = false,
+         programReminderInterval: TimeInterval = 0,
+         bolusInfo: BolusInfo? = nil // O5 only, nil for Eros or Dash
+    ) {
         self.acknowledgementBeep = acknowledgementBeep
         self.completionBeep = completionBeep
         self.programReminderInterval = programReminderInterval
@@ -72,11 +121,18 @@ struct BolusExtraCommand: MessageBlock {
         self.timeBetweenPulses = timeBetweenPulses != 0 ? timeBetweenPulses : Pod.secondsPerBolusPulse
         self.extendedUnits = extendedUnits
         self.extendedDuration = extendedDuration
+        self.bolusInfo = bolusInfo
     }
 }
 
 extension BolusExtraCommand: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "BolusExtraCommand(units:\(units), timeBetweenPulses:\(timeBetweenPulses), extendedUnits:\(extendedUnits), extendedDuration:\(extendedDuration), acknowledgementBeep:\(acknowledgementBeep), completionBeep:\(completionBeep), programReminderInterval:\(programReminderInterval.minutes))"
+        if let bolusInfo = bolusInfo {
+            // Extended O5-only format with additional bolus info
+            return "BolusExtraCommand(units:\(units), timeBetweenPulses:\(timeBetweenPulses), extendedUnits:\(extendedUnits), extendedDuration:\(extendedDuration), acknowledgementBeep:\(acknowledgementBeep), completionBeep:\(completionBeep), programReminderInterval:\(programReminderInterval.minutes), bolusInfo:\(bolusInfo)"
+        } else {
+            // Standard Eros or Dash format
+            return "BolusExtraCommand(units:\(units), timeBetweenPulses:\(timeBetweenPulses), extendedUnits:\(extendedUnits), extendedDuration:\(extendedDuration), acknowledgementBeep:\(acknowledgementBeep), completionBeep:\(completionBeep), programReminderInterval:\(programReminderInterval.minutes)"
+        }
     }
 }

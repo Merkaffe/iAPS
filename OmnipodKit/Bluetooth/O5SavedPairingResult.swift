@@ -1,0 +1,76 @@
+//
+//  O5SavedPairingResult.swift
+//  OmnipodKit
+//
+//  Debug helper: stores pairing details from a previous successful O5 pairing
+//  so we can skip LTK exchange and reconnect directly to a pod for testing.
+//
+//  Copyright © 2026 LoopKit Authors. All rights reserved.
+//
+
+import Foundation
+
+struct O5SavedPairingResult {
+    /// Human-readable label for logging
+    let name: String
+    /// CoreBluetooth peripheral UUID
+    let bleUUID: String
+    /// 16-byte LTK as hex string
+    let ltk: String
+    /// Pod address (UInt32)
+    let podAddress: UInt32
+    /// TWi message sequence number at end of pairing
+    let msgSeq: UInt8
+    /// EAP-AKA sequence number for next session (1 = first session, 2+ = re-establishment)
+    let eapSeq: Int
+
+    // MARK: - Saved sessions
+
+    /// Pod1 — first successful pairing (2026-02-15, pdmid ***REMOVED***)
+    static let pod1 = O5SavedPairingResult(
+        name: "Pod1 (2026-02-15)",
+        bleUUID: "74CF60D7-6A27-EED6-9C1D-BDA1ACA5546F",
+        ltk: "f43fde8e37f453bca32a5c448b2abe52",
+        podAddress: 0x277d19,
+        msgSeq: 6,
+        eapSeq: 1
+    )
+
+    /// Pod3 — successful pairing (2026-02-16, pdmid ***REMOVED***), one EAP session already established
+    static let pod3 = O5SavedPairingResult(
+        name: "Pod3 (2026-02-16)",
+        bleUUID: "F72CE383-DD81-63CF-DB56-EA07A42475F1",
+        ltk: "e61bdad7be42488d91bba7b848d13803",
+        podAddress: 0x277d19,
+        msgSeq: 8,
+        eapSeq: 2
+    )
+
+    /// Pod4 — successful pairing (2026-02-16 ~11:30pm, pdmid ***REMOVED*** = ***REMOVED***)
+    /// Pairing completed (P0=0xa5) but post-pairing EAP-AKA session establishment
+    /// failed due to BLE disconnect (CBErrorDomain code=7). No EAP session was ever
+    /// established, so eapSeq=1. The pod is paired but needs session establishment.
+    /// Pod cert serial: 6f590e4f97e114c400ecc689e7b9056839810210
+    /// Config#10 [00001010] — kdfZeroControllerID=true
+    static let pod4 = O5SavedPairingResult(
+        name: "Pod4 (2026-02-16 11:30pm)",
+        bleUUID: "3FE369C7-22A0-2344-5393-EB967FB49AE3",
+        ltk: "4f1da4ab399c275afdb8be816adb2089",
+        podAddress: 0x277095,
+        msgSeq: 6,
+        eapSeq: 1
+    )
+
+    /// Pod5 — successful pairing + full activation through SetupPod + alerts (2026-02-17 1:45am, pdmid ***REMOVED*** = ***REMOVED***)
+    /// One EAP session established. Pod reached "Pairing completed" state.
+    /// AID commands, SetupPod, low reservoir alert (#4), setup reminder (#7) all succeeded.
+    /// Prime bolus (Type 4 signed) sent but got rejectedMessage(errorCode: 42).
+    static let pod5 = O5SavedPairingResult(
+        name: "Pod5 (2026-02-17 1:45am)",
+        bleUUID: "F1EFC829-6782-86D9-8548-F7FF2752E6D0",
+        ltk: "9277e3987d3b8cbb7a1fceee9f87d8c6",
+        podAddress: 0x277097,
+        msgSeq: 6,
+        eapSeq: 2
+    )
+}

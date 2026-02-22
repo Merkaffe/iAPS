@@ -14,6 +14,7 @@ fileprivate var printDate: Bool = true // whether to print the date (when availa
 fileprivate var printUnacknowledgedMessageLines: Bool = true // whether to print "Unacknowledged message" lines
 fileprivate var printAddressAndSeq: Bool = false // whether to print full message decode including the pod address and seq #
 fileprivate var printPodConnectionLines: Bool = false // whether to print "connection Pod" lines
+fileprivate var printRaw = false // whether to also print raw data bytes
 
 
 //from NSHipster - http://nshipster.com/swift-literal-convertible/
@@ -61,8 +62,12 @@ extension String {
 
 func printDecoded(dateStr: String, timeStr: String, hexStr: String)
 {
-    guard let data = Data(hexadecimalString: hexStr), data.count >= 10 else {
+    guard let data = Data(hexadecimalString: hexStr) else {
         print("Bad hex string: \(hexStr)")
+        return
+    }
+    guard data.count >= 10 else {
+        print("AID command?: \(hexStr)")
         return
     }
     do {
@@ -92,13 +97,20 @@ func printDecoded(dateStr: String, timeStr: String, hexStr: String)
         }
         if printAddressAndSeq {
             // print the complete message with the address and seq
+            if printRaw {
+                print("          \(dateTimeStr)\(hexStr)")
+            }
             print("\(type)\(dateTimeStr)\(message)")
         } else {
             // skip printing the address and seq for each message
+            if printRaw {
+                print("          \(dateTimeStr)\(hexStr)")
+            }
             print("\(type)\(dateTimeStr)\(message.messageBlocks)")
         }
     } catch let error {
-        print("Could not parse \(hexStr): \(error)")
+        print("AID Command?: \(hexStr)")
+        //print("Could not parse \(hexStr): \(error)")
     }
 }
 
@@ -301,7 +313,7 @@ func printPodInfoLine(line: String, timestampLine: String) {
 }
 
 func usage() {
-    print("Usage: [-qv] file...")
+    print("Usage: [-qvr] file...")
     print("Set the Xcode Arguments Passed on Launch using Product->Scheme->Edit Scheme...")
     print("to specify the full path to Loop Report, Xcode log, pod simulator log, iAPS log, Trio log or DASH PDM log file(s) to parse.\n")
     exit(1)
@@ -323,6 +335,13 @@ for arg in CommandLine.arguments[1...] {
         printUnacknowledgedMessageLines = true
         printAddressAndSeq = true
         printPodConnectionLines = true
+        continue
+    } else if arg == "-r" {
+        printDate = true
+        printUnacknowledgedMessageLines = true
+        printAddressAndSeq = true
+        printPodConnectionLines = true
+        printRaw = true
         continue
     } else if arg == "" || arg == "--" {
         continue

@@ -9,7 +9,32 @@
 
 import Foundation
 
-fileprivate let errorResponseCode_badNonce: UInt8 = 0x14 // only returned on Eros
+fileprivate let eros_badNonce: UInt8 = 0x14 // only returned on Eros
+
+
+// Known error response codes returned by the pod when rejecting a command.
+// These are distinct from FaultEventCode values which represent pod hardware faults.
+enum ErrorResponseCode: UInt8, CustomStringConvertible {
+    case badNonce           = 0x14 // Eros only: nonce mismatch
+    case o5InvalidCommand   = 0x2A // Omnipod 5 invalid command (e.g., an unsigned bolus command)
+
+    var description: String {
+        switch self {
+        case .badNonce:
+            return "Bad nonce"
+        case .o5InvalidCommand:
+            return "Omnipod 5 invalid command"
+        }
+    }
+
+    // Return a description for any error code, including unknown ones
+    static func descriptionFor(code: UInt8) -> String {
+        if let known = ErrorResponseCode(rawValue: code) {
+            return known.description
+        }
+        return String(format: "Unknown error code %u (0x%02X)", code, code)
+    }
+}
 
 enum ErrorResponseType {
     case badNonce(nonceResyncKey: UInt16) // only returned on Eros
@@ -19,6 +44,8 @@ enum ErrorResponseType {
 // 06 14 WWWW, WWWW is the encoded nonce resync key
 // 06 EE FF0P, EE != 0x14, FF = fault code (if any), 0P = pod progress status (1..15)
 
+// Known error response codes returned by the pod when rejecting a command.
+// These are distinct from FaultEventCode values which represent pod hardware faults.
 struct ErrorResponse: MessageBlock {
     let blockType: MessageBlockType = .errorResponse
     let errorResponseType: ErrorResponseType
@@ -27,7 +54,7 @@ struct ErrorResponse: MessageBlock {
     init(encodedData: Data) throws {
         let errorCode = encodedData[2]
         switch (errorCode) {
-        case errorResponseCode_badNonce:
+        case eros_badNonce:
             // For this error code only the 2 next bytes are the encoded nonce resync key (only returned on Eros)
             let nonceResyncKey: UInt16 = encodedData[3...].toBigEndian(UInt16.self)
             errorResponseType = .badNonce(nonceResyncKey: nonceResyncKey)

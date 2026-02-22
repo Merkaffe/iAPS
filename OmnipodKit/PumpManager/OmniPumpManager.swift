@@ -990,15 +990,12 @@ extension OmniPumpManager {
                 self.log.info("Resetting controllerId and podId for Eros pod")
 
             case dashType, omnipod5Type:
-                // If controllerId doesn't have its lower 3 bits clear, reset it for the new 7 cycle podId
-                if state.controllerId == 0 || (state.controllerId & 0b111) != 0 {
-                    // Create a semi-unique controllerId and an initial podId of controllerId + 1.
-                    // The podId cycles thru values of +1, ... +7, +1... until podType is changed.
-                    state.controllerId = createControllerId(topIdByte: podType.topIdByte)
-                    state.podId = state.controllerId + 1
+                if state.controllerId == 0 {
+                    // Initialize the controllerId and podId based on the podType.
+                    (state.controllerId, state.podId) = initializeIds(podType: podType)
                     self.log.info("Created initial BLE controllerId %08X and podId %08X", state.controllerId, state.podId)
                 } else {
-                    // Already created a controllerId, so just advance podId to the next one in sequence.
+                    // The podId will cycle thru values of +1, ... +7, +1... until the podType is changed.
                     let lastPodId = state.podId
                     state.podId = nextPodId(lastPodId: lastPodId)
                     self.log.info("Advanced podId from %08X to %08X", lastPodId, state.podId)
@@ -1366,7 +1363,7 @@ extension OmniPumpManager {
 
     // Called when resuming a pod setup operation which sometimes can fail on the first pod command in various situations.
     // Attempting a getStatus and sleeping a couple of seconds on errors greatly improves the odds for first pod command success.
-     func resumingPodSetup() {
+    func resumingPodSetup() {
         let sleepTime:UInt32 = 2
 
         if !hasConnection {
@@ -1374,7 +1371,12 @@ extension OmniPumpManager {
             sleep(sleepTime)
         }
 
-         self.runSession(withName: "Resuming pod setup") { (result) in
+        guard state.podState?.setupProgress.isPaired == true else {
+            self.log.debug("### Pod setup resume skipping getStatus as not yet paired")
+            return
+        }
+
+        self.runSession(withName: "Resuming pod setup") { (result) in
             switch result {
             case .success(let session):
                 let status = try? session.getStatus(noSeqGetStatus: true)

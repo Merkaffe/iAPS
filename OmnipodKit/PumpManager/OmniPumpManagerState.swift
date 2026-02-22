@@ -154,9 +154,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             self.controllerId = 0
             self.podId = 0
         } else {
-            let myId = createControllerId(topIdByte: podType.topIdByte)
-            self.controllerId = myId
-            self.podId = myId + 1
+            (self.controllerId, self.podId) = initializeIds(podType: podType)
         }
 
     }

@@ -185,6 +185,26 @@ class BluetoothManager: NSObject {
             self.autoConnectIDs.insert(uuidString)
         }
     }
+
+    /// Retrieve a known peripheral by UUID (without scanning), add it to devices, and initiate connection.
+    /// Returns the Omni device synchronously; the actual BLE connection completes asynchronously.
+    func retrieveAndConnectKnownPod(uuidString: String) -> Omni? {
+        var result: Omni?
+        managerQueue.sync {
+            guard manager.state == .poweredOn, let uuid = UUID(uuidString: uuidString) else { return }
+            let peripherals = manager.retrievePeripherals(withIdentifiers: [uuid])
+            guard let peripheral = peripherals.first else {
+                log.error("retrieveAndConnectKnownPod: no peripheral found for UUID %{public}@", uuidString)
+                return
+            }
+            let device = addPeripheral(peripheral, podAdvertisement: nil)
+            autoConnectIDs.insert(uuidString)
+            manager.connect(peripheral, options: nil)
+            log.default("retrieveAndConnectKnownPod: initiating connection to %{public}@", peripheral)
+            result = device
+        }
+        return result
+    }
     
     func disconnectFromDevice(uuidString: String) {
         managerQueue.async {
@@ -330,7 +350,11 @@ extension BluetoothManager: CBCentralManagerDelegate {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
         log.debug("%{public}@: %{public}@, %{public}@", #function, peripheral, advertisementData)
-        
+
+        if let mfgData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data {
+            log.default("[SCAN] ManufacturerData: %{public}@ (%{public}d bytes)", mfgData.hexadecimalString, mfgData.count)
+        }
+
         if let podAdvertisement = PodAdvertisement(advertisementData, podType: podType) {
             addPeripheral(peripheral, podAdvertisement: podAdvertisement)
             
@@ -371,7 +395,12 @@ extension BluetoothManager: CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
-        log.debug("%{public}@: error=%{public}@ %{public}@", #function, error?.localizedDescription ?? "None", peripheral)
+        log.error("[DISCONNECT] %{public}@: error=%{public}@ domain=%{public}@ code=%{public}d peripheral=%{public}@",
+                  #function,
+                  error?.localizedDescription ?? "None",
+                  (error as NSError?)?.domain ?? "none",
+                  (error as NSError?)?.code ?? 0,
+                  peripheral)
 
         // Proxy disconnection events to peripheral manager
         for device in devices where device.manager.peripheral.identifier == peripheral.identifier {

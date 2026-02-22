@@ -90,7 +90,8 @@ extension PodCommsError: LocalizedError {
         case .unacknowledgedCommandPending:
             return LocalizedString("Communication issue: Unacknowledged command pending.", comment: "Error message when command is rejected because an unacknowledged command is pending.")
         case .rejectedMessage(let errorCode):
-            return String(format: LocalizedString("Command error %1$u", comment: "Format string for invalid message error code (1: error code number)"), errorCode)
+            let codeDescription = ErrorResponseCode.descriptionFor(code: errorCode)
+            return String(format: LocalizedString("Command error %1$u: %2$@", comment: "Format string for invalid message error code (1: error code number) (2: error description)"), errorCode, codeDescription)
         case .podChange:
             return LocalizedString("Unexpected pod change", comment: "Format string for unexpected pod change")
         case .activationTimeExceeded:
@@ -235,16 +236,21 @@ class PodCommsSession: MessageTransportDelegate {
     private unowned let delegate: PodCommsSessionDelegate
     private var transport: MessageTransport
 
+    /// O5 certificate store for Type 4 signed message sending. Set when creating
+    /// a PodCommsSession for O5 pods that need signed programming commands.
+    private var o5CertStore: O5CertificateStore?
+
     // used for testing
     var mockCurrentDate: Date?
     var currentDate: Date {
         return mockCurrentDate ?? Date()
     }
 
-    init(podState: PodState, transport: MessageTransport, delegate: PodCommsSessionDelegate) {
+    init(podState: PodState, transport: MessageTransport, delegate: PodCommsSessionDelegate, o5CertStore: O5CertificateStore? = nil) {
         self.podState = podState
         self.transport = transport
         self.delegate = delegate
+        self.o5CertStore = o5CertStore
         self.transport.delegate = self
     }
 
@@ -361,7 +367,12 @@ class PodCommsSession: MessageTransportDelegate {
             // Clear the lastDeliveryStatusReceived variable which is used to guard against possible 0x31 pod faults
             podState.lastDeliveryStatusReceived = nil
 
-            let response = try transport.sendMessage(message)
+            // For O5 pods, automatically route whitelisted commands through the
+            // Type 4 (ECDSA signed) transport path instead of unsigned Type 1.
+            let useO5Signing = shouldUseO5Signing(for: blocksToSend)
+            let response = try useO5Signing
+                ? sendO5SignedMessage(message)
+                : transport.sendMessage(message)
 
             // Simulate fault
             //let podInfoResponse = try PodInfoResponse(encodedData: Data(hexadecimalString: "0216020d0000000000ab6a038403ff03860000285708030d0000")!)
@@ -413,6 +424,53 @@ class PodCommsSession: MessageTransportDelegate {
         throw PodCommsError.nonceResyncFailed
     }
 
+    // MARK: - O5 Type 4 Signed Message Support
+
+    /// O5 command types that MUST be sent as Type 4 (ECDSA signed) messages.
+    /// These are the specific_commands from the O5 APK's TWi signing whitelist.
+    /// Any message containing one of these block types will be automatically
+    /// routed through sendO5SignedMessage() by send() when on an O5 pod.
+    private static let o5SignedCommandTypes: Set<MessageBlockType> = [
+        .basalScheduleExtra,  // 0x13 — ProgramBasal (SetInsulinScheduleCommand + BasalScheduleExtraCommand)
+        .tempBasalExtra,      // 0x16 — ProgramTempBasal (SetInsulinScheduleCommand + TempBasalExtraCommand)
+        .bolusExtra,          // 0x17 — ProgramBolus (SetInsulinScheduleCommand + BolusExtraCommand)
+        .deactivatePod,       // 0x1c — DeactivatePod (DeactivatePodCommand)
+        .cancelDelivery,      // 0x1f — StopProgram / ProgramBeep (CancelDeliveryCommand)
+    ]
+
+    /// Returns true if the message blocks contain a command type that requires
+    /// Type 4 (ECDSA signed) sending on O5 pods, and the O5 cert store and
+    /// BLE transport are available.
+    private func shouldUseO5Signing(for blocks: [MessageBlock]) -> Bool {
+        guard podState.podType == omnipod5Type,
+              o5CertStore != nil,
+              transport is BlePodMessageTransport else {
+            return false
+        }
+        return blocks.contains { Self.o5SignedCommandTypes.contains($0.blockType) }
+    }
+
+    /// Sends a Message via the O5 Type 4 (encrypted + ECDSA signed) transport path.
+    /// Called internally by send() when a whitelisted command is detected on an O5 pod.
+    private func sendO5SignedMessage(_ message: Message) throws -> Message {
+        guard let certStore = o5CertStore else {
+            throw PodCommsError.diagnosticMessage(str: "O5 certificate store not available for signed message sending")
+        }
+        guard let bleTransport = transport as? BlePodMessageTransport else {
+            throw PodCommsError.diagnosticMessage(str: "O5 signed messages require BLE transport")
+        }
+        log.info("O5 Type 4 Signed Send: %{public}@", String(describing: message.messageBlocks.map { $0.blockType }))
+        return try bleTransport.sendO5SignedMessage(message, certStore: certStore)
+    }
+
+    /// O5-aware configureAlerts: uses standard Type 1 (encrypted, unsigned) sending.
+    /// ConfigureAlerts (0x19) is NOT on the O5 signed command whitelist.
+    @discardableResult
+    func o5ConfigureAlerts(_ alerts: [PodAlert], acknowledgeAll: Bool = false, beepBlock: MessageBlock? = nil) throws -> StatusResponse {
+        // O5 alerts use the same Type 1 encrypted transport as DASH
+        return try configureAlerts(alerts, acknowledgeAll: acknowledgeAll, beepBlock: beepBlock)
+    }
+
     // Returns time at which prime is expected to finish.
     func prime() throws -> TimeInterval {
         let primeDuration: TimeInterval = .seconds(Pod.primeUnits / Pod.primeDeliveryRate) + 3 // as per PDM
@@ -420,12 +478,16 @@ class PodCommsSession: MessageTransportDelegate {
         // If priming has never been attempted on this pod, handle the pre-prime setup tasks.
         // A FaultConfig can only be done before the prime bolus or the pod will generate an 049 fault.
         if podState.setupProgress.primingNeverAttempted {
-            // This FaultConfig command will set Tab5[$16] to 0 during pairing, which disables $6x faults
-            let _: StatusResponse = try send([FaultConfigCommand(nonce: podState.currentNonce, tab5Sub16: 0, tab5Sub17: 0)])
+            if podState.podType == omnipod5Type {
+                log.info("Skipping FaultConfigCommand and 1 hour finishSetupReminder for O5 for now...")
+            } else {
+                // This FaultConfig command will set Tab5[$16] to 0 during pairing, which disables $6x faults
+                let _: StatusResponse = try send([FaultConfigCommand(nonce: podState.currentNonce, tab5Sub16: 0, tab5Sub17: 0)])
 
-            // Set up the finish pod setup reminder alert which beeps every 5 minutes for 1 hour
-            let finishSetupReminder = PodAlert.finishSetupReminder
-            try configureAlerts([finishSetupReminder])
+                // Set up the finish pod setup reminder alert which beeps every 5 minutes for 1 hour
+                let finishSetupReminder = PodAlert.finishSetupReminder
+                try configureAlerts([finishSetupReminder])
+            }
         } else {
             // Not the first time through, check to see if prime bolus was successfully started
             let status = try getStatus()
@@ -443,7 +505,16 @@ class PodCommsSession: MessageTransportDelegate {
 
         let timeBetweenPulses = TimeInterval(seconds: Pod.secondsPerPrimePulse)
         let scheduleCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, units: Pod.primeUnits, timeBetweenPulses: timeBetweenPulses)
-        let bolusExtraCommand = BolusExtraCommand(units: Pod.primeUnits, timeBetweenPulses: timeBetweenPulses)
+        let bolusInfo: BolusInfo?
+        if podState.podType == omnipod5Type {
+            // O5 uses an BolusExtraCommand format with bolusInfo
+            bolusInfo = BolusInfo()
+        } else {
+            // Eros or DASH doesn't use bolusInfo
+            bolusInfo = nil
+        }
+
+        let bolusExtraCommand = BolusExtraCommand(units: Pod.primeUnits, timeBetweenPulses: timeBetweenPulses, bolusInfo: bolusInfo)
         let status: StatusResponse = try send([scheduleCommand, bolusExtraCommand])
         podState.updateFromStatusResponse(status, at: currentDate)
         podState.setupProgress = .priming
@@ -554,7 +625,8 @@ class PodCommsSession: MessageTransportDelegate {
         }
     }
 
-    func insertCannula(optionalAlerts: [PodAlert] = [], silent: Bool) throws -> TimeInterval {
+    func insertCannula(basalSchedule: BasalSchedule? = nil, scheduleOffset: TimeInterval = 0, optionalAlerts: [PodAlert] = [], silent: Bool) throws -> TimeInterval {
+
         let cannulaInsertionUnits = Pod.cannulaInsertionUnits + Pod.cannulaInsertionUnitsExtra
 
         guard podState.activatedAt != nil else {
@@ -587,9 +659,17 @@ class PodCommsSession: MessageTransportDelegate {
 
         let timeBetweenPulses = TimeInterval(seconds: Pod.secondsPerPrimePulse)
         let bolusScheduleCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, units: cannulaInsertionUnits, timeBetweenPulses: timeBetweenPulses)
+        let bolusInfo: BolusInfo?
+        if podState.podType == omnipod5Type {
+            // O5 uses an extended format including bolusInfo
+            bolusInfo = BolusInfo()
+        } else {
+            // Eros or DASH doesn't use bolusInfo
+            bolusInfo = nil
+        }
 
         podState.setupProgress = .startingInsertCannula
-        let bolusExtraCommand = BolusExtraCommand(units: cannulaInsertionUnits, timeBetweenPulses: timeBetweenPulses)
+        let bolusExtraCommand = BolusExtraCommand(units: cannulaInsertionUnits, timeBetweenPulses: timeBetweenPulses, bolusInfo: bolusInfo)
         let status2: StatusResponse = try send([bolusScheduleCommand, bolusExtraCommand])
         podState.updateFromStatusResponse(status2, at: currentDate)
 
@@ -652,7 +732,16 @@ class PodCommsSession: MessageTransportDelegate {
             }
         }
 
-        let bolusExtraCommand = BolusExtraCommand(units: units, timeBetweenPulses: timeBetweenPulses, extendedUnits: extendedUnits, extendedDuration: extendedDuration, acknowledgementBeep: acknowledgementBeep, completionBeep: completionBeep, programReminderInterval: programReminderInterval)
+        let bolusInfo: BolusInfo?
+        if podState.podType == omnipod5Type {
+            // O5 uses an extended format including bolusInfo
+            bolusInfo = BolusInfo(mealUnits: units)
+        } else {
+            // Eros or DASH doesn't use bolusInfo
+            bolusInfo = nil
+        }
+
+        let bolusExtraCommand = BolusExtraCommand(units: units, timeBetweenPulses: timeBetweenPulses, extendedUnits: extendedUnits, extendedDuration: extendedDuration, acknowledgementBeep: acknowledgementBeep, completionBeep: completionBeep, programReminderInterval: programReminderInterval, bolusInfo: bolusInfo)
         do {
             podState.unacknowledgedCommand = PendingCommand.program(.bolus(volume: units, automatic: automatic), transport.messageNumber, currentDate)
             let statusResponse: StatusResponse = try send([bolusScheduleCommand, bolusExtraCommand])

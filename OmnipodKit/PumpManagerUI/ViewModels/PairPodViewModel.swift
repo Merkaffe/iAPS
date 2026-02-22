@@ -11,6 +11,7 @@ import SwiftUI
 import LoopKit
 import LoopKitUI
 
+fileprivate var disableAutoPairRetry = false
 
 class PairPodViewModel: ObservableObject, Identifiable {
     
@@ -205,7 +206,7 @@ class PairPodViewModel: ObservableObject, Identifiable {
                     if self.podPairer.podCommState == .noPod {
                         let pairAndPrimeError = OmniPairingError.pumpManagerError(error)
                         self.state = .error(pairAndPrimeError)
-                    } else if self.autoRetryAttempted {
+                    } else if self.autoRetryAttempted || disableAutoPairRetry {
                         self.autoRetryAttempted = false // allow for an auto retry on the next user attempt
                         let pairAndPrimeError = OmniPairingError.pumpManagerError(error)
                         self.state = .error(pairAndPrimeError)
