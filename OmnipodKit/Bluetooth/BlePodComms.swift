@@ -12,7 +12,7 @@ import CoreBluetooth
 import LoopKit
 import os.log
 
-var skipO5AID9 = false
+var skipO5AID9 = true
 
 class BlePodComms: PodComms {
 

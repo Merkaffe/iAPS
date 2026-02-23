@@ -478,16 +478,15 @@ class PodCommsSession: MessageTransportDelegate {
         // If priming has never been attempted on this pod, handle the pre-prime setup tasks.
         // A FaultConfig can only be done before the prime bolus or the pod will generate an 049 fault.
         if podState.setupProgress.primingNeverAttempted {
-            if podState.podType.isO5 {
-                log.info("Skipping FaultConfigCommand and 1 hour finishSetupReminder for O5 for now...")
-            } else {
-                // This FaultConfig command will set Tab5[$16] to 0 during pairing, which disables $6x faults
+            if !podState.podType.isO5 {
+                // This FaultConfig command will set Tab5[$16] to 0 during pairing, which disables $6x faults.
+                // This command can't be used (like this at least) on an O5 as it will return error 11.
                 let _: StatusResponse = try send([FaultConfigCommand(nonce: podState.currentNonce, tab5Sub16: 0, tab5Sub17: 0)])
-
-                // Set up the finish pod setup reminder alert which beeps every 5 minutes for 1 hour
-                let finishSetupReminder = PodAlert.finishSetupReminder
-                try configureAlerts([finishSetupReminder])
             }
+
+            // Set up the finish pod setup reminder alert which beeps every 5 minutes for 1 hour
+            let finishSetupReminder = PodAlert.finishSetupReminder
+            try configureAlerts([finishSetupReminder])
         } else {
             // Not the first time through, check to see if prime bolus was successfully started
             let status = try getStatus()
