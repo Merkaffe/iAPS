@@ -62,7 +62,7 @@ class Id: Equatable {
 /// Create the initial controllerId and podId based on the the podType
 func initializeIds(podType: PodType) -> (controllerId: UInt32, podId: UInt32) {
     let randomControllerId = createFakeControllerId(podType: podType)
-    if podType == omnipod5Type {
+    if podType.isO5 {
         /// O5: the controllerID must be the certificate's pdmid
         let controllerId = O5CertificateStore.pdmid
 

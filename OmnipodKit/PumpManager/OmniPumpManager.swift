@@ -127,7 +127,7 @@ public class OmniPumpManager: RileyLinkPumpManager {
         self.podComms.messageLogger = self
 
         // If Eros, register for RileyLink device notifications
-        if podType == erosType {
+        if podType.isEros {
             NotificationCenter.default.publisher(for: .DeviceConnectionStateDidChange)
                 .sink { [weak self] _ in
                     self?.updateRLConnectionStatus()
@@ -2057,7 +2057,7 @@ extension OmniPumpManager: PumpManager {
 
     public var supportedBasalRates: [Double] {
         // 0.05 units for rates up to 30 U/hr
-        if self.state.podType == erosType {
+        if self.state.podType.isEros {
             // Eros doesn't support a zero scheduled basal rate
             return (1...600).map { Double($0) / Double(Pod.pulsesPerUnit) }
         }

@@ -87,7 +87,7 @@ struct VersionResponse : MessageBlock {
             address = encodedData[19...].toBigEndian(UInt32.self)
 
             // The gain and RSSI fields are only valid for Eros pods in the shorter 0x15 VersionResponse
-            if podType == erosType {
+            if podType.isEros {
                 gain = (encodedData[18] & 0xc0) >> 6
                 rssi = encodedData[18] & 0x3f
             } else {

@@ -97,9 +97,9 @@ class BlePodMessageTransport: MessageTransport {
 
     private let manager: PeripheralManager
 
-    /// O5 pods never use RTS/CTS; DASH pods always do
+    // DASH pods always use RTS/CTS;  O5 pods never do
     private var useRTS: Bool {
-        return manager.podType != omnipod5Type
+        return manager.podType.isDash
     }
 
     private var nonce: Nonce?
@@ -308,7 +308,7 @@ class BlePodMessageTransport: MessageTransport {
         do {
             data = try StringLengthPrefixEncoding.parseKeys([RESPONSE_PREFIX], decrypted.payload)[0]
         } catch {
-            if isO5 {
+            if manager.podType.isO5 {
                 log.debug("O5: Standard '0.0=' prefix not found, trying '3.12=' prefix")
                 data = try StringLengthPrefixEncoding.parseKeys([O5_RESPONSE_PREFIX], decrypted.payload)[0]
             } else {
@@ -343,11 +343,6 @@ class BlePodMessageTransport: MessageTransport {
             eqos: 0
         )
         return try enDecrypt.encrypt(msg, nonceSeq)
-    }
-
-    /// Whether the pod is an Omnipod 5 (vs DASH)
-    var isO5: Bool {
-        return manager.podType == omnipod5Type
     }
 
     // MARK: - O5 Raw Data Send/Receive

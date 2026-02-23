@@ -173,7 +173,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         self.configuredAlerts = [.slot7Expired: .waitingForPairingReminder]
         self.podTime = 0
 
-        if podType == erosType {
+        if podType.isEros {
             // Eros specific initializations, nonceState will be initialized on initial nonce resync()
             if let erosMessageTransportState = erosMessageTransportState {
                 self.erosMessageTransportState = erosMessageTransportState
@@ -243,7 +243,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     }
 
     mutating func resyncNonce(syncWord: UInt16, sentNonce: UInt32, messageSequenceNum: Int) {
-        if self.podType == erosType {
+        if self.podType.isEros {
             // Need to initialize or reseed the pod's nonceState
             let sum = (sentNonce & 0xFFFF) + UInt32(crc16Table[messageSequenceNum]) + (lotNo & 0xFFFF) + (lotSeq & 0xFFFF)
             let seed = UInt16(sum & 0xFFFF) ^ syncWord
@@ -627,7 +627,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         if let podTypeRaw = rawValue["podType"] as? UInt8 {
             self.podType = PodType(rawValue: podTypeRaw)
         } else if rawValue["ltk"] != nil {
-            self.podType = dashType // OmniBLE
+            self.podType = dashType // assume OmniBLE
         } else {
             self.podType = erosType // OmniKit
         }
@@ -647,7 +647,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
                 self.erosMessageTransportState = ErosMessageTransportState()
             }
 
-        case dashType,omnipod5Type:
+        case dashType, omnipod5Type:
             self.erosMessageTransportState = ErosMessageTransportState() /// dummy initialization
             if let bleMessageTransportStateRaw = rawValue["bleMessageTransportState"] as? BleMessageTransportState.RawValue,
                 let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
@@ -711,7 +711,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             rawValue["configuredAlerts"] = rawConfiguredAlerts
         }
 
-        if podType == erosType {
+        if podType.isEros {
             rawValue["erosMessageTransportState"] = erosMessageTransportState.rawValue
         } else {
             rawValue["bleMessageTransportState"] = bleMessageTransportState.rawValue

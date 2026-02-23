@@ -19,32 +19,32 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
         case failedFlashStore                     = 0x02
         case tableCorruptionBasalSubcommand       = 0x03
         case basalPulseTableCorruption            = 0x04
-        case corruptionByte720                    = 0x05
-        case dataCorruptionInTestRTCInterrupt     = 0x06
-        case rtcInterruptHandlerInconsistentState = 0x07
-        case valueGreaterThan8                    = 0x08
+        case basalStepCorrupt                     = 0x05
+        case autoWakeupTimeout                    = 0x06
+        case wireOverDriven                       = 0x07
+        case invalidBeepRepeatIndex               = 0x08
         case invalidBeepRepeatPattern             = 0x09
-        case bf0notEqualToBF1                     = 0x0A
+        case tempBasalStep                        = 0x0A
         case tableCorruptionTempBasalSubcommand   = 0x0B
-
+        case bolusOverFlow                        = 0x0C
         case resetDueToCOP                        = 0x0D
         case resetDueToIllegalOpcode              = 0x0E
         case resetDueToIllegalAddress             = 0x0F
         case resetDueToSAWCOP                     = 0x10
-        case corruptionInByte_866                 = 0x11
+        case bolusStep                            = 0x11
         case resetDueToLVD                        = 0x12
         case messageLengthTooLong                 = 0x13
         case occluded                             = 0x14
-        case corruptionInWord129                  = 0x15
-        case corruptionInByte868                  = 0x16
+        case bolusProgChksum                      = 0x15
+        case bolusLog                             = 0x16
         case corruptionInAValidatedTable          = 0x17
         case reservoirEmpty                       = 0x18
-        case badPowerSwitchArrayValue1            = 0x19
-        case badPowerSwitchArrayValue2            = 0x1A
-        case badLoadCnthValue                     = 0x1B
+        case loadErr                              = 0x19
+        case psaFailure                           = 0x1A
+        case tickCntNotCleared                    = 0x1B
         case exceededMaximumPodLife80Hrs          = 0x1C
-        case badStateCommand1AScheduleParse       = 0x1D
-        case unexpectedStateInRegisterUponReset   = 0x1E
+        case comdBitNotSet                        = 0x1D
+        case invalidComdSet                       = 0x1E
         case wrongSummaryForTable129              = 0x1F
         case validateCountErrorWhenBolusing       = 0x20
         case badTimerVariableState                = 0x21
@@ -54,7 +54,7 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
         case tickFailure                          = 0x25
         case rtcInterruptHandlerUnexpectedCall    = 0x26
         case missing2hourAlertToFillTank          = 0x27
-        case faultEventSetupPod                   = 0x28
+        case invalidPassCode                      = 0x28
         case autoOff0                             = 0x29
         case autoOff1                             = 0x2A
         case autoOff2                             = 0x2B
@@ -64,18 +64,18 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
         case autoOff6                             = 0x2F
         case autoOff7                             = 0x30
         case insulinDeliveryCommandError          = 0x31
-        case badValueStartupTest                  = 0x32
+        case copTestFailure                       = 0x32
         case connectedPodCommandTimeout           = 0x33
-        case resetFromUnknownCause                = 0x34
+        case illegalReset                         = 0x34
         case vetoNotSet                           = 0x35
         case errorFlashInitialization             = 0x36
-        case badPiezoValue                        = 0x37
-        case unexpectedValueByte358               = 0x38
-        case problemWithLoad1and2                 = 0x39
-        case aGreaterThan7inMessage               = 0x3A
+        case invalidBeepPattern                   = 0x37
+        case wireStateMachine                     = 0x38
+        case vetoTestDefault                      = 0x39
+        case invalidAlertIndex                    = 0x3A
         case failedTestSawReset                   = 0x3B
         case testInProgress                       = 0x3C
-        case problemWithPumpAnchor                = 0x3D
+        case stepSensorShorted                    = 0x3D
         case errorFlashWrite                      = 0x3E
 
         case encoderCountTooHigh                  = 0x40
@@ -87,23 +87,23 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
         case problemWithLoad1and2type46           = 0x46
         case problemWithLoad1and2type47           = 0x47
         case badTimerCalibration                  = 0x48
-        case badTimerRatios                       = 0x49
-        case badTimerValues                       = 0x4A
-        case trimICSTooCloseTo0x1FF               = 0x4B
-        case problemFindingBestTrimValue          = 0x4C
-        case badSetTPM1MultiCasesValue            = 0x4D
+        case badTickHigh                          = 0x49
+        case badTickPeriod                        = 0x4A
+        case badTrimValue                         = 0x4B
+        case badBusClock                          = 0x4C
+        case badCalMode                           = 0x4D
         case sawTrimError                         = 0x4E
-        case unexpectedRFErrorFlagDuringReset     = 0x4F
+        case rfmCrystalError                      = 0x4F
         case timerPulseWidthModulatorOverflow     = 0x50
         case tickcntError                         = 0x51
         case badRfmXtalStart                      = 0x52
         case badRxSensitivity                     = 0x53
         case packetFrameLengthTooLong             = 0x54
-        case unexpectedIRQHighinTimerTick         = 0x55
-        case unexpectedIRQLowinTimerTick          = 0x56
-        case badArgToGetEntry                     = 0x57
-        case badArgToUpdate37ATable               = 0x58
-        case errorUpdating37ATable                = 0x59
+        case tickLowPhaseExceeded                 = 0x55
+        case tickHighPhaseExceeded                = 0x56
+        case occlusionCritVarFail                 = 0x57
+        case occlusionParam                       = 0x58
+        case occlusionProgFail                    = 0x59
         case occlusionCheckValueTooHigh           = 0x5A
         case loadTableCorruption                  = 0x5B
         case primeOpenCountTooLow                 = 0x5C
@@ -113,6 +113,7 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
         case occlusionCheckStartup1               = 0x60
         case occlusionCheckStartup2               = 0x61
         case occlusionCheckTimeouts1              = 0x62
+        case occlusionParamInvalid                = 0x63
 
         case occlusionCheckTimeouts2              = 0x66
         case occlusionCheckTimeouts3              = 0x67
@@ -132,22 +133,38 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
         case immediateBolusOverInfusionPulse      = 0x89
         case extendedBolusOverInfusionPulse       = 0x8A
         case corruptionOfTables                   = 0x8B
+
         case unrecognizedPulse                    = 0x8D
         case syncWithoutTempActive                = 0x8E
-        case command1AParseUnexpectedFailed       = 0x8F
+        case interlockLoad                        = 0x8F
         case illegalChanParam                     = 0x90
         case basalPulseChanInactive               = 0x91
         case tempPulseChanInactive                = 0x92
         case bolusPulseChanInactive               = 0x93
         case intSemaphoreNotSet                   = 0x94
         case illegalInterLockChan                 = 0x95
-        case badStateInClearBolusIST2AndVars      = 0x96
-        case badStateInMaybeInc33D                = 0x97
+        case terimateBolus                        = 0x96
+        case openTransitionsCount                 = 0x97
 
+        /// End of shared fault codes for all pod types
+        /// The following fault code are DASH and O5 only
+
+        // O5 only
+        case syncWithoutClosedLoop                = 0x98
+        case qnStatusMismatch                     = 0x99
+        case apLoopMismatch                       = 0x9A
+
+        // Dash and O5
         case bleTimeout                           = 0xA0
         case bleInitiated                         = 0xA1
         case bleUnkAlarm                          = 0xA2
 
+        // O5 only
+        case adcLibNotInitialized                 = 0xA3
+        case adcLibMemorySize                     = 0xA4
+        case adcLibNVMemoryCrc                    = 0xA5
+
+        // Dash and O5
         case bleIaas                              = 0xA6
         case crcFailure                           = 0xA8
         case bleWdPingTimeout                     = 0xA9
@@ -155,23 +172,61 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
         case bleNakError                          = 0xAB
         case bleReqHighTimeout                    = 0xAC
         case bleUnknownResp                       = 0xAD
-
+        // 0xAE
         case bleReqStuckHigh                      = 0xAF
         case bleStateMachine1                     = 0xB1
         case bleStateMachine2                     = 0xB2
+
         case bleArbLost                           = 0xB4
-        case bleEr48DualNack                      = 0xC0
+
+        // O5 only
+        case bolusExtendedNotAllowed              = 0xB5
+        case agcInOpenLoop                        = 0xB6
+        case agcBolusExtendedNotAllowed           = 0xB7
+        case agcPulsesExceeded                    = 0xB8
+        case agcBolusAlreadyActive                = 0xB9
+        case agcBolusTooEarly                     = 0xBA
+        case immedBolusMismatch                   = 0xBB
+        case agcMealCorrBolusNotZero              = 0xBC
+        case tempBasalNotAllowed                  = 0xBD
+        case basalNotAllowed                      = 0xBE
+        case agcBolusTooLate                      = 0xBF
+
+        // Dash and O5
+        case bleDualNack                          = 0xC0
         case bleQnExceedMaxRetry                  = 0xC1
         case bleQnCritVarFail                     = 0xC2
+        case bleQnOptIntvlInvalid                 = 0xC3
 
+        // O5 only
+        case bleQnCgmUtcMismatch                  = 0xC4
+        case bleQnCgmTxidNotAllowed               = 0xC5
+        // 0xC6 undefined
+        case bleQnAlgNotRun                       = 0xC7
+        case bleQnHypoInOpenLoop                  = 0xC8
+        case bleQnAlgSetupFail                    = 0xC9
+        case bleQnAgcRunTooLate                   = 0xCA
+
+        // Dash and possibly O5
         case unknown0xCB                          = 0xCB
-
+        // 0xCC - 0xD3 undefined and never seen
         case unknown0xD4                          = 0xD4
         case unknown0xD5                          = 0xD5
         case resetFault0xD6                       = 0xD6
         case resetFault0xD7                       = 0xD7
         case unknown0xD8                          = 0xD8
         case unknown0xD9                          = 0xD9
+
+        // O5 only
+        case bleAgcPotentialDivZero               = 0xE1
+        case bleAgcInvalidInputParam              = 0xE2
+        case bleAgcInvalidParam                   = 0xE3
+        case bleAgcStateVectorParam               = 0xE4
+        case bleAgcInvalidAlgoStateParam          = 0xE5
+        case bleAgcInvalidHypoSetting             = 0xE6
+        case bleAgcOutputOutOfBounds              = 0xE7
+        case bleAgcInvalidFirstRunInInitState     = 0xE8
+        case bleAgcInvalidOffset                  = 0xE9
 
         case valuesDoNotMatch                     = 0xFF
     }
@@ -196,21 +251,22 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
             return "Basal subcommand table corruption"
         case .basalPulseTableCorruption:
             return "Basal pulse table corruption"
-        case .corruptionByte720:
-            return "Corruption in byte_720"
-        case .dataCorruptionInTestRTCInterrupt:
-            return "Data corruption error in test_RTC_interrupt"
-        case .rtcInterruptHandlerInconsistentState:
-            return "RTC interrupt handler called with inconstent state"
-        case .valueGreaterThan8:
-            return "Value > 8"
+        case .basalStepCorrupt:
+            return "Basal step corrupt"
+        case .autoWakeupTimeout:
+            return "Auto wakeup timeout"
+        case .wireOverDriven:
+            return "Wire overdriven"
+        case .invalidBeepRepeatIndex:
+            return "Invalid beep repeat index"
         case .invalidBeepRepeatPattern:
             return "Invalid beep repeat pattern"
-        case .bf0notEqualToBF1:
-            return "Corruption in byte_BF0"
+        case .tempBasalStep:
+            return "Temp Basal Step"
         case .tableCorruptionTempBasalSubcommand:
             return "Temp basal subcommand table corruption"
-
+        case .bolusOverFlow:
+            return "Bolus overflow"
         case .resetDueToCOP:
             return "Reset due to COP"
         case .resetDueToIllegalOpcode:
@@ -219,34 +275,34 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
             return "Reset due to illegal address"
         case .resetDueToSAWCOP:
             return "Reset due to SAWCOP"
-        case .corruptionInByte_866:
-            return "Corruption in byte_866"
+        case .bolusStep:
+            return "Bolus step"
         case .resetDueToLVD:
             return "Reset due to LVD"
         case .messageLengthTooLong:
             return "Message length too long"
         case .occluded:
             return "Occluded"
-        case .corruptionInWord129:
-            return "Corruption in word_129 table/word_86A/dword_86E"
-        case .corruptionInByte868:
-            return "Corruption in byte_868"
+        case .bolusProgChksum:
+            return "Bolus Prog Chksum"
+        case .bolusLog:
+            return "Bolus log"
         case .corruptionInAValidatedTable:
             return "Corruption in a validated table"
         case .reservoirEmpty:
             return "Reservoir empty or exceeded maximum pulse delivery"
-        case .badPowerSwitchArrayValue1:
-            return "Bad Power Switch Array Status and Control Register value 1 before starting pump"
-        case .badPowerSwitchArrayValue2:
-            return "Bad Power Switch Array Status and Control Register value 2 before starting pump"
-        case .badLoadCnthValue:
-            return "Bad LOADCNTH value when running pump"
+        case .loadErr:
+            return "Load error"
+        case .psaFailure:
+            return "PSA failure"
+        case .tickCntNotCleared:
+            return "Tick count not cleared"
         case .exceededMaximumPodLife80Hrs:
             return "Exceeded maximum Pod life of 80 hours"
-        case .badStateCommand1AScheduleParse:
-            return "Unexpected internal state in command_1A_schedule_parse_routine_wrapper"
-        case .unexpectedStateInRegisterUponReset:
-            return "Unexpected commissioned state in status and control register upon reset"
+        case .comdBitNotSet:
+            return "Comd bit not set"
+        case .invalidComdSet:
+            return "Invalid comd set"
         case .wrongSummaryForTable129:
             return "Sum mismatch for word_129 table"
         case .validateCountErrorWhenBolusing:
@@ -265,8 +321,8 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
             return "RTC interrupt handler unexpectedly called"
         case .missing2hourAlertToFillTank:
             return "Failed to set up 2 hour alert for tank fill operation"
-        case .faultEventSetupPod:
-            return "Bad arg or state in update_insulin_variables, verify_and_start_pump or main_loop_control_pump"
+        case .invalidPassCode:
+            return "Invalid pass code"
         case .autoOff0:
             return "Alert #0 auto-off timeout"
         case .autoOff1:
@@ -285,30 +341,30 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
             return "Alert #7 auto-off timeout"
         case .insulinDeliveryCommandError:
             return "Incorrect pod state for command or error during insulin command setup"
-        case .badValueStartupTest:
-            return "Bad value during startup testing"
+        case .copTestFailure:
+            return "COP test failure"
         case .connectedPodCommandTimeout:
             return "Connected Pod command timeout"
-        case .resetFromUnknownCause:
-            return "Reset from unknown cause"
+        case .illegalReset:
+            return "Illegal reset"
         case .vetoNotSet:
             return "Veto not set"
         case .errorFlashInitialization:
             return "Flash initialization error"
-        case .badPiezoValue:
-            return "Bad piezo value"
-        case .unexpectedValueByte358:
-            return "Unexpected byte_358 value"
-        case .problemWithLoad1and2:
-            return "Problem with LOAD1/LOAD2"
-        case .aGreaterThan7inMessage:
-            return "A > 7 in message processing"
+        case .invalidBeepPattern:
+            return "Invalid beep pattern"
+        case .wireStateMachine:
+            return "Wire state machine"
+        case .vetoTestDefault:
+            return "Veto test default"
+        case .invalidAlertIndex:
+            return "Invalid alert index"
         case .failedTestSawReset:
             return "SAW reset testing fail"
         case .testInProgress:
             return "test in progress"
-        case .problemWithPumpAnchor:
-            return "Problem with pump anchor"
+        case .stepSensorShorted:
+            return "Step sensor shorted"
         case .errorFlashWrite:
             return "Flash initialization or write error"
 
@@ -330,42 +386,42 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
             return "Problem with LOAD1/LOAD2"
         case .badTimerCalibration:
             return "Bad timer calibration"
-        case .badTimerRatios:
+        case .badTickHigh:
             return "Bad timer values: COP timer ratio bad"
-        case .badTimerValues:
-            return "Bad timer values"
-        case .trimICSTooCloseTo0x1FF:
-            return "ICS trim too close to 0x1FF"
-        case .problemFindingBestTrimValue:
-            return "find_best_trim_value problem"
-        case .badSetTPM1MultiCasesValue:
-            return "Bad set_TPM1_multi_cases value"
+        case .badTickPeriod:
+            return "Bad tick period"
+        case .badTrimValue:
+            return "Bad trim value"
+        case .badBusClock:
+            return "Bad bus clock"
+        case .badCalMode:
+            return "Bad cal mode"
         case .sawTrimError:
             return "SAW Trim Error"
-        case .unexpectedRFErrorFlagDuringReset:
-            return "Unexpected TXSCR2 RF Tranmission Error Flag set during reset"
+        case .rfmCrystalError:
+            return "RFM Crystal Error"
         case .timerPulseWidthModulatorOverflow:
             return "Timer pulse-width modulator overflow"
         case .tickcntError:
             return "Bad tick count state before starting pump"
         case .badRfmXtalStart:
-            return "TXOK issue in process_input_buffer"
+            return "Bad RFM crystal start"
         case .badRxSensitivity:
-            return "Bad Rx word_107 sensitivity value during input message processing"
+            return "Bad Rx sensitivity"
         case .packetFrameLengthTooLong:
             return "Packet frame length too long"
-        case .unexpectedIRQHighinTimerTick:
-            return "Unexpected IRQ high in timer_tick"
-        case .unexpectedIRQLowinTimerTick:
-            return "Unexpected IRQ low in timer_tick"
-        case .badArgToGetEntry:
-            return "Corrupt constants table at byte_37A[] or flash byte_4036[]"
-        case .badArgToUpdate37ATable:
-            return "Bad argument to update_37A_table"
-        case .errorUpdating37ATable:
-            return "Error updating constants byte_37A table"
+        case .tickLowPhaseExceeded:
+            return "Tick low phase exceeded"
+        case .tickHighPhaseExceeded:
+            return "Tick high phase exceeded"
+        case .occlusionCritVarFail:
+            return "Occlusion critical variable fail"
+        case .occlusionParam:
+            return "Occlusion param"
+        case .occlusionProgFail:
+            return "Occlusion prog fail"
         case .occlusionCheckValueTooHigh:
-            return "Occlusion check value too high for detection"
+            return "Occlusion check value too high"
         case .loadTableCorruption:
             return "Load table corruption"
         case .primeOpenCountTooLow:
@@ -382,6 +438,8 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
             return "Occlusion check startup problem 2"
         case .occlusionCheckTimeouts1:
             return "Occlusion check excess timeouts 1"
+        case .occlusionParamInvalid:
+            return "Occlusion param invalid"
 
         case .occlusionCheckTimeouts2:
             return "Occlusion check excess timeouts 2"
@@ -417,37 +475,48 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
         case .extendedBolusOverInfusionPulse:
             return "Extended bolus over infusion pulse"
         case .corruptionOfTables:
-            return "Corruption of $283/$2E3/$315 tables"
+            return "Corruption of tables"
+
         case .unrecognizedPulse:
-            return "Bad pulse value to verify_and_start_pump"
+            return "Bad pulse value"
         case .syncWithoutTempActive:
-            return "Pump sync req 5 with no temp basal active"
-        case .command1AParseUnexpectedFailed:
-            return "Command 1A parse routine unexpected failed"
+            return "Sync with no temp basal active"
+        case .interlockLoad:
+            return "Interlock load"
         case .illegalChanParam:
-            return "Bad parameter for $283/$2E3/$315 channel table specification"
+            return "illegan channel parameter"
         case .basalPulseChanInactive:
-            return "Pump basal request with basal IST not set"
+            return "basal pulse channel inactive"
         case .tempPulseChanInactive:
-            return "Pump temp basal request with temp basal IST not set"
+            return "temp basal channel inactive"
         case .bolusPulseChanInactive:
-            return "Pump bolus request and bolus IST not set"
+            return "bolus pulse channel inactive"
         case .intSemaphoreNotSet:
             return "Bad table specifier field6 in 1A command"
         case .illegalInterLockChan:
             return "Illegal interlock channel"
-        case .badStateInClearBolusIST2AndVars:
-            return "Bad variable state in clear_Bolus_IST2_and_vars"
-        case .badStateInMaybeInc33D:
-            return "Bad variable state in maybe_inc_33D"
-
+        case .terimateBolus:
+            return "Terminate bolus"
+        case .openTransitionsCount:
+            return "Open transitions count"
+        case .syncWithoutClosedLoop:
+            return "Sync without closed loop"
+        case .qnStatusMismatch:
+            return "QN status mismatch"
+        case .apLoopMismatch:
+            return "AP loop mismatch"
         case .bleTimeout:
             return "BLE timeout"
         case .bleInitiated:
             return "BLE initiated"
         case .bleUnkAlarm:
             return "BLE unknown alarm"
-
+        case .adcLibNotInitialized:
+            return "ADC library not initialized"
+        case .adcLibMemorySize:
+            return "ADC library memory size"
+        case .adcLibNVMemoryCrc:
+            return "ADC library NV memory CRC"
         case .bleIaas:
             return "BLE IAAS"
         case .crcFailure:
@@ -471,12 +540,67 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
             return "BLE state machine 2"
         case .bleArbLost:
             return "BLE arbitration lost"
-        case .bleEr48DualNack:
+        case .bolusExtendedNotAllowed:
+            return "Bolus extended not allowed"
+        case .agcInOpenLoop:
+            return "AGC in open loop"
+        case .agcBolusExtendedNotAllowed:
+            return "AGC bolus extended not allowed"
+        case .agcPulsesExceeded:
+            return "AGC pulses exceeded"
+        case .agcBolusAlreadyActive:
+            return "AGC bolus already active"
+        case .agcBolusTooEarly:
+            return "AGC bolus too early"
+        case .immedBolusMismatch:
+            return "Immediate bolus mismatch"
+        case .agcMealCorrBolusNotZero:
+            return "AGC meal correction bolus not zero"
+        case .tempBasalNotAllowed:
+            return "Temporary basal not allowed"
+        case .basalNotAllowed:
+            return "Basal not allowed"
+        case .agcBolusTooLate:
+            return "AGC bolus too late"
+        case .bleDualNack:
             return "BLE dual Nack"
         case .bleQnExceedMaxRetry:
             return "BLE QN exceed max retry"
         case .bleQnCritVarFail:
             return "BLE QN critical variable fail"
+        case .bleQnOptIntvlInvalid:
+            return "BLE QN optional interval invalid"
+        case .bleQnCgmUtcMismatch:
+            return "BLE QN CGM UTC mismatch"
+        case .bleQnCgmTxidNotAllowed:
+            return "BLE QN CGM TXID not allowed"
+        case .bleQnAlgNotRun:
+            return "BLE QN algorithm not run"
+        case .bleQnHypoInOpenLoop:
+            return "BLE QN hypo in open loop"
+        case .bleQnAlgSetupFail:
+            return "BLE QN algorithm setup fail"
+        case .bleQnAgcRunTooLate:
+            return "BLE QN AGC run too late"
+
+        case .bleAgcPotentialDivZero:
+            return "BLE AGC potential divide by zero"
+        case .bleAgcInvalidInputParam:
+            return "BLE AGC invalid input parameter"
+        case .bleAgcInvalidParam:
+            return "BLE AGC invalid parameter"
+        case .bleAgcStateVectorParam:
+            return "BLE AGC state vector parameter"
+        case .bleAgcInvalidAlgoStateParam:
+            return "BLE AGC invalid algorithm state parameter"
+        case .bleAgcInvalidHypoSetting:
+            return "BLE AGC invalid hypo setting"
+        case .bleAgcOutputOutOfBounds:
+            return "BLE AGC output out of bounds"
+        case .bleAgcInvalidFirstRunInInitState:
+            return "BLE AGC invalid first run in init state"
+        case .bleAgcInvalidOffset:
+            return "BLE AGC invalid offset"
 
         case .resetFault0xD6, .resetFault0xD7:
             return "Reset fault of unknown origin"

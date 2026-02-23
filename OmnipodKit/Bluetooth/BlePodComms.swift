@@ -284,7 +284,7 @@ class BlePodComms: PodComms {
 
             // O5 pods restart the inner Omnipod Message sequence from 0 after each new EAP-AKA session.
             // DASH pods may need to preserve the counter across sessions.
-            let omnipodMessageNumber = (self.podType == omnipod5Type) ? 0 : (self.podState?.bleMessageTransportState.messageNumber ?? 0)
+            let omnipodMessageNumber = self.podType.isO5 ? 0 : (self.podState?.bleMessageTransportState.messageNumber ?? 0)
             let bleMessageTransportState = BleMessageTransportState(
                 ck: keys.ck,
                 noncePrefix: keys.nonce.prefix,
@@ -502,7 +502,7 @@ class BlePodComms: PodComms {
 
         // O5 pods expect 12-hour format (0-11) matching Java Calendar.HOUR (field 10).
         // Fresh pod test confirmed: hour=20 (24h) causes error 33, hour must be % 12.
-        if self.podType == omnipod5Type {
+        if self.podType.isO5 {
             dateComponents.hour = (dateComponents.hour ?? 0) % 12
         }
 
@@ -627,7 +627,7 @@ class BlePodComms: PodComms {
 
                 // O5 pods require getPodVersion (AssignAddress) as the first encrypted command
                 // after each new EAP-AKA session, followed by AID setup commands, then SetupPod.
-                if self.podState!.setupProgress.isPaired == false && self.podType == omnipod5Type {
+                if self.podState!.setupProgress.isPaired == false && self.podType.isO5 {
                     // Use self.myId/self.podId (not the captured locals) because pairPod()
                     // may have overridden self.podId when using a saved pairing result.
                     let preSetupTransport = BlePodMessageTransport(
@@ -685,7 +685,7 @@ class BlePodComms: PodComms {
                 blePodMessageTransport.messageLogger = self.messageLogger
 
                 // For O5 pods, create the certificate store for Type 4 signed message sending
-                let certStore: O5CertificateStore? = self.podType == omnipod5Type ? (try? O5CertificateStore()) : nil
+                let certStore: O5CertificateStore? = self.podType.isO5 ? (try? O5CertificateStore()) : nil
                 let podSession = PodCommsSession(podState: self.podState!, transport: blePodMessageTransport, delegate: self, o5CertStore: certStore)
 
                 block(.success(session: podSession))
@@ -721,7 +721,7 @@ class BlePodComms: PodComms {
             blePodMessageTransport.messageLogger = self.messageLogger
 
             // For O5 pods, create the certificate store for Type 4 signed message sending
-            let certStore: O5CertificateStore? = self.podType == omnipod5Type ? (try? O5CertificateStore()) : nil
+            let certStore: O5CertificateStore? = self.podType.isO5 ? (try? O5CertificateStore()) : nil
             let podSession = PodCommsSession(podState: self.podState!, transport: blePodMessageTransport, delegate: self, o5CertStore: certStore)
             block(.success(session: podSession))
         }
@@ -785,7 +785,7 @@ extension BlePodComms: PeripheralManagerDelegate {
             // iOS auto-negotiates MTU asynchronously after connect. For O5, we need
             // maximumWriteValueLength >= BlePacket_MAX_PAYLOAD_SIZE (244) per write.
             // With .withoutResponse, writes exceeding the MTU are silently truncated.
-            if manager.podType == omnipod5Type {
+            if manager.podType.isO5 {
                 let requiredMTU = BlePacket_MAX_PAYLOAD_SIZE
                 var attempts = 0
                 var currentMTU = manager.peripheral.maximumWriteValueLength(for: .withoutResponse)

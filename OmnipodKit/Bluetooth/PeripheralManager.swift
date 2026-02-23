@@ -82,10 +82,10 @@ class PeripheralManager: NSObject {
         self.peripheral = peripheral
         self.central = centralManager
 
-        assert(podType == dashType || podType == omnipod5Type)
+        assert(podType.isDash || podType.isO5)
         self.podType = podType
         setServicePodType(podType: podType)
-        if podType == omnipod5Type {
+        if podType.isO5 {
             self.configuration = .omnipod5
         } else {
             self.configuration = .omnipodDash

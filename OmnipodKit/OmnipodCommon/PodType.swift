@@ -163,6 +163,18 @@ struct PodType: CustomStringConvertible, Equatable {
             return 0x0
         }
     }
+
+    var isEros: Bool {
+        return podType == .productIdEros
+    }
+
+    var isDash: Bool {
+        return podType == .productIdDash
+    }
+
+    var isO5: Bool {
+        return podType == .productIdOmnipod5
+    }
 }
 
 /* convenience constants */

@@ -30,7 +30,7 @@ extension PeripheralManager {
         // O5: .withoutResponse (confirmed).
         // DASH: always .withResponse.
         let type: CBCharacteristicWriteType
-        if podType == omnipod5Type {
+        if podType.isO5 {
             type = .withoutResponse
         } else {
             type = .withResponse
@@ -203,7 +203,7 @@ extension PeripheralManager {
         // O5: .withoutResponse (confirmed).
         // DASH: always .withResponse.
         let type: CBCharacteristicWriteType
-        if podType == omnipod5Type {
+        if podType.isO5 {
             type = .withoutResponse
         } else {
             type = .withResponse

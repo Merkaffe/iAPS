@@ -155,13 +155,12 @@ extension PeripheralManager.Configuration {
 private var servicePodType: PodType = dashType
 
 func setServicePodType(podType: PodType) {
-    assert(podType == dashType || podType == omnipod5Type)
     servicePodType = podType
 
     // JJJ update the former constant MAX_SIZE for packets
     // JJJ figure out a cleaner way to do manage this and
     // other such constants which vary between DASH and O5.
-    if podType == dashType {
+    if podType.isDash {
         BlePacket_MAX_PAYLOAD_SIZE = 20
     } else {
         // The max BLE Packet size is 256, but there is a 12 byte header that is invisible to us, so for our purposes the max is 256-12=244.
@@ -178,28 +177,28 @@ func setServicePodType(podType: PodType) {
 }
 
 var OmnipodServiceUUID_advertisement_cbUUID: CBUUID {
-    if servicePodType == omnipod5Type {
+    if servicePodType.isO5 {
         return o5OmnipodServiceUUID.advertisement.cbUUID
     }
     return dashOmnipodServiceUUID.advertisement.cbUUID
 }
 
 var OmnipodServiceUUID_service_cbUUID: CBUUID {
-    if servicePodType == omnipod5Type {
+    if servicePodType.isO5 {
         return o5OmnipodServiceUUID.service.cbUUID
     }
     return dashOmnipodServiceUUID.service.cbUUID
 }
 
 var OmnipodCharacteristicUUID_command_cbUUID: CBUUID {
-    if servicePodType == omnipod5Type {
+    if servicePodType.isO5 {
         return o5OmnipodCharacteristicUUID.command.cbUUID
     }
     return dashOmnipodCharacteristicUUID.command.cbUUID
 }
 
 var OmnipodCharacteristicUUID_data_cbUUID: CBUUID {
-    if servicePodType == omnipod5Type {
+    if servicePodType.isO5 {
         return o5OmnipodCharacteristicUUID.data.cbUUID
     }
     return dashOmnipodCharacteristicUUID.data.cbUUID

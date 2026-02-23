@@ -69,8 +69,8 @@ class SessionEstablisher {
     }
     
     func negotiateSessionKeys() throws -> SessionResult {
-        // O5 pods never use RTS/CTS; DASH pods always do
-        let useRTS = (podType != omnipod5Type)
+        // DASH pods always use RTS/CTS; O5 pods never do
+        let useRTS = podType.isDash
         log.default("negotiateSessionKeys: podType=%{public}@, useRTS=%{public}@, mode=%{public}@", podType.briefName, String(describing: useRTS), String(describing: mode))
 
         switch mode {

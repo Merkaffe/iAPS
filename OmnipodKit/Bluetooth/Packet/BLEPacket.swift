@@ -12,24 +12,24 @@ import Foundation
 // JJJ need to review all these former constants in this file for O5
 // and find a better way to handle per pod type BLE differences.
 var BlePacket_MAX_PAYLOAD_SIZE = 20 // 20 for DASH and 244 for O5
-var BlePacket_MAX_FRAGMENTS = 15 // 15 for DASH (15*20=300 bytes), ?? for O5
+var BlePacket_MAX_FRAGMENTS = 15 // 15 for DASH (15*20=300 bytes), same for O5?
 
 var BleFirstPacket_HEADER_SIZE_WITHOUT_MIDDLE_PACKETS = 7 // using all fields
-var BleFirstPacket_HEADER_SIZE_WITH_MIDDLE_PACKETS = 2 // 2 for DASH, same for O5? // not using crc32 or size
+var BleFirstPacket_HEADER_SIZE_WITH_MIDDLE_PACKETS = 2 // 2 for DASH, same for O5?
 
 // FirstBlePacket.CAPACITY_WITHOUT_MIDDLE_PACKETS was MAX_SIZE - HEADER_SIZE_WITHOUT_MIDDLE_PACKETS
-var FirstBlePacket_CAPACITY_WITHOUT_MIDDLE_PACKETS = 13 // 20-7=13 for DASH, 256-7=249 for O5?
+var FirstBlePacket_CAPACITY_WITHOUT_MIDDLE_PACKETS = 13 // 20-7=13 for DASH, 237 for O5
 
 // FirstBlePacket.CAPACITY_WITH_MIDDLE_PACKET was MAX_SIZE - HEADER_SIZE_WITH_MIDDLE_PACKETS
-var FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS = 18 // 20-2 for DASH, 256-2=254 for O5?
+var FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS = 18 // 20-2 for DASH, 242 for O5
 
-var FirstBlePacket_CAPACITY_WITH_THE_OPTIONAL_PLUS_ONE_PACKET = 18 // 18 for DASH, 256-2=254 for O5?
+var FirstBlePacket_CAPACITY_WITH_THE_OPTIONAL_PLUS_ONE_PACKET = 18 // 18 for DASH, 242 for O5
 
-var MiddleBlePacket_CAPACITY = 19 // 19 (MAX_SIZE-1) for DASH, 255 for O5?
+var MiddleBlePacket_CAPACITY = 19 // 19 (MAX_SIZE-1) for DASH, 243 for O5
 
-let LastBlePacket_HEADER_SIZE = 6 // 6 for DASH, same for o5?
+let LastBlePacket_HEADER_SIZE = 6 // 6 for DASH, same for O5?
 // was LastBlePacket.CAPACITY = MAX_SIZE - HEADER_SIZE = 20-6 = 14
-var LastBlePacket_CAPACITY = 14 // 14 for DASH, 250 for O5?
+var LastBlePacket_CAPACITY = 14 // 14 for DASH, 238 for O5
 
 protocol BlePacket {
     var payload: Data { get }

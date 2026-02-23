@@ -442,7 +442,7 @@ class PodCommsSession: MessageTransportDelegate {
     /// Type 4 (ECDSA signed) sending on O5 pods, and the O5 cert store and
     /// BLE transport are available.
     private func shouldUseO5Signing(for blocks: [MessageBlock]) -> Bool {
-        guard podState.podType == omnipod5Type,
+        guard podState.podType.isO5,
               o5CertStore != nil,
               transport is BlePodMessageTransport else {
             return false
@@ -478,7 +478,7 @@ class PodCommsSession: MessageTransportDelegate {
         // If priming has never been attempted on this pod, handle the pre-prime setup tasks.
         // A FaultConfig can only be done before the prime bolus or the pod will generate an 049 fault.
         if podState.setupProgress.primingNeverAttempted {
-            if podState.podType == omnipod5Type {
+            if podState.podType.isO5 {
                 log.info("Skipping FaultConfigCommand and 1 hour finishSetupReminder for O5 for now...")
             } else {
                 // This FaultConfig command will set Tab5[$16] to 0 during pairing, which disables $6x faults
@@ -506,7 +506,7 @@ class PodCommsSession: MessageTransportDelegate {
         let timeBetweenPulses = TimeInterval(seconds: Pod.secondsPerPrimePulse)
         let scheduleCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, units: Pod.primeUnits, timeBetweenPulses: timeBetweenPulses)
         let bolusInfo: BolusInfo?
-        if podState.podType == omnipod5Type {
+        if podState.podType.isO5 {
             // O5 uses an BolusExtraCommand format with bolusInfo
             bolusInfo = BolusInfo()
         } else {
@@ -660,7 +660,7 @@ class PodCommsSession: MessageTransportDelegate {
         let timeBetweenPulses = TimeInterval(seconds: Pod.secondsPerPrimePulse)
         let bolusScheduleCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, units: cannulaInsertionUnits, timeBetweenPulses: timeBetweenPulses)
         let bolusInfo: BolusInfo?
-        if podState.podType == omnipod5Type {
+        if podState.podType.isO5 {
             // O5 uses an extended format including bolusInfo
             bolusInfo = BolusInfo()
         } else {
@@ -733,7 +733,7 @@ class PodCommsSession: MessageTransportDelegate {
         }
 
         let bolusInfo: BolusInfo?
-        if podState.podType == omnipod5Type {
+        if podState.podType.isO5 {
             // O5 uses an extended format including bolusInfo
             bolusInfo = BolusInfo(mealUnits: units)
         } else {
@@ -1014,7 +1014,7 @@ class PodCommsSession: MessageTransportDelegate {
     // Throws PodCommsError
     func getStatus(noSeqGetStatus: Bool = false, beepBlock: MessageBlock? = nil) throws -> StatusResponse {
         // For noSeqSetStatus, use alternative noSeqStatus (type 7) request if not an Eros pod type instead of a normal (type 0) request
-        let statusType: PodInfoResponseSubType = (noSeqGetStatus && podState.podType != erosType) ? .noSeqStatus : .normal
+        let statusType: PodInfoResponseSubType = (noSeqGetStatus && !podState.podType.isEros) ? .noSeqStatus : .normal
         let statusResponse: StatusResponse = try send([GetStatusCommand(podInfoType: statusType)], beepBlock: beepBlock)
 
         if podState.unacknowledgedCommand != nil {

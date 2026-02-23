@@ -32,11 +32,11 @@ struct PodAdvertisement {
     var serviceUUIDs: [CBUUID]
 
     var pairable: Bool {
-        if podType == dashType {
+        if podType.isDash {
             return serviceUUIDs.count >= 5 && serviceUUIDs[3].uuidString.uppercased() == "FFFF" && serviceUUIDs[4].uuidString.uppercased() == "FFFE"
         }
 
-        if podType != omnipod5Type {
+        guard podType.isO5 else {
             return false
         }
 
