@@ -106,8 +106,15 @@ struct PodDetailsView: View {
                 row(LocalizedString("Device Name", comment: "description label for device name pod details row"), value: deviceName)
             }
             row(LocalizedString("Address", comment: "description label for address pod details row"), value: String(format: "0x%08X", podDetails.address))
-            row(LocalizedString("Lot", comment: "description label for lot pod details row"), value: lotDecode(lot: podDetails.lotNumber).readableText)
-            row(LocalizedString("Lot Number", comment: "description label for lot number pod details row"), value: String(describing: podDetails.lotNumber))
+            if podDetails.podType.isEros {
+                row(LocalizedString("Lot", comment: "description label for lot pod details row"),
+                    value: String(format: "L%05u", podDetails.lotNumber))
+            } else {
+                row(LocalizedString("Lot", comment: "description label for lot pod details row"),
+                    value: lotDecode(lot: podDetails.lotNumber).readableText)
+                row(LocalizedString("Lot Number", comment: "description label for lot number pod details row"),
+                    value: String(describing: podDetails.lotNumber))
+            }
             row(LocalizedString("Sequence Number", comment: "description label for sequence number pod details row"), value: String(format: "%07d", podDetails.sequenceNumber))
             row(LocalizedString("Firmware Version", comment: "description label for firmware version pod details row"), value: podDetails.firmwareVersion)
             row(LocalizedString("BLE Firmware Version", comment: "description label for ble firmware version pod details row"), value: podDetails.bleFirmwareVersion)
