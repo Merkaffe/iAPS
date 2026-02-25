@@ -1631,6 +1631,9 @@
         }
       }
     },
+    "Lot" : {
+      "comment" : "description label for lot pod details row"
+    },
     "Lot Number" : {
       "comment" : "description label for lot number pod details row",
       "localizations" : {
@@ -2102,7 +2105,7 @@
     "Omnipod 5" : {
       "comment" : "Title string for Omnipod 5"
     },
-    "Omnipod 5 pods have a clear needle tab with a 12-character LOT number typically starting with 'PH1' or 'PP1'. The pod's \"SmartAdjust\" technology will not be used for closed loop control." : {
+    "Omnipod 5 pods have a clear needle tab with a 12-character LOT number typically starting with 'PH1'. The pod's \"SmartAdjust\" technology will not be used for closed loop control." : {
       "comment" : "Description for Omnipod 5 pods"
     },
     "Omnipod Classic" : {

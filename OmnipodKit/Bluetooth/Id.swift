@@ -57,32 +57,32 @@ class Id: Equatable {
 ///
 /// The O5 PDM also uses the original PDM's SN shifted left 2 for the basis of its controllerId,
 /// however this value is stored in the certificate and apparently checked by the pod so it can't
-/// be used as a base for a set of rotating podIds that wil be semi-unique across.
+/// be used as a base for a set of rotating podIds that will be semi-unique across for all users.
 
 /// Create the initial controllerId and podId as needed for the given pod type.
-/// The controllerId and set of 7 podId's are kept until the pump manager is deleted.
+/// The controllerId and set of 3 podId's are kept until the pump manager is deleted.
 func initializeIds(podType: PodType) -> (controllerId: UInt32, podId: UInt32) {
     let createdControllerId = createControllerId(podType: podType)
     if podType.isO5 {
         /// For the O5, the controllerID must match the certificate's pdmid
         let controllerId = O5CertificateStore.pdmid
 
-        // XXX every DIY user will be using the same 7 podIds, but its working
+        // XXX every DIY user will be using the same 3 podIds, but it's working
         return (controllerId: controllerId, podId: controllerId + 1)
 
-        /// The podIds will rotate between randomControllerId +1, ... +7, +1,...
-        /// XXX This scheme doesn't work as pod unhappy after receiving SPS2
-        ///return (controllerId: controllerId, podId: createdControllerId + 1)
+        /// The podIds will rotate between createdControllerId +1, ... +3, +1,...
+        /// XXX This scheme isn't working yet as pod gets unhappy after receiving SPS2
+        //return (controllerId: controllerId, podId: createdControllerId + 1)
     }
 
-    /// DASH: use a random controllerID with the correct top byte and the bottom 3-bits clear and the podId will be controllerId+1, ... +7, +1, ...
+    /// DASH: use a random controllerID with the correct top byte and the bottom 2-bits clear
+    /// while the podId will cycle between controllerId+1,+2,+3,+1, ...
     return (controllerId: createdControllerId, podId: createdControllerId + 1)
 }
 
-/// OmnipodKit podId's cycle between 7 #'s of +1, +2, ... +7, +1, ...
-/// while the DASH & OmniBLE podId's only cycle between 3 values.
+/// The podId's cycle between 3 #'s of +1,+2,+3,+1, ...
 func nextPodId(lastPodId: UInt32) -> UInt32 {
-    let bitmask: UInt32 = 0xb111
+    let bitmask: UInt32 = 0xb11
     if (lastPodId & bitmask) == bitmask {
         // start over at the base + 1
         return (lastPodId & ~bitmask) + 1
@@ -93,8 +93,8 @@ func nextPodId(lastPodId: UInt32) -> UInt32 {
 
 /// Creates a base controllerId to be used directly (DASH) or as a fake
 /// controllerId base to be used as the base for the rotating podId's (O5).
-/// The top byte will be set for the given pod type, the bottom 3 bits will be
-/// clear for use with the cycling 7 podIds, wihle the other 21 bits are random.
+/// The top byte will be set for the given pod type, the bottom 2 bits will be
+/// clear for use with the cycling 3 podIds, while the other 22 bits are random.
 private func createControllerId(podType: PodType) -> UInt32 {
-    return (UInt32(podType.topIdByte) << 24) | ((arc4random() & 0x001FFFFF) << 3)
+    return (UInt32(podType.topIdByte) << 24) | ((arc4random() & 0x003FFFFF) << 2)
 }
