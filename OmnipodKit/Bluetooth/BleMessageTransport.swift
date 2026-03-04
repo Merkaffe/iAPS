@@ -85,6 +85,10 @@ extension BleMessageTransportState: CustomDebugStringConvertible {
             "cmdSeqCounter: \(cmdSeqCounter)",
         ].joined(separator: "\n")
     }
+
+    var inlineDescription: String {
+        "[eapSeq:\(eapSeq), msgSeq:\(msgSeq), nonceSeq:\(nonceSeq), messageNumber:\(messageNumber), cmdSeqCounter:\(cmdSeqCounter)]"
+    }
 }
 
 class BlePodMessageTransport: MessageTransport {
@@ -302,14 +306,13 @@ class BlePodMessageTransport: MessageTransport {
 
     private func parseResponse(decrypted: MessagePacket) throws -> Message {
 
-        // Try standard "0.0=" prefix first (works for DASH and some O5 responses like unsolicited status)
-        // Then try O5 "3.12=" prefix if "0.0=" fails
         let data: Data
         do {
+            // Try standard "0.0=" prefix first (works for all DASH and most O5 responses)
             data = try StringLengthPrefixEncoding.parseKeys([RESPONSE_PREFIX], decrypted.payload)[0]
         } catch {
+            // Try "3.12=" prefix for an O5 pod since "0.0=" prefix failed
             if manager.podType.isO5 {
-                log.debug("O5: Standard '0.0=' prefix not found, trying '3.12=' prefix")
                 data = try StringLengthPrefixEncoding.parseKeys([O5_RESPONSE_PREFIX], decrypted.payload)[0]
             } else {
                 throw error
@@ -320,7 +323,8 @@ class BlePodMessageTransport: MessageTransport {
         // Dash pods generates a CRC16 for Omnipod Messages, but the actual algorithm is not understood and doesn't match the CRC16
         // that the pod enforces for incoming Omnipod command message. The Dash PDM explicitly ignores the CRC16 for incoming messages,
         // so we ignore them as well and rely on higher level BLE & Dash message data checking to provide data corruption protection.
-        let response = try Message(encodedData: data, checkCRC: false)
+        // However the Omnipod 5 pods do generate the same expected CRC16 in their responses as Eros pods do so do check their CRC16.
+        let response = try Message(encodedData: data, checkCRC: manager.podType.isO5)
 
         log.default("Recv(Hex): %{public}@", data.hexadecimalString)
         messageLogger?.didReceive(data)

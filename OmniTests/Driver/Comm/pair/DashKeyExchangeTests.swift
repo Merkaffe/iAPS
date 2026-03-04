@@ -1,5 +1,5 @@
 //
-//  KeyExchangeTests.swift
+//  DashKeyExchangeTests.swift
 //  OmniTests
 //
 //  From OmniBLE/OmniBLETests/Drive/Comm/message/KeyExchangeTests.swift
@@ -10,16 +10,16 @@
 import XCTest
 @testable import OmnipodKit
 
-class KeyExchangeTest: XCTestCase {
+class DashKeyExchangeTest: XCTestCase {
     
-    func testKeyExchange() {
+    func testDashKeyExchange() {
 
         let pdmNonce = Data(hexadecimalString:"edfdacb242c7f4e1d2bc4d93ca3c5706")!
         
         let privateKey = Data(hexadecimalString: "27ec94b71a201c5e92698d668806ae5ba00594c307cf5566e60c1fc53a6f6bb6")!
         let privateKeyGenerator = MockFixedPrivateKeyGenerator(fixedPrivateKey: privateKey, generator: X25519KeyGenerator())
         let randomByteGenerator = MockRandomByteGenerator(fixedData: pdmNonce)
-        let ke = try! KeyExchange(
+        let ke = try! DashKeyExchange(
             privateKeyGenerator,
             randomByteGenerator
         )

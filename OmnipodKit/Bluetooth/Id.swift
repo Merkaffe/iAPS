@@ -67,7 +67,7 @@ func initializeIds(podType: PodType) -> (controllerId: UInt32, podId: UInt32) {
         /// For the O5, the controllerID must match the certificate's pdmid
         let controllerId = O5CertificateStore.pdmid
 
-        // XXX every DIY user will be using the same 3 podIds, but it's working
+        // Far from ideal with a limited # of controllerId's...
         return (controllerId: controllerId, podId: controllerId + 1)
 
         /// The podIds will rotate between createdControllerId +1, ... +3, +1,...
@@ -81,11 +81,12 @@ func initializeIds(podType: PodType) -> (controllerId: UInt32, podId: UInt32) {
 }
 
 /// The podId's cycle between 3 #'s of +1,+2,+3,+1, ...
+/// For far, this seems to be required for O5 pods, but not for DASH pods
 func nextPodId(lastPodId: UInt32) -> UInt32 {
-    let bitmask: UInt32 = 0xb11
-    if (lastPodId & bitmask) == bitmask {
+    let bitMask: UInt32 = 0b11
+    if (lastPodId & bitMask) == bitMask {
         // start over at the base + 1
-        return (lastPodId & ~bitmask) + 1
+        return (lastPodId & ~bitMask) + 1
     }
     // return the next sequential podId #
     return lastPodId + 1

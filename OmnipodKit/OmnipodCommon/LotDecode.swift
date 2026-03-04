@@ -7,31 +7,31 @@ import Foundation
 
 // Constants
 let ProductCode: [UInt32: String] = [
-    0x04: "D1", // Dash U100
-    0x18: "D2",
-    0x36: "D5",
+    0x04: "D1", // 'D'ash (gen 4) U100
+    0x18: "D2", // 'D'ash (gen 4) U200
+    0x36: "D5", // 'D'ash (gen 4) U500
 
-    0x07: "H1", // Horizon (aka O5) U100
-    0x1B: "H2",
-    0x39: "H5",
+    0x07: "H1", // 'H'orizon (Omnipod 5) U100
+    0x1B: "H2", // 'H'orizon (Omnipod 5) U200
+    0x39: "H5", // 'H'orizon (Omnipod 5) U500
 
-    0x02: "E1", // Unknown "E" pod U100
-    0x16: "E2",
-    0x34: "E5",
+    0x02: "E1", // 'E' pod (Omnipod 6?) U100
+    0x16: "E2", // 'E' pod (Omnipod 6?) U200
+    0x34: "E5", // 'E' pod (Omnipod 6?) U500
 
-    0x05: "P1", // Pre-production U100
-    0x19: "P2",
-    0x37: "P5",
+    0x05: "P1", // 'P're-production? U100
+    0x19: "P2", // 'P're-production? U200
+    0x37: "P5", // 'P're-production? U500
 
     0x03: "A0",
     0x09: "R1",
 ]
 
 let MfgLoc: [Int: String] = [
-    0: "C",
-    1: "U",
-    2: "K",
-    3: "M", // guess at value for Malaysia
+    0: "C", // China
+    1: "U", // USA
+    2: "K", // Kunshan (China)
+    3: "M", // Malaysia
 ]
 
 struct LotDecode {

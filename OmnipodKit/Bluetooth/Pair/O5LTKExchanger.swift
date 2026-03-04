@@ -2,7 +2,6 @@
 //  O5LTKExchanger.swift
 //  OmnipodKit
 //
-//  Based on OmniBLE/OmniBLE/Bluetooth/Pair/LTKExchanger.swift
 //  Created by Joe Moran on 3/25/25.
 //  Copyright © 2025 LoopKit Authors. All rights reserved.
 //
@@ -153,7 +152,7 @@ class O5LTKExchanger {
         log.default("=== SPS2.1 PHASE COMPLETE ===")
 
         /// send ~1089 byte SPS2 (cert + sig) and receive ~895 byte SPS2 (cert + sig)
-        log.default("Sending SPS2")
+        log.default("=== SPS2 PHASE START ===")
         seq += 1
         let sps2 = try PairMessage(
             sequenceNumber: seq,
@@ -168,6 +167,7 @@ class O5LTKExchanger {
             throw PodProtocolError.pairingException("Could not read SPS2")
         }
         try o5validatePodSps2(podSPS2)
+        log.default("=== SPS2 PHASE COMPLETE ===")
 
         // send 0 byte SP0GP0 pair message
         log.default("Sending SP0GP0")
@@ -262,10 +262,10 @@ class O5LTKExchanger {
     }
 
     /// The 11-byte O5 SP2 payload is an encoded type 0 get pod status command for the requested id including the calculated CRC-16
-    /// SP2=[00 0b][[00 0c 3a 35][00][03][0e 01 00][02 45]
+    /// SP2=[00 0b][[4-byte podId][00][03][0e 01 00][2-byte CRC]
     private func o5sp2(podId: Id) -> Data {
         let address = podId.toUInt32()
-        let sequenceNum = 0 // when does this 4-bit Omnipod sequence # need to be something else?
+        let sequenceNum = 0 // 4-bit Omnipod command sequence #
         let message = Message(address: address, messageBlocks: [GetStatusCommand()], sequenceNum: sequenceNum)
         let encoded = message.encoded()
         log.debug("Encoded SP2 get status command for address 0x%x and seq # %u: %@", address, seq, encoded.hexadecimalString)
@@ -282,8 +282,7 @@ class O5LTKExchanger {
         let header = Data([0x00, 0x01, 0x09])
         let crc = O5LTKExchanger.crc16XMODEM(header)
         var payload = header
-        payload.append(UInt8((crc >> 8) & 0xFF))
-        payload.append(UInt8(crc & 0xFF))
+        payload.appendBigEndian(UInt16(crc))
         log.debug("Generated SPS0 value: %@", payload.bytes.toHexString())
         return payload
     }
@@ -313,7 +312,7 @@ class O5LTKExchanger {
         // Verify CRC-16/XMODEM over the first 3 bytes
         let header = payload.subdata(in: 0..<3)
         let expectedCRC = O5LTKExchanger.crc16XMODEM(header)
-        let receivedCRC = (UInt16(payload[3]) << 8) | UInt16(payload[4])
+        let receivedCRC = payload[3...].toBigEndian(UInt16.self)
         guard expectedCRC == receivedCRC else {
             throw PodProtocolError.pairingException("SPS0 CRC mismatch: expected \(String(format: "%04x", expectedCRC)), received \(String(format: "%04x", receivedCRC))")
         }
@@ -340,16 +339,16 @@ class O5LTKExchanger {
 
     /// Build and encrypt the SPS2.1 payload (short path: cert only, no signature).
     ///
-    ///   plaintext = INS02PG1_cert_DER (634 bytes)
+    ///   plaintext = intermediate_CA_cert_DER (634 bytes)
     ///   encrypted = AES_CCM_ENC(plaintext) || tag(8)
     ///   Total: 634 + 8 = 642
     ///
     /// The ECDSA channel-binding signature goes in SPS2 (not here).
     private func o5sps2_1() throws -> Data {
         guard let certDER = certStore.registration.intermediateCACertDER else {
-            throw PodProtocolError.pairingException("SPS2.1: INS02PG1 intermediate CA certificate DER is nil")
+            throw PodProtocolError.pairingException("SPS2.1: intermediate CA certificate DER is nil")
         }
-        log.default("SPS2.1: using INS02PG1 cert (%{public}d bytes, cert-only short path)", certDER.count)
+        log.default("SPS2.1: using cert (%{public}d bytes, cert-only short path)", certDER.count)
 
         // Encrypt cert-only plaintext with AES-CCM: key=conf, nonce=13B, tag=8
         let nonce = keyExchange.getSPSNonce(direction: .write)
