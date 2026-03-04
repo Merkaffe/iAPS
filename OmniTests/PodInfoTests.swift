@@ -192,7 +192,7 @@ class PodInfoTests: XCTestCase {
             XCTAssertEqual(.suspended, decoded.deliveryStatus)
             XCTAssertEqual(0, decoded.bolusNotDelivered, accuracy: 0.01)
             XCTAssertEqual(6, decoded.lastProgrammingMessageSeqNum)
-            XCTAssertEqual(.command1AParseUnexpectedFailed, decoded.faultEventCode.faultType)
+            XCTAssertEqual(.interlockLoad, decoded.faultEventCode.faultType)
             XCTAssertEqual(TimeInterval(minutes: 0x0000), decoded.faultEventTimeSinceActivation)
             XCTAssertEqual(Pod.reservoirLevelAboveThresholdMagicNumber, decoded.reservoirLevel, accuracy: 0.01)
             XCTAssertEqual(TimeInterval(minutes: 0x0000), decoded.timeActive)

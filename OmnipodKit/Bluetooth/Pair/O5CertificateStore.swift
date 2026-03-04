@@ -27,12 +27,10 @@ class O5CertificateStore {
 
     static var pdmid: UInt32 { O5RegistrationData.active.pdmid }
     static var pdmidExtension: UInt32 { O5RegistrationData.active.pdmidExtension }
-    static var secondaryPublicKeyRaw: Data { O5RegistrationData.active.secondaryPublicKeyRaw }
     static var primaryPublicKeyRaw: Data? { O5RegistrationData.active.primaryPublicKeyRaw }
     static var primaryCertificateDER: Data? { O5RegistrationData.active.primaryCertificateDER }
     static var rootCAPublicKeyRaw: Data { O5RegistrationData.active.rootCAPublicKeyRaw }
     static var intermediateCAPublicKeyRaw: Data { O5RegistrationData.active.intermediateCAPublicKeyRaw }
-    static var podIntermediateCAPublicKeyRaw: Data { O5RegistrationData.active.podIntermediateCAPublicKeyRaw }
 
     // MARK: - Computed Properties
 

@@ -2,7 +2,6 @@
 //  O5KeyExchange.swift
 //  OmnipodKit
 //
-//  From OmniBLE/OmniBLE/Bluetooth/Pair/KeyExchange.swift
 //  Created by Joe Moran on 3/25/25.
 //  Copyright © 2025 LoopKit Authors. All rights reserved.
 //

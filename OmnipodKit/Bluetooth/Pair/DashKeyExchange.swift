@@ -1,5 +1,5 @@
 //
-//  KeyExchange.swift
+//  DashKeyExchange.swift
 //  OmnipodKit
 //
 //  From OmniBLE/OmniBLE/Bluetooth/Pair/KeyExchange.swift
@@ -10,7 +10,7 @@
 import Foundation
 import CryptoSwift
 
-class KeyExchange {
+class DashKeyExchange {
     static let CMAC_SIZE = 16
 
     static let PUBLIC_KEY_SIZE = 32
@@ -36,25 +36,25 @@ class KeyExchange {
         self.keyGenerator = keyGenerator
         self.randomByteGenerator = randomByteGenerator
         
-        pdmNonce = randomByteGenerator.nextBytes(length: KeyExchange.NONCE_SIZE)
+        pdmNonce = randomByteGenerator.nextBytes(length: DashKeyExchange.NONCE_SIZE)
         pdmPrivate = keyGenerator.generatePrivateKey()
         pdmPublic = try keyGenerator.publicFromPrivate(pdmPrivate)
     
-        podPublic = Data(capacity: KeyExchange.PUBLIC_KEY_SIZE)
-        podNonce = Data(capacity: KeyExchange.NONCE_SIZE)
+        podPublic = Data(capacity: DashKeyExchange.PUBLIC_KEY_SIZE)
+        podNonce = Data(capacity: DashKeyExchange.NONCE_SIZE)
     
-        podConf = Data(capacity: KeyExchange.CMAC_SIZE)
-        pdmConf = Data(capacity: KeyExchange.CMAC_SIZE)
+        podConf = Data(capacity: DashKeyExchange.CMAC_SIZE)
+        pdmConf = Data(capacity: DashKeyExchange.CMAC_SIZE)
     
-        ltk = Data(capacity: KeyExchange.CMAC_SIZE)
+        ltk = Data(capacity: DashKeyExchange.CMAC_SIZE)
     }
 
     func updatePodPublicData(_ payload: Data) throws {
-        if (payload.count != KeyExchange.PUBLIC_KEY_SIZE + KeyExchange.NONCE_SIZE) {
+        if (payload.count != DashKeyExchange.PUBLIC_KEY_SIZE + DashKeyExchange.NONCE_SIZE) {
             throw PodProtocolError.messageIOException("Invalid payload size")
         }
-        podPublic = payload.subdata(in: 0..<KeyExchange.PUBLIC_KEY_SIZE)
-        podNonce = payload.subdata(in: KeyExchange.PUBLIC_KEY_SIZE..<KeyExchange.PUBLIC_KEY_SIZE + KeyExchange.NONCE_SIZE)
+        podPublic = payload.subdata(in: 0..<DashKeyExchange.PUBLIC_KEY_SIZE)
+        podNonce = payload.subdata(in: DashKeyExchange.PUBLIC_KEY_SIZE..<DashKeyExchange.PUBLIC_KEY_SIZE + DashKeyExchange.NONCE_SIZE)
         try generateKeys()
     }
 
