@@ -79,7 +79,7 @@ extension PeripheralManager.Configuration {
                     guard let characteristic = manager.peripheral.getCommandCharacteristic() else { return }
                     guard let value = characteristic.value else { return }
 
-                    manager.log.default("[BLE RAW] CMD RECV: %{public}@", value.hexadecimalString)
+                    manager.log.bleDebug("[BLE RAW] CMD RECV: %{public}@", value.hexadecimalString)
                     manager.queueLock.lock()
                     manager.cmdQueue.append(value)
                     manager.queueLock.signal()
@@ -89,7 +89,7 @@ extension PeripheralManager.Configuration {
                     guard let characteristic = manager.peripheral.getDataCharacteristic() else { return }
                     guard let value = characteristic.value else { return }
 
-                    manager.log.default("[BLE RAW] DATA RECV: %{public}@", value.hexadecimalString)
+                    manager.log.bleDebug("[BLE RAW] DATA RECV: %{public}@", value.hexadecimalString)
                     manager.queueLock.lock()
                     manager.dataQueue.append(value)
                     manager.queueLock.signal()
@@ -126,7 +126,7 @@ extension PeripheralManager.Configuration {
                     guard let characteristic = manager.peripheral.getCommandCharacteristic() else { return }
                     guard let value = characteristic.value else { return }
 
-                    manager.log.default("[BLE RAW] CMD RECV: %{public}@", value.hexadecimalString)
+                    manager.log.bleDebug("[BLE RAW] CMD RECV: %{public}@", value.hexadecimalString)
                     manager.queueLock.lock()
                     manager.cmdQueue.append(value)
                     manager.queueLock.signal()
@@ -136,7 +136,7 @@ extension PeripheralManager.Configuration {
                     guard let characteristic = manager.peripheral.getDataCharacteristic() else { return }
                     guard let value = characteristic.value else { return }
 
-                    manager.log.default("[BLE RAW] DATA RECV: %{public}@", value.hexadecimalString)
+                    manager.log.bleDebug("[BLE RAW] DATA RECV: %{public}@", value.hexadecimalString)
                     manager.queueLock.lock()
                     manager.dataQueue.append(value)
                     manager.queueLock.signal()

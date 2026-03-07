@@ -101,11 +101,6 @@ class BlePodMessageTransport: MessageTransport {
 
     private let manager: PeripheralManager
 
-    // DASH pods always use RTS/CTS;  O5 pods never do
-    private var useRTS: Bool {
-        return manager.podType.isDash
-    }
-
     private var nonce: Nonce?
     private var enDecrypt: EnDecrypt?
 
@@ -227,7 +222,7 @@ class BlePodMessageTransport: MessageTransport {
 
         let sendMessage = try getCmdMessage(cmd: message)
 
-        let writeResult = manager.sendMessagePacket(sendMessage, doRTS: useRTS)
+        let writeResult = manager.sendMessagePacket(sendMessage)
         switch writeResult {
         case .sentWithAcknowledgment:
             break;
@@ -278,7 +273,7 @@ class BlePodMessageTransport: MessageTransport {
     private func readAndAckResponse() throws -> Message {
         guard let enDecrypt = self.enDecrypt else { throw PodCommsError.podNotConnected }
 
-        let readResponse = try manager.readMessagePacket(doRTS: useRTS)
+        let readResponse = try manager.readMessagePacket()
         guard let readMessage = readResponse else {
             throw PodProtocolError.messageIOException("Could not read response")
         }
@@ -291,7 +286,7 @@ class BlePodMessageTransport: MessageTransport {
         incrementMsgSeq()
         incrementNonceSeq()
         let ack = try getAck(response: decrypted)
-        let ackResult = manager.sendMessagePacket(ack, doRTS: useRTS)
+        let ackResult = manager.sendMessagePacket(ack)
         guard case .sentWithAcknowledgment = ackResult else {
             throw PodProtocolError.messageIOException("Could not write $msgType: \(ackResult)")
         }
@@ -394,7 +389,7 @@ class BlePodMessageTransport: MessageTransport {
         log.default("O5 SendRaw(Hex): %{public}@ (%{public}d bytes)", rawData.hexadecimalString, rawData.count)
         messageLogger?.didSend(rawData)
 
-        let writeResult = manager.sendMessagePacket(encrypted, doRTS: useRTS)
+        let writeResult = manager.sendMessagePacket(encrypted)
         switch writeResult {
         case .sentWithAcknowledgment:
             break
@@ -405,7 +400,7 @@ class BlePodMessageTransport: MessageTransport {
         }
 
         // Read and ACK the response
-        let readResponse = try manager.readMessagePacket(doRTS: useRTS)
+        let readResponse = try manager.readMessagePacket()
         guard let readMessage = readResponse else {
             throw PodProtocolError.messageIOException("Could not read raw O5 response")
         }
@@ -435,7 +430,7 @@ class BlePodMessageTransport: MessageTransport {
         incrementMsgSeq()
         incrementNonceSeq()
         let ack = try getAck(response: decrypted)
-        let ackResult = manager.sendMessagePacket(ack, doRTS: useRTS)
+        let ackResult = manager.sendMessagePacket(ack)
         guard case .sentWithAcknowledgment = ackResult else {
             throw PodProtocolError.messageIOException("Could not send ACK for raw O5 response")
         }
@@ -483,7 +478,7 @@ class BlePodMessageTransport: MessageTransport {
                      wrappedPayload.count, wrappedPayload.hexadecimalString)
         messageLogger?.didSend(wrappedPayload)
 
-        let writeResult = manager.sendMessagePacket(encrypted, doRTS: useRTS)
+        let writeResult = manager.sendMessagePacket(encrypted)
         switch writeResult {
         case .sentWithAcknowledgment:
             break
@@ -494,7 +489,7 @@ class BlePodMessageTransport: MessageTransport {
         }
 
         // Read the response
-        let readResponse = try manager.readMessagePacket(doRTS: useRTS)
+        let readResponse = try manager.readMessagePacket()
         guard let readMessage = readResponse else {
             throw PodProtocolError.messageIOException("Could not read AID command response")
         }
@@ -522,7 +517,7 @@ class BlePodMessageTransport: MessageTransport {
         incrementMsgSeq()
         incrementNonceSeq()
         let ack = try getAck(response: decrypted)
-        let ackResult = manager.sendMessagePacket(ack, doRTS: useRTS)
+        let ackResult = manager.sendMessagePacket(ack)
         guard case .sentWithAcknowledgment = ackResult else {
             throw PodProtocolError.messageIOException("Could not send ACK for AID command response")
         }
@@ -549,7 +544,7 @@ class BlePodMessageTransport: MessageTransport {
 
         let sendMessage = try getO5SignedCmdMessage(cmd: message, certStore: certStore)
 
-        let writeResult = manager.sendMessagePacket(sendMessage, doRTS: false) // O5 never uses RTS
+        let writeResult = manager.sendMessagePacket(sendMessage)
         switch writeResult {
         case .sentWithAcknowledgment:
             break
@@ -620,7 +615,7 @@ class BlePodMessageTransport: MessageTransport {
     private func readAndAckO5SignedResponse(certStore: O5CertificateStore) throws -> Message {
         guard let enDecrypt = self.enDecrypt else { throw PodCommsError.podNotConnected }
 
-        let readResponse = try manager.readMessagePacket(doRTS: false) // O5 never uses RTS
+        let readResponse = try manager.readMessagePacket()
         guard let readMessage = readResponse else {
             throw PodProtocolError.messageIOException("Could not read signed response")
         }
@@ -634,7 +629,7 @@ class BlePodMessageTransport: MessageTransport {
         incrementMsgSeq()
         incrementNonceSeq()
         let ack = try getO5Ack(response: decrypted)
-        let ackResult = manager.sendMessagePacket(ack, doRTS: false)
+        let ackResult = manager.sendMessagePacket(ack)
         guard case .sentWithAcknowledgment = ackResult else {
             throw PodProtocolError.messageIOException("Could not send ACK")
         }

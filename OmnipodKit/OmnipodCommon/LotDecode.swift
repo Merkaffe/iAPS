@@ -31,7 +31,7 @@ let MfgLoc: [Int: String] = [
     0: "C", // China
     1: "U", // USA
     2: "K", // Kunshan (China)
-    3: "M", // Malaysia
+    6: "M", // Malaysia
 ]
 
 struct LotDecode {

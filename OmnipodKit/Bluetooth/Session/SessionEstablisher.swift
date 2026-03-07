@@ -69,28 +69,26 @@ class SessionEstablisher {
     }
     
     func negotiateSessionKeys() throws -> SessionResult {
-        // DASH pods always use RTS/CTS; O5 pods never do
-        let useRTS = podType.isDash
-        log.default("negotiateSessionKeys: podType=%{public}@, useRTS=%{public}@, mode=%{public}@", podType.briefName, String(describing: useRTS), String(describing: mode))
+        log.default("negotiateSessionKeys: podType=%{public}@, mode=%{public}@", podType.briefName, String(describing: mode))
 
         switch mode {
         case .PRIMARY:
-            return try negotiateSessionKeysPrimary(useRTS: useRTS)
+            return try negotiateSessionKeysPrimary()
         case .SECONDARY:
-            return try negotiateSessionKeysSecondary(useRTS: useRTS)
+            return try negotiateSessionKeysSecondary()
         }
     }
 
     // MARK: - PRIMARY Mode (Controller initiates challenge -- current DASH behavior)
 
-    private func negotiateSessionKeysPrimary(useRTS: Bool) throws -> SessionResult {
+    private func negotiateSessionKeysPrimary() throws -> SessionResult {
         msgSeq += 1
         let challenge = try eapAkaChallenge()
-        let sendResult = manager.sendMessagePacket(challenge, doRTS: useRTS)
+        let sendResult = manager.sendMessagePacket(challenge)
         guard case .sentWithAcknowledgment = sendResult else {
             throw SessionEstablishmentException.CommunicationError("Could not send the EAP AKA challenge: $sendResult")
         }
-        guard let challengeResponse = try manager.readMessagePacket(doRTS: useRTS) else {
+        guard let challengeResponse = try manager.readMessagePacket() else {
             throw SessionEstablishmentException.CommunicationError("Could not establish session")
         }
 
@@ -104,7 +102,7 @@ class SessionEstablisher {
 
         msgSeq += 1
         let success = eapSuccess()
-        let _ = manager.sendMessagePacket(success, doRTS: useRTS)
+        let _ = manager.sendMessagePacket(success)
 
         return .SessionKeys(SessionKeys(
             ck: milenage.ck,
@@ -115,10 +113,10 @@ class SessionEstablisher {
 
     // MARK: - SECONDARY Mode (Pod initiates challenge -- O5 post-pairing behavior)
 
-    private func negotiateSessionKeysSecondary(useRTS: Bool) throws -> SessionResult {
+    private func negotiateSessionKeysSecondary() throws -> SessionResult {
         // Step 1: Wait for pod's EAP-Request/AKA-Challenge
         log.default("SECONDARY: Waiting for pod's EAP-AKA challenge...")
-        guard let challengePacket = try manager.readMessagePacket(doRTS: useRTS) else {
+        guard let challengePacket = try manager.readMessagePacket() else {
             throw SessionEstablishmentException.CommunicationError(
                 "SECONDARY: Did not receive EAP-AKA challenge from pod"
             )
@@ -218,7 +216,7 @@ class SessionEstablisher {
             identifier: identifier
         )
 
-        let sendResult = manager.sendMessagePacket(responsePacket, doRTS: useRTS)
+        let sendResult = manager.sendMessagePacket(responsePacket)
         guard case .sentWithAcknowledgment = sendResult else {
             throw SessionEstablishmentException.CommunicationError(
                 "SECONDARY: Could not send EAP-AKA response: \(sendResult)"
@@ -228,7 +226,7 @@ class SessionEstablisher {
                      secondaryMilenage.res.hexadecimalString, controllerIV.hexadecimalString)
 
         // Step 6: Wait for EAP-Success from pod
-        guard let successPacket = try manager.readMessagePacket(doRTS: useRTS) else {
+        guard let successPacket = try manager.readMessagePacket() else {
             throw SessionEstablishmentException.CommunicationError(
                 "SECONDARY: Did not receive EAP-Success from pod"
             )

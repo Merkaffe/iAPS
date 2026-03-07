@@ -8,7 +8,34 @@
 //
 
 import CoreBluetooth
+import os.log
 
+fileprivate var PeripheralManagerDebug = false
+
+extension OSLog {
+    func bleDebug(_ message: StaticString, _ args: CVarArg...) {
+        guard PeripheralManagerDebug else {
+            return
+        }
+        let type: OSLogType = .default
+        switch args.count {
+        case 0:
+            os_log(message, log: self, type: type)
+        case 1:
+            os_log(message, log: self, type: type, args[0])
+        case 2:
+            os_log(message, log: self, type: type, args[0], args[1])
+        case 3:
+            os_log(message, log: self, type: type, args[0], args[1], args[2])
+        case 4:
+            os_log(message, log: self, type: type, args[0], args[1], args[2], args[3])
+        case 5:
+            os_log(message, log: self, type: type, args[0], args[1], args[2], args[3], args[4])
+        default:
+            os_log(message, log: self, type: type, args)
+        }
+    }
+}
 
 enum SendMessageResult {
     case sentWithAcknowledgment
@@ -27,14 +54,7 @@ extension PeripheralManager {
             throw PeripheralManagerError.notReady
         }
 
-        // O5: .withoutResponse (confirmed).
-        // DASH: always .withResponse.
-        let type: CBCharacteristicWriteType
-        if podType.isO5 {
-            type = .withoutResponse
-        } else {
-            type = .withResponse
-        }
+        let type: CBCharacteristicWriteType = podType.isDash ? .withResponse : .withoutResponse
         try writeValue(Data([PodCommand.HELLO.rawValue, 0x01, 0x04]) + controllerId, for: characteristic, type: type, timeout: 5)
     }
     
@@ -50,25 +70,25 @@ extension PeripheralManager {
         try setNotifyValue(true, for: dataChar, timeout: .seconds(2))
     }
         
-    func sendMessagePacket(_ message: MessagePacket, _ forEncryption: Bool = false, doRTS: Bool = true) -> SendMessageResult {
+    func sendMessagePacket(_ message: MessagePacket, _ forEncryption: Bool = false) -> SendMessageResult {
         dispatchPrecondition(condition: .onQueue(queue))
 
         var didSend = false
 
         do {
-            if doRTS {
-                log.default("[sendMessagePacket] Sending RTS...")
+            if podType.isDash {
+                log.bleDebug("[sendMessagePacket] Sending RTS...")
                 try requestToSend()
-                log.default("[sendMessagePacket] Waiting for CTS...")
+                log.bleDebug("[sendMessagePacket] Waiting for CTS...")
                 try waitForCommand(PodCommand.CTS, timeout: 5)
-                log.default("[sendMessagePacket] Got CTS")
+                log.bleDebug("[sendMessagePacket] Got CTS")
             } else {
-                log.default("[sendMessagePacket] Skipping RTS/CTS (doRTS=false), writing data directly. peripheral state=%{public}@", peripheral.state.description)
+                log.bleDebug("[sendMessagePacket] Skipping RTS/CTS, writing data directly. peripheral state=%{public}@", peripheral.state.description)
             }
 
             let splitter = PayloadSplitter(payload: message.asData(forEncryption: forEncryption))
             let packets = splitter.splitInPackets()
-            log.default("[sendMessagePacket] Split payload into %{public}d packet(s), total payload %{public}d bytes", packets.count, message.payload.count)
+            log.bleDebug("[sendMessagePacket] Split payload into %{public}d packet(s), total payload %{public}d bytes", packets.count, message.payload.count)
 
             for (index, packet) in packets.enumerated() {
                 // Consider starting the last packet send as the point at which the message may be received by the pod.
@@ -77,16 +97,16 @@ extension PeripheralManager {
                     didSend = true
                 }
                 let packetData = packet.toData()
-                log.default("[sendMessagePacket] Writing data packet %{public}d/%{public}d (%{public}d bytes)... peripheral state=%{public}@",
+                log.bleDebug("[sendMessagePacket] Writing data packet %{public}d/%{public}d (%{public}d bytes)... peripheral state=%{public}@",
                             index + 1, packets.count, packetData.count, peripheral.state.description)
                 try sendData(packetData, timeout: 5)
-                log.default("[sendMessagePacket] Data packet %{public}d/%{public}d written. Peeking for NACK...", index + 1, packets.count)
+                log.bleDebug("[sendMessagePacket] Data packet %{public}d/%{public}d written. Peeking for NACK...", index + 1, packets.count)
                 try self.peekForNack()
             }
 
-            log.default("[sendMessagePacket] All packets written. Waiting for SUCCESS... peripheral state=%{public}@", peripheral.state.description)
+            log.bleDebug("[sendMessagePacket] All packets written. Waiting for SUCCESS... peripheral state=%{public}@", peripheral.state.description)
             try waitForCommand(PodCommand.SUCCESS, timeout: 5)
-            log.default("[sendMessagePacket] SUCCESS received. peripheral state=%{public}@", peripheral.state.description)
+            log.bleDebug("[sendMessagePacket] SUCCESS received. peripheral state=%{public}@", peripheral.state.description)
         } catch {
             log.error("[sendMessagePacket] Error (didSend=%{public}@): %{public}@. peripheral state=%{public}@",
                       String(describing: didSend), String(describing: error), peripheral.state.description)
@@ -100,57 +120,57 @@ extension PeripheralManager {
     }
     
     /// - Throws: PeripheralManagerError
-    func readMessagePacket(doRTS: Bool = true) throws -> MessagePacket? {
+    func readMessagePacket() throws -> MessagePacket? {
         dispatchPrecondition(condition: .onQueue(queue))
 
         var packet: MessagePacket?
 
         do {
-            if doRTS {
-                log.default("[readMessagePacket] Waiting for RTS from pod...")
+            if podType.isDash {
+                log.bleDebug("[readMessagePacket] Waiting for RTS from pod...")
                 try waitForCommand(PodCommand.RTS)
-                log.default("[readMessagePacket] Got RTS, sending CTS...")
+                log.bleDebug("[readMessagePacket] Got RTS, sending CTS...")
                 try sendCommandType(PodCommand.CTS)
-                log.default("[readMessagePacket] CTS sent")
+                log.bleDebug("[readMessagePacket] CTS sent")
             } else {
-                log.default("[readMessagePacket] Skipping RTS/CTS (doRTS=false), waiting for data. peripheral state=%{public}@", peripheral.state.description)
+                log.bleDebug("[readMessagePacket] Skipping RTS/CTS, waiting for data. peripheral state=%{public}@", peripheral.state.description)
             }
 
             var expected: UInt8 = 0
 
-            log.default("[readMessagePacket] Waiting for first data packet (seq 0)... peripheral state=%{public}@", peripheral.state.description)
+            log.bleDebug("[readMessagePacket] Waiting for first data packet (seq 0)... peripheral state=%{public}@", peripheral.state.description)
             let firstPacket = try waitForData(sequence: expected, timeout: 5)
-            log.default("[readMessagePacket] First data packet received (%{public}d bytes)", firstPacket.count)
+            log.bleDebug("[readMessagePacket] First data packet received (%{public}d bytes)", firstPacket.count)
 
             let joiner = try PayloadJoiner(firstPacket: firstPacket)
             let totalFragments = joiner.fullFragments + (joiner.oneExtraPacket ? 1 : 0)
-            log.default("[readMessagePacket] Expecting %{public}d more fragment(s) (fullFragments=%{public}d, oneExtra=%{public}@)",
+            log.bleDebug("[readMessagePacket] Expecting %{public}d more fragment(s) (fullFragments=%{public}d, oneExtra=%{public}@)",
                         totalFragments, joiner.fullFragments, String(describing: joiner.oneExtraPacket))
 
             if joiner.fullFragments > 0 {
                 for i in 1...joiner.fullFragments {
                     expected += 1
-                    log.default("[readMessagePacket] Waiting for fragment %{public}d (seq %{public}d)... peripheral state=%{public}@",
+                    log.bleDebug("[readMessagePacket] Waiting for fragment %{public}d (seq %{public}d)... peripheral state=%{public}@",
                                 i, expected, peripheral.state.description)
                     let packet = try waitForData(sequence: expected, timeout: 5)
-                    log.default("[readMessagePacket] Fragment %{public}d received (%{public}d bytes)", i, packet.count)
+                    log.bleDebug("[readMessagePacket] Fragment %{public}d received (%{public}d bytes)", i, packet.count)
                     try joiner.accumulate(packet: packet)
                 }
             }
             if joiner.oneExtraPacket {
                 expected += 1
-                log.default("[readMessagePacket] Waiting for extra fragment (seq %{public}d)... peripheral state=%{public}@",
+                log.bleDebug("[readMessagePacket] Waiting for extra fragment (seq %{public}d)... peripheral state=%{public}@",
                             expected, peripheral.state.description)
                 let packet = try waitForData(sequence: expected, timeout: 5)
-                log.default("[readMessagePacket] Extra fragment received (%{public}d bytes)", packet.count)
+                log.bleDebug("[readMessagePacket] Extra fragment received (%{public}d bytes)", packet.count)
                 try joiner.accumulate(packet: packet)
             }
             let fullPayload = try joiner.finalize()
-            log.default("[readMessagePacket] All fragments received, total payload %{public}d bytes. Sending SUCCESS...", fullPayload.count)
+            log.bleDebug("[readMessagePacket] All fragments received, total payload %{public}d bytes. Sending SUCCESS...", fullPayload.count)
             try  sendCommandType(PodCommand.SUCCESS)
-            log.default("[readMessagePacket] SUCCESS sent. Parsing message...")
+            log.bleDebug("[readMessagePacket] SUCCESS sent. Parsing message...")
             packet = try MessagePacket.parse(payload: fullPayload)
-            log.default("[readMessagePacket] Message parsed successfully. peripheral state=%{public}@", peripheral.state.description)
+            log.bleDebug("[readMessagePacket] Message parsed successfully. peripheral state=%{public}@", peripheral.state.description)
         } catch {
             log.error("[readMessagePacket] Error reading message: %{public}@. peripheral state=%{public}@", String(describing: error), peripheral.state.description)
             if let error = error as? PeripheralManagerError, error.isSymptomaticOfUnresponsivePod {
@@ -200,14 +220,7 @@ extension PeripheralManager {
             throw PeripheralManagerError.notReady
         }
 
-        // O5: .withoutResponse (confirmed).
-        // DASH: always .withResponse.
-        let type: CBCharacteristicWriteType
-        if podType.isO5 {
-            type = .withoutResponse
-        } else {
-            type = .withResponse
-        }
+        let type: CBCharacteristicWriteType = podType.isDash ? .withResponse : .withoutResponse
         try writeValue(Data([command.rawValue]), for: characteristic, type: type, timeout: timeout)
     }
 
@@ -284,16 +297,7 @@ extension PeripheralManager {
             throw PeripheralManagerError.notReady
         }
 
-        var type: CBCharacteristicWriteType
-        switch self.podType {
-        case omnipod5Type:
-            type = .withoutResponse
-        case dashType:
-            type = .withResponse
-        default:
-            throw PeripheralManagerError.unknownPodType
-        }
-
+        let type: CBCharacteristicWriteType = podType.isDash ? .withResponse : .withoutResponse
         try writeValue(value, for: characteristic, type: type, timeout: timeout)
     }
 

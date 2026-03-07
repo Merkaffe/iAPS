@@ -2,10 +2,10 @@
 
 OmnipodKit is a new universal Omnipod pump manager that
 
-* Handles both the Omnipod Classic (Eros) and DASH pod types
+* Handles all supported Omnipod types
 * Simplifies future DIY Omnipod code maintenance
 * Has a number of improvements and updates for Omnipod support
-* Will hopefully eventually work with the Omnipod 5 pod type
+* Will be replacing both OmniKit (Eros) and OmniBLE (Dash)
 
 To select the new OmnipodKit pump manager,
 select `All Omnipod Types` when doing an `Add Pump`.
@@ -20,17 +20,25 @@ by scrolling to the bottom of the pod settings view and tapping on
 The `Omnipod` (OmniKit) and `Omnipod DASH` (OmniBLE) pump managers
 currently displayed with `Add Pump` are the original unmodified
 pump managers which maintain their own separate pump manager state.
-Therefore if you already have an active pod session using a previous pump manager,
+Currently if you already have an active pod session using a previous pump manager,
 you must select `Switch to other insulin delivery device`
 after deactivating any active pod before you can do an `Add Pump`
 to select `All Omnipod Types` for the OmnipodKit pump manager.
-Eventually the OmniKit and OmniBLE pump managers
-will be totally replaced by OmnipodKit.
+Eventually the OmniKit and OmniBLE pump manager will be replaced by OmnipodKit.
 When this happens, OmnipodKit will handle any conversion of
 any OmniKit or OmniBLE state (including for a currently active pod)
-with a minor app change and the OmniKit and OmniBLE pump managers
-will no longer be available or eventually supported.
+with minor app changes and the OmniKit and OmniBLE pump managers
+will no longer be available and eventually unsupported.
 
+## Status as of March 6, 2026
+Pod Details now displays the printed lot information
+along with the decimal lot value for all pod types.
+
+A work in progress with many still to be worked out,
+but pairing and communications working with real O5 pods
+in side branch! No nudge or heartbeat services as of yet,
+so time between loop operations can vary a lot without a CGM
+providing a "heartbeat" service.
 
 ## Status as of January 20, 2026
 
@@ -50,26 +58,14 @@ only the `Omnipod Classic` and `Omnipod DASH` pod types.
 
 ## Developer Notes
 
-The Omnipod 5 (O5) pod ids (addresses) start with 0x15
-while the DIY DASH pod ids will continue to start with 0x17.
-Eros addresses (pod ids) start with 0x1F for both DIY and PDM.
+The Omnipod 5 (O5) pod ids are still be worked on, but for
+now are a limited set of values with a 0x00 in the type byte
+DIY DASH pod ids will continue to start with 0x17 and
+Eros addresses (pod ids) start with 0x1F in both DIY and PDM.
 The pump settings shows the name of the selected pod type.
 `Pod Diagnostics` -> `Pump Manager Details` can be used
 to examine details of attributes of the new unified
 Pump Manager and Pod state used by OmnipodKit.
-
-OmnipodKit/OmnipodKit/Bluetooth/BluetoothServices.swift
-currently has a number of temporary hacks to rapidly
-handle a number of DASH versus O5 Bluetooth differences.
-Eventually parts of OmnipodKit/OmnipodKit/Bluetooth
-will be refactored to a more reasonable form once more
-of the O5 communication differences are better understood.
-The setServicePodType() func currently is used to
-set a number of temporary variables that are used
-to control several aspects of the Bluetooth communications.
-The OmnipodKit/OmnipodKit/Bluetooth/Pair/O5LTKExchanger.swift
-file contains code for the early part of what's understood
-about the O5 pairing sequence and will be expanding.
 
 
 ## To Add to LoopWorkspace
