@@ -326,10 +326,10 @@ extension PeripheralManager {
     /// - Throws: PeripheralManagerError
     func writeValue(_ value: Data, for characteristic: CBCharacteristic, type: CBCharacteristicWriteType, timeout: TimeInterval) throws {
         if type == .withoutResponse {
-            log.default("[BLE RAW] WRITE %{public}@ type=withoutResponse canSend=%{public}@ (%{public}d bytes): %{public}@",
+            log.bleDebug("[BLE RAW] WRITE %{public}@ type=withoutResponse canSend=%{public}@ (%{public}d bytes): %{public}@",
                         characteristic.uuid.uuidString, String(describing: peripheral.canSendWriteWithoutResponse), value.count, value.hexadecimalString)
         } else {
-            log.default("[BLE RAW] WRITE %{public}@ type=withResponse (%{public}d bytes): %{public}@",
+            log.bleDebug("[BLE RAW] WRITE %{public}@ type=withResponse (%{public}d bytes): %{public}@",
                         characteristic.uuid.uuidString, value.count, value.hexadecimalString)
         }
         try runCommand(timeout: timeout) {
@@ -426,7 +426,7 @@ extension PeripheralManager: CBPeripheralDelegate {
         if let error = error {
             log.error("[BLE RAW] didWriteValueFor %{public}@ ERROR: %{public}@", characteristic.uuid.uuidString, String(describing: error))
         } else {
-            log.default("[BLE RAW] didWriteValueFor %{public}@ OK", characteristic.uuid.uuidString)
+            log.bleDebug("[BLE RAW] didWriteValueFor %{public}@ OK", characteristic.uuid.uuidString)
         }
         commandLock.lock()
         
@@ -483,7 +483,7 @@ extension PeripheralManager: CBPeripheralDelegate {
     }
 
     func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
-        log.default("[BLE RAW] peripheralIsReadyToSendWriteWithoutResponse — buffer was full, now ready")
+        log.bleDebug("[BLE RAW] peripheralIsReadyToSendWriteWithoutResponse — buffer was full, now ready")
     }
 
 }

@@ -85,7 +85,7 @@ class O5LTKExchanger {
         try o5throwOnSendError(sps0.message, O5LTKExchanger.SPS0)
 
         log.default("Reading SPS0")
-        guard let podSps0 = try manager.readMessagePacket(doRTS: false) else {
+        guard let podSps0 = try manager.readMessagePacket() else {
             logPeripheralState("SPS0")
             throw PodProtocolError.pairingException("Could not read SPS0")
         }
@@ -103,7 +103,7 @@ class O5LTKExchanger {
         )
         try o5throwOnSendError(sps1.message, O5LTKExchanger.SPS1)
 
-        guard let podSps1 = try manager.readMessagePacket(doRTS: false) else {
+        guard let podSps1 = try manager.readMessagePacket() else {
             logPeripheralState("SPS1")
             throw PodProtocolError.pairingException("Could not read SPS1")
         }
@@ -135,7 +135,7 @@ class O5LTKExchanger {
         let sps21ReadStart = Date()
         let podSPS2_1: MessagePacket
         do {
-            guard let resp = try manager.readMessagePacket(doRTS: false) else {
+            guard let resp = try manager.readMessagePacket() else {
                 log.error("SPS2.1 read returned nil after %{public}.3f sec. peripheral state=%{public}@", Date().timeIntervalSince(sps21ReadStart), peripheralStateString())
                 logPeripheralState("SPS2.1")
                 throw PodProtocolError.pairingException("Could not read SPS2.1")
@@ -162,7 +162,7 @@ class O5LTKExchanger {
             payloads: [o5sps2()]
         )
         try o5throwOnSendError(sps2.message, O5LTKExchanger.SPS2)
-        guard let podSPS2 = try manager.readMessagePacket(doRTS: false) else {
+        guard let podSPS2 = try manager.readMessagePacket() else {
             logPeripheralState("SPS2")
             throw PodProtocolError.pairingException("Could not read SPS2")
         }
@@ -182,7 +182,7 @@ class O5LTKExchanger {
         try o5throwOnSendError(sp0gp0.message, O5LTKExchanger.SP0GP0)
 
         /// read and validate the fixed 1 byte P0 response
-        guard let p0 = try manager.readMessagePacket(doRTS: false) else {
+        guard let p0 = try manager.readMessagePacket() else {
             logPeripheralState("P0")
             throw PodProtocolError.pairingException("Could not read P0")
         }
@@ -201,9 +201,9 @@ class O5LTKExchanger {
     }
 
     private func o5throwOnSendError(_ msg: MessagePacket, _ msgType: String) throws {
-        log.default("[o5throwOnSendError] %{public}@: begin (payload %{public}d bytes, seq %{public}d, doRTS=false). peripheral state=%{public}@",
+        log.default("[o5throwOnSendError] %{public}@: begin (payload %{public}d bytes, seq %{public}d). peripheral state=%{public}@",
                     msgType, msg.payload.count, seq, peripheralStateString())
-        let result = manager.sendMessagePacket(msg, doRTS: false)
+        let result = manager.sendMessagePacket(msg)
         switch result {
         case .sentWithAcknowledgment:
             log.default("[o5throwOnSendError] %{public}@: sentWithAcknowledgment (SUCCESS received). peripheral state=%{public}@",
