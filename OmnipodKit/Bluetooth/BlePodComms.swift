@@ -16,11 +16,6 @@ fileprivate var skipO5AID9 = true // skips the 9th & slightly problematic O5 AID
 fileprivate var continuousMsgNum = true // true keeps continuous Omnipod mesg #'s behavior for new sessions
 
 class BlePodComms: PodComms {
-    // MARK - Debug use only -- unclear if this functionality still works.
-    // Set to a saved pairing result to skip LTK exchange and pod discovery,
-    // connecting directly to the pod by BLE UUID and re-establishing the
-    // EAP-AKA session with the stored LTK.
-    static let savedPairingResult: SavedPairingResult? = nil
 
     var manager: PeripheralManager? {
         didSet {
@@ -56,35 +51,6 @@ class BlePodComms: PodComms {
     }
 
     func connectToNewPod(_ completion: @escaping (Result<Omni, Error>) -> Void) {
-        if let saved = BlePodComms.savedPairingResult, let savedUUID = saved.bleUUID, self.podId == saved.podAddress {
-            log.info("@@@ Reconnecting directly to UUID (%{public}@)", savedUUID)
-
-            setServicePodType(podType: self.podType)
-            guard let device = bluetoothManager.retrieveAndConnectKnownPod(uuidString: savedUUID) else {
-                log.error("@@@ Failed to retrieve peripheral on reconnect for UUID %{public}@", savedUUID)
-                completion(.failure(PodCommsError.noPodsFound))
-                return
-            }
-
-            self.manager = device.manager
-            device.manager.delegate = self
-
-            let connectStartTime = Date()
-            Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
-                let elapsed = Date().timeIntervalSince(connectStartTime)
-                if device.manager.peripheral.state == .connected {
-                    self.log.default("@@@ Reconnected to known pod in %.1f sec", elapsed)
-                    completion(.success(device))
-                    timer.invalidate()
-                } else if elapsed > TimeInterval(seconds: 15) {
-                    self.log.error("@@@ Timeout connecting to known pod")
-                    completion(.failure(PodCommsError.noPodsFound))
-                    timer.invalidate()
-                }
-            }
-            return
-        }
-
         let discoveryStartTime = Date()
 
         setServicePodType(podType: self.podType)
@@ -178,30 +144,21 @@ class BlePodComms: PodComms {
         let ltk: Data
         let eapSeq: Int
 
-        // See if there is saved LTK pairing result we can use
-        if let saved = BlePodComms.savedPairingResult, let ltkString = saved.ltk, self.podId == saved.podAddress {
-            // Skip LTK exchange — use saved pairing result
-            log.info("@@@ pairPod skipping LTKExchanger for %{public}@", saved.name)
-            ltk = Data(hexadecimalString: ltkString)!
-            response = PairResult(ltk: ltk, address: saved.podAddress, msgSeq: UInt8(saved.msgSeq))
-            eapSeq = saved.eapSeq
-        } else {
-            ids = Ids(myId: self.myId, podId: self.podId)
-            log.info("@@@ calling LTKExchanger for myId 0x%x podId 0x%x", ids.myIdAddr, ids.podIdAddr)
-            switch podType {
-            case dashType:
-                let dashLTKExchanger = DashLTKExchanger(manager: manager, ids: ids)
-                response = try dashLTKExchanger.negotiateLTK()
-                ltk = response.ltk
-            case omnipod5Type:
-                let o5LTKExchanger = try O5LTKExchanger(manager: manager, ids: ids)
-                response = try o5LTKExchanger.o5negotiateLTK()
-                ltk = response.ltk
-            default:
-                throw OmniPumpManagerError.podTypeNotConfigured
-            }
-            eapSeq = 1
+        ids = Ids(myId: self.myId, podId: self.podId)
+        log.info("@@@ calling LTKExchanger for myId 0x%x podId 0x%x", ids.myIdAddr, ids.podIdAddr)
+        switch podType {
+        case dashType:
+            let dashLTKExchanger = DashLTKExchanger(manager: manager, ids: ids)
+            response = try dashLTKExchanger.negotiateLTK()
+            ltk = response.ltk
+        case omnipod5Type:
+            let o5LTKExchanger = try O5LTKExchanger(manager: manager, ids: ids)
+            response = try o5LTKExchanger.o5negotiateLTK()
+            ltk = response.ltk
+        default:
+            throw OmniPumpManagerError.podTypeNotConfigured
         }
+        eapSeq = 1
 
         guard podId == response.address else {
             log.debug("@@@ podId 0x%x doesn't match response value!: %{public}@", podId, String(describing: response))
@@ -635,9 +592,7 @@ class BlePodComms: PodComms {
                 let transport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: podState!.bleMessageTransportState)
                 transport.messageLogger = messageLogger
 
-                // For O5 pods, create the certificate store needed to send Type 4 signed messages
-                let certStore: O5CertificateStore? = podType.isO5 ? try? O5CertificateStore() : nil
-                let podSession = PodCommsSession(podState: podState!, transport: transport, delegate: self, o5CertStore: certStore)
+                let podSession = PodCommsSession(podState: podState!, transport: transport, delegate: self)
 
                 block(.success(session: podSession))
             } catch let error as PodCommsError {
@@ -671,9 +626,7 @@ class BlePodComms: PodComms {
             let transport = BlePodMessageTransport(manager: manager, myId: self.myId, podId: self.podId, state: self.podState!.bleMessageTransportState)
             transport.messageLogger = self.messageLogger
 
-            // For O5 pods, create the certificate store for Type 4 signed message sending
-            let certStore: O5CertificateStore? = self.podType.isO5 ? try? O5CertificateStore() : nil
-            let podSession = PodCommsSession(podState: self.podState!, transport: transport, delegate: self, o5CertStore: certStore)
+            let podSession = PodCommsSession(podState: self.podState!, transport: transport, delegate: self)
             block(.success(session: podSession))
         }
     }
