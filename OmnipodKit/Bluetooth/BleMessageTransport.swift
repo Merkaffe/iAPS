@@ -20,20 +20,18 @@ struct BleMessageTransportState: MessageTransportState {
     var msgSeq: Int // 8-bit Dash MessagePacket sequence # (with ck)
     var nonceSeq: Int // nonce sequence # (with noncePrefix)
     var messageNumber: Int // 4-bit Omnipod Message # (for Omnipod command/responses Messages)
-    var cmdSeqCounter: Int // O5 command sequence counter (increments per signed command exchange)
 
     init() {
         self.init(ck: nil, noncePrefix: nil)
     }
 
-    init(ck: Data?, noncePrefix: Data?, eapSeq: Int = 1, msgSeq: Int = 0, nonceSeq: Int = 0, messageNumber: Int = 0, cmdSeqCounter: Int = 0) {
+    init(ck: Data?, noncePrefix: Data?, eapSeq: Int = 1, msgSeq: Int = 0, nonceSeq: Int = 0, messageNumber: Int = 0) {
         self.ck = ck
         self.noncePrefix = noncePrefix
         self.eapSeq = eapSeq
         self.msgSeq = msgSeq
         self.nonceSeq = nonceSeq
         self.messageNumber = messageNumber
-        self.cmdSeqCounter = cmdSeqCounter
     }
 
     // RawRepresentable
@@ -53,7 +51,6 @@ struct BleMessageTransportState: MessageTransportState {
         self.msgSeq = msgSeq
         self.nonceSeq = nonceSeq
         self.messageNumber = messageNumber
-        self.cmdSeqCounter = rawValue["cmdSeqCounter"] as? Int ?? 0
     }
 
     var rawValue: RawValue {
@@ -64,7 +61,6 @@ struct BleMessageTransportState: MessageTransportState {
             "msgSeq": msgSeq,
             "nonceSeq": nonceSeq,
             "messageNumber": messageNumber,
-            "cmdSeqCounter": cmdSeqCounter
         ]
     }
 
@@ -82,12 +78,11 @@ extension BleMessageTransportState: CustomDebugStringConvertible {
             "msgSeq: \(msgSeq)",
             "nonceSeq: \(nonceSeq)",
             "messageNumber: \(messageNumber)",
-            "cmdSeqCounter: \(cmdSeqCounter)",
         ].joined(separator: "\n")
     }
 
     var inlineDescription: String {
-        "[eapSeq:\(eapSeq), msgSeq:\(msgSeq), nonceSeq:\(nonceSeq), messageNumber:\(messageNumber), cmdSeqCounter:\(cmdSeqCounter)]"
+        "[eapSeq:\(eapSeq), msgSeq:\(msgSeq), nonceSeq:\(nonceSeq), messageNumber:\(messageNumber)]"
     }
 }
 
@@ -167,15 +162,6 @@ class BlePodMessageTransport: MessageTransport {
         }
     }
 
-    private(set) var cmdSeqCounter: Int {
-        get {
-            return state.cmdSeqCounter
-        }
-        set {
-            state.cmdSeqCounter = newValue
-        }
-    }
-
     private let myId: UInt32
     private let podId: UInt32
     
@@ -205,7 +191,9 @@ class BlePodMessageTransport: MessageTransport {
         messageNumber = ((messageNumber) + count) & 0b1111 // messageNumber is the 4-bit Omnipod Message #
     }
 
-    /// Sends the given pod message over the encrypted Dash transport and returns the pod's response
+    /// Sends the given pod message over the encrypted BLE transport and returns the pod's response.
+    /// Handles both DASH and O5 Type 1 messages as well as O5 Type 4 signed messages as needed.
+    /// The ECDSA signature covers the complete encrypted message: AAD(16) + ciphertext + tag(8).
     func sendMessage(_ message: Message) throws -> Message {
 
         guard manager.peripheral.state == .connected else {
@@ -243,6 +231,7 @@ class BlePodMessageTransport: MessageTransport {
         }
     }
 
+    /// Creates either a Type 1 (encrypted) or Type 4 (encrypted+signed) command MessagePacket
     private func getCmdMessage(cmd: Message) throws -> MessagePacket {
         guard let enDecrypt = self.enDecrypt else {
             throw PodCommsError.podNotConnected
@@ -257,8 +246,11 @@ class BlePodMessageTransport: MessageTransport {
             payloads: [cmd.encoded(), Data()]
         )
 
+        // Use Type 4 (ECDSA signed) messages for the O5 commands requiring this
+        let needsSigning = manager.podType.isO5 && requiresType4Signing(for: cmd.messageBlocks)
+
         let msg = MessagePacket(
-            type: MessageType.ENCRYPTED,
+            type: needsSigning ? MessageType.ENCRYPTED_SIGNED : MessageType.ENCRYPTED,
             source: self.myId,
             destination: self.podId,
             payload: wrapped,
@@ -267,7 +259,27 @@ class BlePodMessageTransport: MessageTransport {
         )
 
         incrementNonceSeq()
-        return try enDecrypt.encrypt(msg, nonceSeq)
+        let encrypted = try enDecrypt.encrypt(msg, nonceSeq)
+
+        guard needsSigning, let certStore = try? O5CertificateStore() else {
+            // No signing or certStore (i.e., DASH or O5 Type 1), we're done
+            return encrypted
+        }
+
+        // An O5 Type 4 signed message: AAD (16 bytes TWi header) + ciphertext + tag (8 bytes)
+        let signingInput = encrypted.asData(forEncryption: false).prefix(16) + encrypted.payload
+        log.bleDebug("signing input (%{public}d bytes): AAD=%{public}@ payload=%{public}d bytes",
+                  signingInput.count, signingInput.prefix(16).hexadecimalString, encrypted.payload.count)
+
+        let signature = try certStore.signRaw(signingInput)
+        assert(signature.count == 64, "ECDSA raw signature must be 64 bytes")
+
+        // Store signature separately — it's appended after payload in asData()
+        // but NOT counted in the header size field (size = ciphertext only)
+        var signedPacket = encrypted
+        signedPacket.signatureData = signature
+
+        return signedPacket
     }
 
     private func readAndAckResponse() throws -> Message {
@@ -525,143 +537,21 @@ class BlePodMessageTransport: MessageTransport {
         return responseData
     }
 
-    // MARK: - O5 Signed (Type 4) Message Support
-
-    /// Sends an Omnipod Message as a Type 4 (encrypted + signed) message for O5 steady-state commands.
-    /// The ECDSA signature covers the complete encrypted message: AAD(16) + ciphertext + tag(8).
-    /// Returns the pod's decrypted response.
-    func sendO5SignedMessage(_ message: Message, certStore: O5CertificateStore) throws -> Message {
-        guard manager.peripheral.state == .connected else {
-            throw PodCommsError.podNotConnected
-        }
-
-        messageNumber = message.sequenceNum
-        incrementMessageNumber()
-
-        let dataToSend = message.encoded()
-        log.default("O5Sign Send(Hex): %{public}@", dataToSend.hexadecimalString)
-        messageLogger?.didSend(dataToSend)
-
-        let sendMessage = try getO5SignedCmdMessage(cmd: message, certStore: certStore)
-
-        let writeResult = manager.sendMessagePacket(sendMessage)
-        switch writeResult {
-        case .sentWithAcknowledgment:
-            break
-        case .sentWithError(let error):
-            messageLogger?.didError("Unacknowledged signed message. seq:\(message.sequenceNum), error = \(error)")
-            throw PodCommsError.unacknowledgedMessage(sequenceNumber: message.sequenceNum, error: error)
-        case .unsentWithError(let error):
-            throw PodCommsError.commsError(error: error)
-        }
-
-        do {
-            let response = try readAndAckO5SignedResponse(certStore: certStore)
-            incrementMessageNumber()
-            cmdSeqCounter += 1  // increment command sequence counter after successful exchange
-            return response
-        } catch {
-            messageLogger?.didError("Unacknowledged signed message. seq:\(message.sequenceNum), error = \(error)")
-            throw PodCommsError.unacknowledgedMessage(sequenceNumber: message.sequenceNum, error: error)
-        }
-    }
-
-    /// Creates a Type 4 encrypted+signed command message.
-    private func getO5SignedCmdMessage(cmd: Message, certStore: O5CertificateStore) throws -> MessagePacket {
-        guard let enDecrypt = self.enDecrypt else {
-            throw PodCommsError.podNotConnected
-        }
-
-        incrementMsgSeq()
-
-        // Standard Omnipod commands use ",G0.0" even for O5 signed messages.
-        // AID-specific commands use their own suffixes via sendO5AidCommand().
-        let wrapped = StringLengthPrefixEncoding.formatKeys(
-            keys: [COMMAND_PREFIX, COMMAND_SUFFIX],
-            payloads: [cmd.encoded(), Data()]
-        )
-
-        // Create Type 4 message packet
-        let msg = MessagePacket(
-            type: MessageType.ENCRYPTED_SIGNED,
-            source: self.myId,
-            destination: self.podId,
-            payload: wrapped,
-            sequenceNumber: UInt8(msgSeq),
-            eqos: 1
-        )
-
-        incrementNonceSeq()
-        let encrypted = try enDecrypt.encrypt(msg, nonceSeq)
-
-        // Sign: AAD (16 bytes TWi header) + ciphertext + tag (8 bytes)
-        let signingInput = encrypted.asData(forEncryption: false).prefix(16) + encrypted.payload
-        log.debug("O5Sign signing input (%{public}d bytes): AAD=%{public}@ payload=%{public}d bytes",
-                  signingInput.count, signingInput.prefix(16).hexadecimalString, encrypted.payload.count)
-
-        let signature = try certStore.signRaw(signingInput)
-        assert(signature.count == 64, "ECDSA raw signature must be 64 bytes")
-
-        // Store signature separately — it's appended after payload in asData()
-        // but NOT counted in the header size field (size = ciphertext only)
-        var signedPacket = encrypted
-        signedPacket.signatureData = signature
-
-        return signedPacket
-    }
-
-    /// Reads and ACKs a Type 4 signed response from the pod.
-    /// Pod responses are Type 1 (ENCRYPTED), NOT Type 4. ACK is also Type 1 with no signature.
-    private func readAndAckO5SignedResponse(certStore: O5CertificateStore) throws -> Message {
-        guard let enDecrypt = self.enDecrypt else { throw PodCommsError.podNotConnected }
-
-        let readResponse = try manager.readMessagePacket()
-        guard let readMessage = readResponse else {
-            throw PodProtocolError.messageIOException("Could not read signed response")
-        }
-
-        incrementNonceSeq()
-        let decrypted = try enDecrypt.decrypt(readMessage, nonceSeq)
-
-        let response = try parseResponse(decrypted: decrypted)
-
-        // Send Type 1 (encrypted, unsigned) ACK — matches official app behavior
-        incrementMsgSeq()
-        incrementNonceSeq()
-        let ack = try getO5Ack(response: decrypted)
-        let ackResult = manager.sendMessagePacket(ack)
-        guard case .sentWithAcknowledgment = ackResult else {
-            throw PodProtocolError.messageIOException("Could not send ACK")
-        }
-
-        guard response.sequenceNum == messageNumber else {
-            throw MessageError.invalidSequence
-        }
-
-        return response
-    }
-
-    /// Creates a Type 1 (encrypted, unsigned) ACK message for Type 4 command responses.
-    /// Confirmed: ACK after Type 4 command uses Type 1 (byte[3]=0x81), no ECDSA signature.
-    private func getO5Ack(response: MessagePacket) throws -> MessagePacket {
-        guard let enDecrypt = self.enDecrypt else { throw PodCommsError.podNotConnected }
-
-        let ackNumber = (UInt(response.sequenceNumber) + 1) & 0xff
-        let msg = MessagePacket(
-            type: MessageType.ENCRYPTED,
-            source: response.destination.toUInt32(),
-            destination: response.source.toUInt32(),
-            payload: Data(),
-            sequenceNumber: UInt8(msgSeq),
-            ack: true,
-            ackNumber: UInt8(ackNumber),
-            eqos: 0
-        )
-        return try enDecrypt.encrypt(msg, nonceSeq)
-    }
-
     func assertOnSessionQueue() {
         dispatchPrecondition(condition: .onQueue(manager.queue))
     }
 }
 
+/// Returns true if the message blocks contain a command type that requires Type 4 (ECDSA signed) sending on O5 pods.
+private func requiresType4Signing(for blocks: [MessageBlock]) -> Bool {
+    /// O5 command types that MUST be sent as Type 4 (ECDSA signed) messages.
+    let o5SignedCommandTypes: Set<MessageBlockType> = [
+        /// Just check for 0x1a command type which is always before one of the
+        /// "extra" message types: 0x13 basal, 0x16 temp basal & 0x17 bolus.
+        .setInsulinSchedule,  // 0x1a
+        .deactivatePod,       // 0x1c
+        .cancelDelivery,      // 0x1f
+    ]
+
+    return blocks.contains { o5SignedCommandTypes.contains($0.blockType) }
+}
