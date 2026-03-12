@@ -152,9 +152,12 @@ extension PeripheralManager.Configuration {
 }
 
 // Quick hack to deal with DASH and O5 BLE Service and Attribute differences
-private var servicePodType: PodType = dashType
+private var servicePodType: PodType? = nil
 
 func setServicePodType(podType: PodType) {
+    if !(podType.isDash || podType.isO5) {
+        print("@@@ setServicePodType called with podType # \(podType.rawValue)!")
+    }
     servicePodType = podType
 
     // JJJ update the former constant MAX_SIZE for packets
@@ -177,6 +180,9 @@ func setServicePodType(podType: PodType) {
 }
 
 var OmnipodServiceUUID_advertisement_cbUUID: CBUUID {
+    guard let servicePodType = servicePodType else {
+        fatalError("servicePodType not set")
+    }
     if servicePodType.isO5 {
         return o5OmnipodServiceUUID.advertisement.cbUUID
     }
@@ -184,6 +190,9 @@ var OmnipodServiceUUID_advertisement_cbUUID: CBUUID {
 }
 
 var OmnipodServiceUUID_service_cbUUID: CBUUID {
+    guard let servicePodType = servicePodType else {
+        fatalError("servicePodType not set")
+    }
     if servicePodType.isO5 {
         return o5OmnipodServiceUUID.service.cbUUID
     }
@@ -191,6 +200,9 @@ var OmnipodServiceUUID_service_cbUUID: CBUUID {
 }
 
 var OmnipodCharacteristicUUID_command_cbUUID: CBUUID {
+    guard let servicePodType = servicePodType else {
+        fatalError("servicePodType not set")
+    }
     if servicePodType.isO5 {
         return o5OmnipodCharacteristicUUID.command.cbUUID
     }
@@ -198,6 +210,9 @@ var OmnipodCharacteristicUUID_command_cbUUID: CBUUID {
 }
 
 var OmnipodCharacteristicUUID_data_cbUUID: CBUUID {
+    guard let servicePodType = servicePodType else {
+        fatalError("servicePodType not set")
+    }
     if servicePodType.isO5 {
         return o5OmnipodCharacteristicUUID.data.cbUUID
     }

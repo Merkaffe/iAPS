@@ -142,6 +142,10 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
         self.podType = podType
 
+        if podType.isDash || podType.isO5 {
+            setServicePodType(podType: podType) // XXX the need for this function will be going away
+        }
+
         if podType.usesRileyLink {
             self.rileyLinkConnectionManagerState = rileyLinkConnectionManagerState
             self.controllerId = 0
@@ -295,17 +299,19 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         }
 
         if let prevPodStateRaw = rawValue["previousPodState"] as? PodState.RawValue {
-            previousPodState = PodState(rawValue: prevPodStateRaw)
+            self.previousPodState = PodState(rawValue: prevPodStateRaw)
         } else {
-            previousPodState = nil
+            self.previousPodState = nil
         }
 
-        // Some more Eros specific values
-        if let pairingAttemptAddress = rawValue["pairingAttemptAddress"] as? UInt32 {
-            self.pairingAttemptAddress = pairingAttemptAddress
+        if podType.isEros {
+            // Some more Eros specific values
+            if let pairingAttemptAddress = rawValue["pairingAttemptAddress"] as? UInt32 {
+                self.pairingAttemptAddress = pairingAttemptAddress
+            }
+            self.rileyLinkBatteryAlertLevel = rawValue["rileyLinkBatteryAlertLevel"] as? Int
+            self.lastRileyLinkBatteryAlertDate = rawValue["lastRileyLinkBatteryAlertDate"] as? Date ?? Date.distantPast
         }
-        rileyLinkBatteryAlertLevel = rawValue["rileyLinkBatteryAlertLevel"] as? Int
-        lastRileyLinkBatteryAlertDate = rawValue["lastRileyLinkBatteryAlertDate"] as? Date ?? Date.distantPast
     }
 
     public var rawValue: RawValue {
