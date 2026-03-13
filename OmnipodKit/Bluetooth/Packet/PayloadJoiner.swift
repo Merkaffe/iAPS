@@ -10,14 +10,16 @@
 import Foundation
 
 class PayloadJoiner {
+    private let layout: BlePacketLayout
     var oneExtraPacket: Bool
     let fullFragments: Int
     var crc: Data?
     private var expectedIndex = 0
     private var fragments: Array<BlePacket> = Array<BlePacket>()
 
-    init(firstPacket: Data) throws {
-        let firstPacket = try FirstBlePacket.parse(payload: firstPacket)
+    init(firstPacket: Data, layout: BlePacketLayout) throws {
+        self.layout = layout
+        let firstPacket = try FirstBlePacket.parse(payload: firstPacket, layout: layout)
         fragments.append(firstPacket)
         fullFragments = firstPacket.fullFragments
         crc = firstPacket.crc32
@@ -35,14 +37,14 @@ class PayloadJoiner {
         expectedIndex += 1
         switch idx{
         case let index where index < fullFragments:
-            fragments.append(try MiddleBlePacket.parse(payload: packet))
+            fragments.append(try MiddleBlePacket.parse(payload: packet, layout: layout))
         case let index where index == fullFragments:
-            let lastPacket = try LastBlePacket.parse(payload: packet)
+            let lastPacket = try LastBlePacket.parse(payload: packet, layout: layout)
             fragments.append(lastPacket)
             crc = lastPacket.crc32
             oneExtraPacket = lastPacket.oneExtraPacket
         case let index where index == fullFragments + 1 && oneExtraPacket:
-            fragments.append(try LastOptionalPlusOneBlePacket.parse(payload: packet))
+            fragments.append(try LastOptionalPlusOneBlePacket.parse(payload: packet, layout: layout))
         case let index where index > fullFragments:
             throw PodProtocolError.incorrectPacketException(packet, idx)
         default:

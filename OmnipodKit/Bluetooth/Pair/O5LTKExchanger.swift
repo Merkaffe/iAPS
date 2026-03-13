@@ -61,8 +61,8 @@ class O5LTKExchanger {
         log.default("=== O5 Pairing Start === myId=0x%{public}x podId=0x%{public}x", ids.myId.toUInt32(), ids.podId.toUInt32())
         let mtuNoResp = manager.peripheral.maximumWriteValueLength(for: .withoutResponse)
         let mtuWithResp = manager.peripheral.maximumWriteValueLength(for: .withResponse)
-        log.default("MTU at pairing start: withoutResponse=%{public}d, withResponse=%{public}d, BlePacket_MAX_PAYLOAD_SIZE=%{public}d",
-                    mtuNoResp, mtuWithResp, BlePacket_MAX_PAYLOAD_SIZE)
+        log.default("MTU at pairing start: withoutResponse=%{public}d, withResponse=%{public}d, packetMaxPayloadSize=%{public}d",
+                    mtuNoResp, mtuWithResp, manager.profile.packetLayout.maxPayloadSize)
         log.default("Sending SP1+SP2")
         let sp1sp2 = PairMessage(
             sequenceNumber: seq,
