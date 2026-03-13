@@ -53,7 +53,6 @@ class BlePodComms: PodComms {
     func connectToNewPod(_ completion: @escaping (Result<Omni, Error>) -> Void) {
         let discoveryStartTime = Date()
 
-        setServicePodType(podType: self.podType)
         bluetoothManager.discoverPods { error in
             if let error = error {
                 completion(.failure(error))
@@ -683,10 +682,10 @@ extension BlePodComms: PeripheralManagerDelegate {
         if hasLTK && needsSessionEstablishment {
             // Ensure BLE MTU is properly negotiated before sending O5 protocol messages.
             // iOS auto-negotiates MTU asynchronously after connect. For O5, we need
-            // maximumWriteValueLength >= BlePacket_MAX_PAYLOAD_SIZE (244) per write.
+            // maximumWriteValueLength >= packet max payload size (244 for O5) per write.
             // With .withoutResponse, writes exceeding the MTU are silently truncated.
             if manager.podType.isO5 {
-                let requiredMTU = BlePacket_MAX_PAYLOAD_SIZE
+                let requiredMTU = manager.profile.packetLayout.maxPayloadSize
                 var attempts = 0
                 var currentMTU = manager.peripheral.maximumWriteValueLength(for: .withoutResponse)
                 while currentMTU < requiredMTU && attempts < 10 {

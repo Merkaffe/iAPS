@@ -69,6 +69,7 @@ class PeripheralManager: NSObject {
 
     private(set) weak var central: CBCentralManager?
 
+    let profile: BlePodProfile
     let configuration: Configuration
 
     // Confined to `queue`
@@ -84,12 +85,8 @@ class PeripheralManager: NSObject {
 
         assert(podType.isDash || podType.isO5)
         self.podType = podType
-        setServicePodType(podType: podType)
-        if podType.isO5 {
-            self.configuration = .omnipod5
-        } else {
-            self.configuration = .omnipodDash
-        }
+        self.profile = podType.blePodProfile
+        self.configuration = profile.makePeripheralConfiguration()
 
         super.init()
 
@@ -518,13 +515,13 @@ extension PeripheralManager {
         case .connected:
             clearCommsQueues()
 
-            // Log the MTU at connect time. Note: this may report 20 (MTU 23) initially because
-            // iOS auto-negotiates MTU asynchronously after connect. For O5 (.withoutResponse writes),
-            // writes exceeding maximumWriteValueLength are silently truncated — NOT fragmented.
-            // Android requests MTU 251, pod responds with 247. iOS should auto-negotiate to 247.
-            // completeConfiguration() polls until MTU settles before sending protocol messages.
-            let mtu = peripheral.maximumWriteValueLength(for: .withoutResponse)
-            self.log.default("PeripheralManager - didConnect - maximumWriteValueLength: %{public}d, BlePacket_MAX_PAYLOAD_SIZE: %{public}d", mtu, BlePacket_MAX_PAYLOAD_SIZE)
+            /// maximumWriteValueLength (MTU minus 3-byte overhead) is the max bytes to write in a single operation.
+            /// This may report 20 here (MTU 23) initially because iOS auto-negotiates the MTU asynchronously.
+            /// iOS should auto-negotiate a maximumWriteValueLength of 244 for the O5 to match packetLayout.maxPayloadSize.
+            /// completeConfiguration() polls until the maximumWriteValueLength settles before sending any protocol messages.
+            /// For O5 withoutResponse, any writes exceeding maximumWriteValueLength are silently truncated — NOT fragmented.
+            let maximumWriteValueLength = peripheral.maximumWriteValueLength(for: .withoutResponse)
+            self.log.default("PeripheralManager - didConnect - maximumWriteValueLength: %{public}d, packetMaxPayloadSize: %{public}d", maximumWriteValueLength, profile.packetLayout.maxPayloadSize)
 
             self.log.debug("PeripheralManager - didConnect - running assertConfiguration")
             assertConfiguration()
@@ -552,24 +549,24 @@ extension PeripheralManager {
 }
 
 extension CBPeripheral {
-    func getCommandCharacteristic() -> CBCharacteristic? {
-        guard let service = services?.itemWithUUID(OmnipodServiceUUID_service_cbUUID) else {
+    func getCommandCharacteristic(profile: BlePodProfile) -> CBCharacteristic? {
+        guard let service = services?.itemWithUUID(profile.serviceUUID) else {
             return nil
         }
 
-        let val = service.characteristics?.itemWithUUID(OmnipodCharacteristicUUID_command_cbUUID)
+        let val = service.characteristics?.itemWithUUID(profile.commandCharacteristicUUID)
         if val == nil {
             return nil
         }
         return val
     }
 
-    func getDataCharacteristic() -> CBCharacteristic? {
-        guard let service = services?.itemWithUUID(OmnipodServiceUUID_service_cbUUID) else {
+    func getDataCharacteristic(profile: BlePodProfile) -> CBCharacteristic? {
+        guard let service = services?.itemWithUUID(profile.serviceUUID) else {
             return nil
         }
 
-        let val = service.characteristics?.itemWithUUID(OmnipodCharacteristicUUID_data_cbUUID)
+        let val = service.characteristics?.itemWithUUID(profile.dataCharacteristicUUID)
         if val == nil {
             return nil
         }
