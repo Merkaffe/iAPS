@@ -218,6 +218,12 @@ extension PeripheralManager {
         dispatchPrecondition(condition: .onQueue(queue))
         guard central?.state == .poweredOn && peripheral.state == .connected else {
             self.log.info("runCommand guard failed - bluetooth not running or peripheral not connected: peripheral %@", peripheral)
+            self.log.info("runCommand guard failed - not ready: peripheral=%{public}@ centralState=%{public}@ peripheralState=%{public}@ queueDepth=%{public}d commandConditions=%{public}@",
+                          peripheral,
+                          central?.state.description ?? "nil",
+                          peripheral.state.description,
+                          sessionQueue.operationCount,
+                          String(describing: commandConditions))
             throw PeripheralManagerError.notReady
         }
 
@@ -228,6 +234,7 @@ extension PeripheralManager {
         }
 
         guard commandConditions.isEmpty else {
+            log.error("runCommand precondition failed - pending command conditions already present: %{public}@", String(describing: commandConditions))
             throw PeripheralManagerError.emptyValue
         }
 
@@ -249,6 +256,14 @@ extension PeripheralManager {
 
         guard signaled else {
             self.log.info("runCommand lock timeout reached - not signalled")
+            let characteristicsReady = peripheral.getCommandCharacteristic() != nil && peripheral.getDataCharacteristic() != nil
+            self.log.error("runCommand timeout - not signalled: timeout=%{public}.3f pendingConditions=%{public}@ characteristicsReady=%{public}@ queueDepth=%{public}d centralState=%{public}@ peripheralState=%{public}@",
+                           timeout,
+                           String(describing: commandConditions),
+                           String(describing: characteristicsReady),
+                           sessionQueue.operationCount,
+                           central?.state.description ?? "nil",
+                           peripheral.state.description)
             throw PeripheralManagerError.timeout(commandConditions)
         }
 
@@ -579,6 +594,10 @@ extension CBPeripheral {
 extension PeripheralManager {
     /// Timestamp of the last heartbeat received from the O5 pod
     private static var lastHeartbeatTime: Date?
+
+    static func mostRecentHeartbeatTime() -> Date? {
+        return lastHeartbeatTime
+    }
 
     /// Handle a heartbeat notification from the O5 pod.
     /// This resets the idle timer to keep the connection alive.

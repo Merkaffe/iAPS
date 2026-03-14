@@ -33,6 +33,29 @@ class BlePodComms: PodComms {
 
     private let bluetoothManager = BluetoothManager()
 
+    private func secondsSinceLastSuccessfulTransportMessage() -> TimeInterval? {
+        guard let last = BlePodMessageTransport.mostRecentSuccessfulExchangeTime() else {
+            return nil
+        }
+        return Date().timeIntervalSince(last)
+    }
+
+    private func logSessionEntryState(reason: StaticString) {
+        let managerExists = manager != nil
+        let peripheralUUID = manager?.peripheral.identifier.uuidString ?? "nil"
+        let peripheralState = manager?.peripheral.state.description ?? "nil"
+        let activeBLEIdentifier = podState?.bleIdentifier ?? "nil"
+        let sinceLastMessage = secondsSinceLastSuccessfulTransportMessage()
+        log.error("bleRunSession abort (%{public}@): managerPresent=%{public}@ peripheralUUID=%{public}@ peripheralState=%{public}@ activePodBLEIdentifier=%{public}@ needsSessionEstablishment=%{public}@ secondsSinceLastSuccessfulPodMessage=%{public}@",
+                  String(describing: reason),
+                  String(describing: managerExists),
+                  peripheralUUID,
+                  peripheralState,
+                  activeBLEIdentifier,
+                  String(describing: needsSessionEstablishment),
+                  sinceLastMessage != nil ? String(format: "%.3f", sinceLastMessage!) : "nil")
+    }
+
     override init(podState: PodState?, podType: PodType, myId: UInt32 = 0, podId: UInt32 = 0) {
         super.init(podState: podState, podType: podType, myId: myId, podId: podId)
         bluetoothManager.podType = podType
@@ -605,9 +628,16 @@ class BlePodComms: PodComms {
     func bleRunSession(withName name: String, _ block: @escaping (_ result: SessionRunResult) -> Void) {
 
         guard let manager = manager, manager.peripheral.state == .connected else {
+            logSessionEntryState(reason: "podNotConnected")
             block(.failure(PodCommsError.podNotConnected))
             return
         }
+
+        log.default("bleRunSession starting %{public}@ with peripheral=%{public}@ state=%{public}@ needsSessionEstablishment=%{public}@",
+                    name,
+                    manager.peripheral.identifier.uuidString,
+                    manager.peripheral.state.description,
+                    String(describing: needsSessionEstablishment))
 
         manager.runSession(withName: name) { () in
 
@@ -645,7 +675,12 @@ class BlePodComms: PodComms {
 extension BlePodComms: OmniConnectionDelegate {
     func omnipodPeripheralWasRestored(manager: PeripheralManager) {
         if let podState = podState, manager.peripheral.identifier.uuidString == podState.bleIdentifier {
+            let previousManagerIdentifier = self.manager?.peripheral.identifier.uuidString
             self.manager = manager
+            log.default("omnipodPeripheralWasRestored: peripheral=%{public}@ activeManagerReplaced=%{public}@ previousManager=%{public}@",
+                        manager.peripheral.identifier.uuidString,
+                        String(describing: previousManagerIdentifier != manager.peripheral.identifier.uuidString),
+                        previousManagerIdentifier ?? "nil")
             delegate?.omnipodPeripheralWasRestored(manager: manager)
         }
     }
@@ -653,7 +688,13 @@ extension BlePodComms: OmniConnectionDelegate {
     func omnipodPeripheralDidConnect(manager: PeripheralManager) {
         if let podState = podState, manager.peripheral.identifier.uuidString == podState.bleIdentifier {
             needsSessionEstablishment = true
+            let previousManagerIdentifier = self.manager?.peripheral.identifier.uuidString
             self.manager = manager
+            log.default("omnipodPeripheralDidConnect: peripheral=%{public}@ activeManagerReplaced=%{public}@ previousManager=%{public}@ needsSessionEstablishment=%{public}@",
+                        manager.peripheral.identifier.uuidString,
+                        String(describing: previousManagerIdentifier != manager.peripheral.identifier.uuidString),
+                        previousManagerIdentifier ?? "nil",
+                        String(describing: needsSessionEstablishment))
             delegate?.omnipodPeripheralDidConnect(manager: manager)
         }
     }
@@ -661,14 +702,26 @@ extension BlePodComms: OmniConnectionDelegate {
     func omnipodPeripheralDidDisconnect(peripheral: CBPeripheral, error: Error?) {
         if let podState = podState, peripheral.identifier.uuidString == podState.bleIdentifier {
             delegate?.omnipodPeripheralDidDisconnect(peripheral: peripheral, error: error)
-            log.debug("omnipodPeripheralDidDisconnect... will auto-reconnect")
+            let sinceLastMessage = secondsSinceLastSuccessfulTransportMessage()
+            log.error("omnipodPeripheralDidDisconnect: peripheral=%{public}@ error=%{public}@ needsSessionEstablishment=%{public}@ secondsSinceLastSuccessfulPodMessage=%{public}@ autoReconnectExpected=%{public}@",
+                      peripheral.identifier.uuidString,
+                      String(describing: error),
+                      String(describing: needsSessionEstablishment),
+                      sinceLastMessage != nil ? String(format: "%.3f", sinceLastMessage!) : "nil",
+                      "unknown")
         }
     }
 
     func omnipodPeripheralDidFailToConnect(peripheral: CBPeripheral, error: Error?) {
         if let podState = podState, peripheral.identifier.uuidString == podState.bleIdentifier {
             delegate?.omnipodPeripheralDidFailToConnect(peripheral: peripheral, error: error)
-            log.debug("omnipodPeripheralDidDisconnect... will auto-reconnect")
+            let sinceLastMessage = secondsSinceLastSuccessfulTransportMessage()
+            log.error("omnipodPeripheralDidFailToConnect: peripheral=%{public}@ error=%{public}@ needsSessionEstablishment=%{public}@ secondsSinceLastSuccessfulPodMessage=%{public}@ autoReconnectExpected=%{public}@",
+                      peripheral.identifier.uuidString,
+                      String(describing: error),
+                      String(describing: needsSessionEstablishment),
+                      sinceLastMessage != nil ? String(format: "%.3f", sinceLastMessage!) : "nil",
+                      "unknown")
         }
     }
 
@@ -706,11 +759,33 @@ extension BlePodComms: PeripheralManagerDelegate {
             }
 
             do {
-                try manager.sendHello(myId: myId)
-                try manager.enableNotifications() // Seemingly this cannot be done before the hello command, or the pod disconnects
-                try establishNewSession()
+                log.default("completeConfiguration: begin HELLO step for peripheral=%{public}@", manager.peripheral.identifier.uuidString)
+                do {
+                    try manager.sendHello(myId: myId)
+                } catch {
+                    log.error("completeConfiguration failed at HELLO: %{public}@", String(describing: error))
+                    throw error
+                }
+
+                log.default("completeConfiguration: begin notification enablement")
+                do {
+                    try manager.enableNotifications() // Seemingly this cannot be done before the hello command, or the pod disconnects
+                } catch {
+                    log.error("completeConfiguration failed at notification enablement: %{public}@", String(describing: error))
+                    throw error
+                }
+
+                log.default("completeConfiguration: begin session establishment")
+                do {
+                    try establishNewSession()
+                } catch {
+                    log.error("completeConfiguration failed at session establishment: %{public}@", String(describing: error))
+                    throw error
+                }
+
                 needsSessionEstablishment = false
                 delegate?.podCommsDidEstablishSession(self)
+                log.default("completeConfiguration: session establishment complete")
             } catch {
                 log.error("Pod session sync error: %{public}@", String(describing: error))
             }

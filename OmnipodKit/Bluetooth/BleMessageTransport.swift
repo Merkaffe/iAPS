@@ -168,6 +168,12 @@ class BlePodMessageTransport: MessageTransport {
     weak var messageLogger: MessageLogger?
     weak var delegate: MessageTransportDelegate?
 
+    private static var lastSuccessfulExchangeTime: Date?
+
+    static func mostRecentSuccessfulExchangeTime() -> Date? {
+        return lastSuccessfulExchangeTime
+    }
+
     init(manager: PeripheralManager, myId: UInt32, podId: UInt32, state: BleMessageTransportState) {
         self.manager = manager
         self.myId = myId
@@ -209,15 +215,21 @@ class BlePodMessageTransport: MessageTransport {
         messageLogger?.didSend(dataToSend)
 
         let sendMessage = try getCmdMessage(cmd: message)
+        log.default("[transport] send phase=write msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d",
+                    msgSeq, nonceSeq, messageNumber)
 
         let writeResult = manager.sendMessagePacket(sendMessage)
         switch writeResult {
         case .sentWithAcknowledgment:
             break;
         case .sentWithError(let error):
+            log.error("[transport] failed phase=write-ack msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d error=%{public}@",
+                      msgSeq, nonceSeq, messageNumber, String(describing: error))
             messageLogger?.didError("Unacknowledged message. seq:\(message.sequenceNum), error = \(error)")
             throw PodCommsError.unacknowledgedMessage(sequenceNumber: message.sequenceNum, error: error)
         case .unsentWithError(let error):
+            log.error("[transport] failed phase=write msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d error=%{public}@",
+                      msgSeq, nonceSeq, messageNumber, String(describing: error))
             throw PodCommsError.commsError(error: error)
         }
 
@@ -226,6 +238,8 @@ class BlePodMessageTransport: MessageTransport {
             incrementMessageNumber() // bump the 4-bit Omnipod Message number
             return response
         } catch {
+            log.error("[transport] failed phase=read/ack msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d error=%{public}@",
+                      msgSeq, nonceSeq, messageNumber, String(describing: error))
             messageLogger?.didError("Unacknowledged message. seq:\(message.sequenceNum), error = \(error)")
             throw PodCommsError.unacknowledgedMessage(sequenceNumber: message.sequenceNum, error: error)
         }
@@ -285,28 +299,54 @@ class BlePodMessageTransport: MessageTransport {
     private func readAndAckResponse() throws -> Message {
         guard let enDecrypt = self.enDecrypt else { throw PodCommsError.podNotConnected }
 
+        log.default("[transport] receive phase=read msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d",
+                    msgSeq, nonceSeq, messageNumber)
         let readResponse = try manager.readMessagePacket()
         guard let readMessage = readResponse else {
+            log.error("[transport] failed phase=read-empty msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d",
+                      msgSeq, nonceSeq, messageNumber)
             throw PodProtocolError.messageIOException("Could not read response")
         }
 
         incrementNonceSeq()
-        let decrypted = try enDecrypt.decrypt(readMessage, nonceSeq)
+        let decrypted: MessagePacket
+        do {
+            decrypted = try enDecrypt.decrypt(readMessage, nonceSeq)
+        } catch {
+            log.error("[transport] failed phase=decrypt msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d error=%{public}@",
+                      msgSeq, nonceSeq, messageNumber, String(describing: error))
+            throw error
+        }
 
-        let response = try parseResponse(decrypted: decrypted)
+        let response: Message
+        do {
+            response = try parseResponse(decrypted: decrypted)
+        } catch {
+            log.error("[transport] failed phase=parse msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d error=%{public}@",
+                      msgSeq, nonceSeq, messageNumber, String(describing: error))
+            throw error
+        }
 
         incrementMsgSeq()
         incrementNonceSeq()
         let ack = try getAck(response: decrypted)
         let ackResult = manager.sendMessagePacket(ack)
         guard case .sentWithAcknowledgment = ackResult else {
+            log.error("[transport] failed phase=ack-write msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d ackResult=%{public}@",
+                      msgSeq, nonceSeq, messageNumber, String(describing: ackResult))
             throw PodProtocolError.messageIOException("Could not write $msgType: \(ackResult)")
         }
 
         // verify that the Omnipod message # matches the expected value
         guard response.sequenceNum == messageNumber else {
+            log.error("[transport] failed phase=message-number-validation expected=%{public}d received=%{public}d msgSeq=%{public}d nonceSeq=%{public}d",
+                      messageNumber, response.sequenceNum, msgSeq, nonceSeq)
             throw MessageError.invalidSequence
         }
+
+        BlePodMessageTransport.lastSuccessfulExchangeTime = Date()
+        log.default("[transport] exchange success msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d",
+                    msgSeq, nonceSeq, messageNumber)
 
         return response
     }

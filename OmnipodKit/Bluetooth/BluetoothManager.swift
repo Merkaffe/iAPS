@@ -384,12 +384,28 @@ extension BluetoothManager: CBCentralManagerDelegate {
         log.debug("%{public}@: %{public}@", #function, peripheral)
         
         // Proxy connection events to peripheral manager
+        var matchedManager = false
         for device in devices where device.manager.peripheral.identifier == peripheral.identifier {
+            matchedManager = true
             device.manager.centralManager(central, didConnect: peripheral)
             connectionDelegate?.omnipodPeripheralDidConnect(manager: device.manager)
 
+            let lastHeartbeatAge = PeripheralManager.mostRecentHeartbeatTime().map { Date().timeIntervalSince($0) }
+            let lastMessageAge = BlePodMessageTransport.mostRecentSuccessfulExchangeTime().map { Date().timeIntervalSince($0) }
+            log.default("[CONNECT] connected peripheral=%{public}@ managerMatched=%{public}@ autoConnect=%{public}@ devicesTracked=%{public}d heartbeatAgeSeconds=%{public}@ lastMessageAgeSeconds=%{public}@",
+                        peripheral.identifier.uuidString,
+                        String(describing: matchedManager),
+                        String(describing: autoConnectIDs.contains(peripheral.identifier.uuidString)),
+                        devices.count,
+                        lastHeartbeatAge != nil ? String(format: "%.3f", lastHeartbeatAge!) : "nil",
+                        lastMessageAge != nil ? String(format: "%.3f", lastMessageAge!) : "nil")
+
             // Get an RSSI reading for logging
             peripheral.readRSSI()
+        }
+
+        if !matchedManager {
+            log.error("[CONNECT] connected peripheral has no matching manager: %{public}@", peripheral.identifier.uuidString)
         }
     }
 
@@ -411,7 +427,15 @@ extension BluetoothManager: CBCentralManagerDelegate {
 
         if autoConnectIDs.contains(peripheral.identifier.uuidString) {
             log.debug("Reconnecting disconnected autoconnect peripheral")
+            let lastHeartbeatAge = PeripheralManager.mostRecentHeartbeatTime().map { Date().timeIntervalSince($0) }
+            let lastMessageAge = BlePodMessageTransport.mostRecentSuccessfulExchangeTime().map { Date().timeIntervalSince($0) }
+            log.error("[DISCONNECT] scheduling auto-reconnect peripheral=%{public}@ state=%{public}@ heartbeatAgeSeconds=%{public}@ lastMessageAgeSeconds=%{public}@",
+                      peripheral.identifier.uuidString,
+                      peripheral.state.description,
+                      lastHeartbeatAge != nil ? String(format: "%.3f", lastHeartbeatAge!) : "nil",
+                      lastMessageAge != nil ? String(format: "%.3f", lastMessageAge!) : "nil")
             central.connect(peripheral, options: nil)
+            log.default("[DISCONNECT] auto-reconnect requested peripheral=%{public}@", peripheral.identifier.uuidString)
         }
     }
 
@@ -423,7 +447,15 @@ extension BluetoothManager: CBCentralManagerDelegate {
         connectionDelegate?.omnipodPeripheralDidFailToConnect(peripheral: peripheral, error: error)
 
         if autoConnectIDs.contains(peripheral.identifier.uuidString) {
+            let lastHeartbeatAge = PeripheralManager.mostRecentHeartbeatTime().map { Date().timeIntervalSince($0) }
+            let lastMessageAge = BlePodMessageTransport.mostRecentSuccessfulExchangeTime().map { Date().timeIntervalSince($0) }
+            log.error("[FAIL-TO-CONNECT] scheduling auto-reconnect peripheral=%{public}@ state=%{public}@ heartbeatAgeSeconds=%{public}@ lastMessageAgeSeconds=%{public}@",
+                      peripheral.identifier.uuidString,
+                      peripheral.state.description,
+                      lastHeartbeatAge != nil ? String(format: "%.3f", lastHeartbeatAge!) : "nil",
+                      lastMessageAge != nil ? String(format: "%.3f", lastMessageAge!) : "nil")
             central.connect(peripheral, options: nil)
+            log.default("[FAIL-TO-CONNECT] auto-reconnect requested peripheral=%{public}@", peripheral.identifier.uuidString)
         }
     }
 }
