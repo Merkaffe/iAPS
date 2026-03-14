@@ -83,7 +83,8 @@ extension PeripheralManager {
                 try waitForCommand(PodCommand.CTS, timeout: 5)
                 log.bleDebug("[sendMessagePacket] Got CTS")
             } else {
-                log.bleDebug("[sendMessagePacket] Skipping RTS/CTS, writing data directly. peripheral state=%{public}@", peripheral.state.description)
+                log.bleDebug("[sendMessagePacket] Skipping RTS/CTS, writing data directly. peripheral state=%{public}@",
+                             String(describing: peripheral.state))
             }
 
             let splitter = PayloadSplitter(payload: message.asData(forEncryption: forEncryption), layout: profile.packetLayout)
@@ -98,18 +99,20 @@ extension PeripheralManager {
                 }
                 let packetData = packet.toData(layout: profile.packetLayout)
                 log.bleDebug("[sendMessagePacket] Writing data packet %{public}d/%{public}d (%{public}d bytes)... peripheral state=%{public}@",
-                            index + 1, packets.count, packetData.count, peripheral.state.description)
+                            index + 1, packets.count, packetData.count, String(describing: peripheral.state))
                 try sendData(packetData, timeout: 5)
                 log.bleDebug("[sendMessagePacket] Data packet %{public}d/%{public}d written. Peeking for NACK...", index + 1, packets.count)
                 try self.peekForNack()
             }
 
-            log.bleDebug("[sendMessagePacket] All packets written. Waiting for SUCCESS... peripheral state=%{public}@", peripheral.state.description)
+            log.bleDebug("[sendMessagePacket] All packets written. Waiting for SUCCESS... peripheral state=%{public}@",
+                         String(describing: peripheral.state))
             try waitForCommand(PodCommand.SUCCESS, timeout: 5)
-            log.bleDebug("[sendMessagePacket] SUCCESS received. peripheral state=%{public}@", peripheral.state.description)
+            log.bleDebug("[sendMessagePacket] SUCCESS received. peripheral state=%{public}@",
+                         String(describing: peripheral.state))
         } catch {
             log.error("[sendMessagePacket] Error (didSend=%{public}@): %{public}@. peripheral state=%{public}@",
-                      String(describing: didSend), String(describing: error), peripheral.state.description)
+                      String(describing: didSend), String(describing: error), String(describing: peripheral.state))
             if didSend {
                 return .sentWithError(error)
             } else {
@@ -133,12 +136,14 @@ extension PeripheralManager {
                 try sendCommandType(PodCommand.CTS)
                 log.bleDebug("[readMessagePacket] CTS sent")
             } else {
-                log.bleDebug("[readMessagePacket] Skipping RTS/CTS, waiting for data. peripheral state=%{public}@", peripheral.state.description)
+                log.bleDebug("[readMessagePacket] Skipping RTS/CTS, waiting for data. peripheral state=%{public}@",
+                             String(describing: peripheral.state))
             }
 
             var expected: UInt8 = 0
 
-            log.bleDebug("[readMessagePacket] Waiting for first data packet (seq 0)... peripheral state=%{public}@", peripheral.state.description)
+            log.bleDebug("[readMessagePacket] Waiting for first data packet (seq 0)... peripheral state=%{public}@",
+                         String(describing: peripheral.state))
             let firstPacket = try waitForData(sequence: expected, timeout: 5)
             log.bleDebug("[readMessagePacket] First data packet received (%{public}d bytes)", firstPacket.count)
 
@@ -151,7 +156,7 @@ extension PeripheralManager {
                 for i in 1...joiner.fullFragments {
                     expected += 1
                     log.bleDebug("[readMessagePacket] Waiting for fragment %{public}d (seq %{public}d)... peripheral state=%{public}@",
-                                i, expected, peripheral.state.description)
+                                i, expected, String(describing: peripheral.state))
                     let packet = try waitForData(sequence: expected, timeout: 5)
                     log.bleDebug("[readMessagePacket] Fragment %{public}d received (%{public}d bytes)", i, packet.count)
                     try joiner.accumulate(packet: packet)
@@ -160,7 +165,7 @@ extension PeripheralManager {
             if joiner.oneExtraPacket {
                 expected += 1
                 log.bleDebug("[readMessagePacket] Waiting for extra fragment (seq %{public}d)... peripheral state=%{public}@",
-                            expected, peripheral.state.description)
+                            expected, String(describing: peripheral.state))
                 let packet = try waitForData(sequence: expected, timeout: 5)
                 log.bleDebug("[readMessagePacket] Extra fragment received (%{public}d bytes)", packet.count)
                 try joiner.accumulate(packet: packet)
@@ -170,15 +175,19 @@ extension PeripheralManager {
             try  sendCommandType(PodCommand.SUCCESS)
             log.bleDebug("[readMessagePacket] SUCCESS sent. Parsing message...")
             packet = try MessagePacket.parse(payload: fullPayload)
-            log.bleDebug("[readMessagePacket] Message parsed successfully. peripheral state=%{public}@", peripheral.state.description)
+            log.bleDebug("[readMessagePacket] Message parsed successfully. peripheral state=%{public}@",
+                         String(describing: peripheral.state))
         } catch {
-            log.error("[readMessagePacket] Error reading message: %{public}@. peripheral state=%{public}@", String(describing: error), peripheral.state.description)
+            log.error("[readMessagePacket] Error reading message: %{public}@. peripheral state=%{public}@",
+                      String(describing: error),
+                      String(describing: peripheral.state))
             if let error = error as? PeripheralManagerError, error.isSymptomaticOfUnresponsivePod {
                 if peripheral.state == .connected {
                     log.error("[readMessagePacket] Disconnecting due to unresponsive pod error while reading")
                     central?.cancelPeripheralConnection(peripheral)
                 } else {
-                    log.error("[readMessagePacket] Pod already not connected (state=%{public}@), skipping disconnect", peripheral.state.description)
+                    log.error("[readMessagePacket] Pod already not connected (state=%{public}@), skipping disconnect",
+                              String(describing: peripheral.state))
                 }
             } else {
                 log.error("[readMessagePacket] Non-unresponsive error, sending NACK")
@@ -293,7 +302,8 @@ extension PeripheralManager {
         dispatchPrecondition(condition: .onQueue(queue))
 
         guard let characteristic = peripheral.getDataCharacteristic(profile: profile) else {
-            log.error("Unable to get characteristic... peripheral status: %{PUBLIC}@", peripheral.state.description)
+            log.error("Unable to get characteristic... peripheral status: %{PUBLIC}@",
+                      String(describing: peripheral.state))
             throw PeripheralManagerError.notReady
         }
 

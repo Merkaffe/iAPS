@@ -9,6 +9,9 @@
 
 import RileyLinkBLEKit
 import LoopKit
+import os.log
+
+private let log = OSLog(category: "OmniPumpManagerState")
 
 // XXX still needs be declared public with the current Trio implementation
 public struct OmniPumpManagerState: RawRepresentable, Equatable {
@@ -46,7 +49,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     var podAttachmentConfirmed: Bool
 
-    var activeAlerts: Set<PumpManagerAlert>
+    public internal(set) var activeAlerts: Set<PumpManagerAlert>
 
     var alertsWithPendingAcknowledgment: Set<PumpManagerAlert>
 
@@ -157,26 +160,37 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             (self.controllerId, self.podId) = initializeIds(podType: podType)
         }
 
+        log.debug("[OmniPumpManagerState] init finished: %{public}@",
+                  self.debugDescription)
+
     }
 
     public init?(rawValue: RawValue) {
+        log.debug("[OmniPumpManagerState] init with rawValue: %{public}@",
+                  String(describing: rawValue))
 
         let isOnboarded = rawValue["isOnboarded"] as? Bool ?? false
 
-        let podType: PodType
-        if let podTypeRaw = rawValue["podType"] as? UInt8 {
-            podType = PodType(rawValue: podTypeRaw)
-        } else if rawValue["controllerId"] != nil {
-            podType = dashType // OmniBLE
-        } else {
-            podType = erosType // OmniKit
-        }
 
         let podState: PodState?
         if let podStateRaw = rawValue["podState"] as? PodState.RawValue {
             podState = PodState(rawValue: podStateRaw)
         } else {
             podState = nil
+        }
+
+        let podType: PodType
+        if let podTypeRaw = rawValue["podType"] as? UInt8 {
+            podType = PodType(rawValue: podTypeRaw)
+        } else if let podState = podState {
+            log.error("[OmniPumpManagerState] init with rawValue has no podType, using podState.podType=%{public}@",
+                      String(describing: podState.podType))
+            podType = podState.podType
+        } else if rawValue["controllerId"] != nil {
+            log.error("[OmniPumpManagerState] init with rawValue has no podType, assuming dashType")
+            podType = dashType // OmniBLE
+        } else {
+            podType = erosType // OmniKit
         }
 
         let timeZone: TimeZone

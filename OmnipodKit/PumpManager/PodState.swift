@@ -9,6 +9,9 @@
 
 import Foundation
 import LoopKit
+import os.log
+
+private let log = OSLog(category: "PodState")
 
 enum SetupProgress: Int {
     case addressAssigned = 0
@@ -463,6 +466,8 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
     // MARK: - RawRepresentable
     public init?(rawValue: RawValue) {
+        log.debug("[PodState] init with rawValue: %{public}@",
+                  String(describing: rawValue))
 
         guard
             let address = rawValue["address"] as? UInt32,
@@ -627,6 +632,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         if let podTypeRaw = rawValue["podType"] as? UInt8 {
             self.podType = PodType(rawValue: podTypeRaw)
         } else if rawValue["ltk"] != nil {
+            log.error("[PodState] init with rawValue has missing podType, assuming dashType")
             self.podType = dashType // assume OmniBLE
         } else {
             self.podType = erosType // OmniKit

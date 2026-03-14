@@ -242,6 +242,25 @@ class PodCommsSession: MessageTransportDelegate {
         return mockCurrentDate ?? Date()
     }
 
+    private func logExchangeSummary(context: StaticString, requestedBlocks: [MessageBlock], wrappedError: Error) {
+        let requested = requestedBlocks.map { String(describing: $0.blockType) }.joined(separator: ",")
+        let pendingCommand = podState.unacknowledgedCommand.map { String(describing: $0) } ?? "nil"
+        let lastDeliveryStatus = podState.lastDeliveryStatusReceived.map { String(describing: $0) } ?? "nil"
+        log.error("[%{public}@] podAddress=0x%08x requestedBlocks=%{public}@ pendingCommand=%{public}@ lastDeliveryStatus=%{public}@ wrappedError=%{public}@",
+                  String(describing: context),
+                  podState.address,
+                  requested,
+                  pendingCommand,
+                  lastDeliveryStatus,
+                  String(describing: wrappedError))
+
+        if let podProtocolError = wrappedError as? PodProtocolError {
+            log.error("[%{public}@] PodProtocolError=%{public}@", String(describing: context), String(describing: podProtocolError))
+        } else if case PodCommsError.commsError(let underlying) = wrappedError, let podProtocolError = underlying as? PodProtocolError {
+            log.error("[%{public}@] PodProtocolError(underlying)=%{public}@", String(describing: context), String(describing: podProtocolError))
+        }
+    }
+
     init(podState: PodState, transport: MessageTransport, delegate: PodCommsSessionDelegate) {
         self.podState = podState
         self.transport = transport
@@ -362,7 +381,13 @@ class PodCommsSession: MessageTransportDelegate {
             // Clear the lastDeliveryStatusReceived variable which is used to guard against possible 0x31 pod faults
             podState.lastDeliveryStatusReceived = nil
 
-            let response = try transport.sendMessage(message)
+            let response: Message
+            do {
+                response = try transport.sendMessage(message)
+            } catch {
+                logExchangeSummary(context: "sendMessageFailure", requestedBlocks: blocksToSend, wrappedError: error)
+                throw error
+            }
 
             // Simulate fault
             //let podInfoResponse = try PodInfoResponse(encodedData: Data(hexadecimalString: "0216020d0000000000ab6a038403ff03860000285708030d0000")!)
@@ -694,9 +719,11 @@ class PodCommsSession: MessageTransportDelegate {
         } catch PodCommsError.unacknowledgedMessage(let seq, let error) {
             podState.unacknowledgedCommand = podState.unacknowledgedCommand?.commsFinished
             log.error("Unacknowledged bolus: command seq = %d, error = %{public}@", seq, String(describing: error))
+            logExchangeSummary(context: "bolus.unacknowledged", requestedBlocks: [bolusScheduleCommand, bolusExtraCommand], wrappedError: error)
             return DeliveryCommandResult.unacknowledged(error: .commsError(error: error))
         } catch let error {
             podState.unacknowledgedCommand = nil
+            logExchangeSummary(context: "bolus.failure", requestedBlocks: [bolusScheduleCommand, bolusExtraCommand], wrappedError: error)
             return DeliveryCommandResult.certainFailure(error: .commsError(error: error))
         }
     }
@@ -726,9 +753,11 @@ class PodCommsSession: MessageTransportDelegate {
         } catch PodCommsError.unacknowledgedMessage(let seq, let error) {
             podState.unacknowledgedCommand = podState.unacknowledgedCommand?.commsFinished
             log.error("Unacknowledged temp basal: command seq = %d, error = %{public}@", seq, String(describing: error))
+            logExchangeSummary(context: "tempBasal.unacknowledged", requestedBlocks: [tempBasalCommand, tempBasalExtraCommand], wrappedError: error)
             return DeliveryCommandResult.unacknowledged(error: .commsError(error: error))
         } catch let error {
             podState.unacknowledgedCommand = nil
+            logExchangeSummary(context: "tempBasal.failure", requestedBlocks: [tempBasalCommand, tempBasalExtraCommand], wrappedError: error)
             return DeliveryCommandResult.certainFailure(error: .commsError(error: error))
         }
     }
