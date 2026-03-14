@@ -49,7 +49,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     var podAttachmentConfirmed: Bool
 
-    var activeAlerts: Set<PumpManagerAlert>
+    public internal(set) var activeAlerts: Set<PumpManagerAlert>
 
     var alertsWithPendingAcknowledgment: Set<PumpManagerAlert>
 
