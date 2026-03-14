@@ -45,9 +45,19 @@ extension OSLog {
             os_log(message, log: self, type: type, args[0], args[1], args[2], args[3])
         case 5:
             os_log(message, log: self, type: type, args[0], args[1], args[2], args[3], args[4])
+        case 6:
+            os_log(message, log: self, type: type, args[0], args[1], args[2], args[3], args[4], args[5])
+        case 7:
+            os_log(message, log: self, type: type, args[0], args[1], args[2], args[3], args[4], args[5], args[6])
+        case 8:
+            os_log(message, log: self, type: type, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])
+        case 9:
+            os_log(message, log: self, type: type, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+        case 10:
+            os_log(message, log: self, type: type, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
         default:
-            os_log(message, log: self, type: type, args)
+            assertionFailure("OSLog wrapper received unsupported argument count: \(args.count)")
+            os_log("Unsupported OSLog argument count %{public}d for message %{public}@", log: self, type: .fault, args.count, String(describing: message))
         }
     }
 }
-
