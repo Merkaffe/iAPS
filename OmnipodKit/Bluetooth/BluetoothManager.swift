@@ -431,7 +431,7 @@ extension BluetoothManager: CBCentralManagerDelegate {
             let lastMessageAge = BlePodMessageTransport.mostRecentSuccessfulExchangeTime().map { Date().timeIntervalSince($0) }
             log.error("[DISCONNECT] scheduling auto-reconnect peripheral=%{public}@ state=%{public}@ heartbeatAgeSeconds=%{public}@ lastMessageAgeSeconds=%{public}@",
                       peripheral.identifier.uuidString,
-                      peripheral.state.description,
+                      String(describing: peripheral.state),
                       lastHeartbeatAge != nil ? String(format: "%.3f", lastHeartbeatAge!) : "nil",
                       lastMessageAge != nil ? String(format: "%.3f", lastMessageAge!) : "nil")
             central.connect(peripheral, options: nil)
@@ -451,7 +451,7 @@ extension BluetoothManager: CBCentralManagerDelegate {
             let lastMessageAge = BlePodMessageTransport.mostRecentSuccessfulExchangeTime().map { Date().timeIntervalSince($0) }
             log.error("[FAIL-TO-CONNECT] scheduling auto-reconnect peripheral=%{public}@ state=%{public}@ heartbeatAgeSeconds=%{public}@ lastMessageAgeSeconds=%{public}@",
                       peripheral.identifier.uuidString,
-                      peripheral.state.description,
+                      String(describing: peripheral.state),
                       lastHeartbeatAge != nil ? String(format: "%.3f", lastHeartbeatAge!) : "nil",
                       lastMessageAge != nil ? String(format: "%.3f", lastMessageAge!) : "nil")
             central.connect(peripheral, options: nil)

@@ -9,6 +9,9 @@
 
 import Foundation
 import LoopKit
+import os.log
+
+private let log = OSLog(category: "PodState")
 
 enum SetupProgress: Int {
     case addressAssigned = 0
@@ -463,7 +466,8 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
     // MARK: - RawRepresentable
     public init?(rawValue: RawValue) {
-        log.debug("[PodState] init with rawValue: \(rawValue)")
+        log.debug("[PodState] init with rawValue: %{public}@",
+                  String(describing: rawValue))
 
         guard
             let address = rawValue["address"] as? UInt32,

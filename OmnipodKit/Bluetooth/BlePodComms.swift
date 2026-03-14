@@ -43,7 +43,7 @@ class BlePodComms: PodComms {
     private func logSessionEntryState(reason: StaticString) {
         let managerExists = manager != nil
         let peripheralUUID = manager?.peripheral.identifier.uuidString ?? "nil"
-        let peripheralState = manager?.peripheral.state.description ?? "nil"
+        let peripheralState = manager.map { String(describing: $0.peripheral.state) } ?? "nil"
         let activeBLEIdentifier = podState?.bleIdentifier ?? "nil"
         let sinceLastMessage = secondsSinceLastSuccessfulTransportMessage()
         log.error("bleRunSession abort (%{public}@): managerPresent=%{public}@ peripheralUUID=%{public}@ peripheralState=%{public}@ activePodBLEIdentifier=%{public}@ needsSessionEstablishment=%{public}@ secondsSinceLastSuccessfulPodMessage=%{public}@",
