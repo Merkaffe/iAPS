@@ -50,20 +50,20 @@ extension PeripheralManager {
         dispatchPrecondition(condition: .onQueue(queue))
 
         let controllerId = Id.fromUInt32(myId).address
-        guard let characteristic = peripheral.getCommandCharacteristic() else {
+        guard let characteristic = peripheral.getCommandCharacteristic(profile: profile) else {
             throw PeripheralManagerError.notReady
         }
 
-        let type: CBCharacteristicWriteType = podType.isDash ? .withResponse : .withoutResponse
+        let type: CBCharacteristicWriteType = profile.commandWriteType
         try writeValue(Data([PodCommand.HELLO.rawValue, 0x01, 0x04]) + controllerId, for: characteristic, type: type, timeout: 5)
     }
     
     func enableNotifications() throws {
         dispatchPrecondition(condition: .onQueue(queue))
-        guard let cmdChar = peripheral.getCommandCharacteristic() else {
+        guard let cmdChar = peripheral.getCommandCharacteristic(profile: profile) else {
             throw PeripheralManagerError.notReady
         }
-        guard let dataChar = peripheral.getDataCharacteristic() else {
+        guard let dataChar = peripheral.getDataCharacteristic(profile: profile) else {
             throw PeripheralManagerError.notReady
         }
         try setNotifyValue(true, for: cmdChar, timeout: .seconds(2))
@@ -86,7 +86,7 @@ extension PeripheralManager {
                 log.bleDebug("[sendMessagePacket] Skipping RTS/CTS, writing data directly. peripheral state=%{public}@", peripheral.state.description)
             }
 
-            let splitter = PayloadSplitter(payload: message.asData(forEncryption: forEncryption))
+            let splitter = PayloadSplitter(payload: message.asData(forEncryption: forEncryption), layout: profile.packetLayout)
             let packets = splitter.splitInPackets()
             log.bleDebug("[sendMessagePacket] Split payload into %{public}d packet(s), total payload %{public}d bytes", packets.count, message.payload.count)
 
@@ -96,7 +96,7 @@ extension PeripheralManager {
                 if index == packets.count - 1 {
                     didSend = true
                 }
-                let packetData = packet.toData()
+                let packetData = packet.toData(layout: profile.packetLayout)
                 log.bleDebug("[sendMessagePacket] Writing data packet %{public}d/%{public}d (%{public}d bytes)... peripheral state=%{public}@",
                             index + 1, packets.count, packetData.count, peripheral.state.description)
                 try sendData(packetData, timeout: 5)
@@ -142,7 +142,7 @@ extension PeripheralManager {
             let firstPacket = try waitForData(sequence: expected, timeout: 5)
             log.bleDebug("[readMessagePacket] First data packet received (%{public}d bytes)", firstPacket.count)
 
-            let joiner = try PayloadJoiner(firstPacket: firstPacket)
+            let joiner = try PayloadJoiner(firstPacket: firstPacket, layout: profile.packetLayout)
             let totalFragments = joiner.fullFragments + (joiner.oneExtraPacket ? 1 : 0)
             log.bleDebug("[readMessagePacket] Expecting %{public}d more fragment(s) (fullFragments=%{public}d, oneExtra=%{public}@)",
                         totalFragments, joiner.fullFragments, String(describing: joiner.oneExtraPacket))
@@ -216,11 +216,11 @@ extension PeripheralManager {
     func sendCommandType(_ command: PodCommand, timeout: TimeInterval = 5) throws  {
         dispatchPrecondition(condition: .onQueue(queue))
 
-        guard let characteristic = peripheral.getCommandCharacteristic() else {
+        guard let characteristic = peripheral.getCommandCharacteristic(profile: profile) else {
             throw PeripheralManagerError.notReady
         }
 
-        let type: CBCharacteristicWriteType = podType.isDash ? .withResponse : .withoutResponse
+        let type: CBCharacteristicWriteType = profile.commandWriteType
         try writeValue(Data([command.rawValue]), for: characteristic, type: type, timeout: timeout)
     }
 
@@ -292,12 +292,12 @@ extension PeripheralManager {
     func sendData(_ value: Data, timeout: TimeInterval) throws {
         dispatchPrecondition(condition: .onQueue(queue))
 
-        guard let characteristic = peripheral.getDataCharacteristic() else {
+        guard let characteristic = peripheral.getDataCharacteristic(profile: profile) else {
             log.error("Unable to get characteristic... peripheral status: %{PUBLIC}@", peripheral.state.description)
             throw PeripheralManagerError.notReady
         }
 
-        let type: CBCharacteristicWriteType = podType.isDash ? .withResponse : .withoutResponse
+        let type: CBCharacteristicWriteType = profile.commandWriteType
         try writeValue(value, for: characteristic, type: type, timeout: timeout)
     }
 

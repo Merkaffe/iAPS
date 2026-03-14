@@ -142,10 +142,6 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
         self.podType = podType
 
-        if podType.isDash || podType.isO5 {
-            setServicePodType(podType: podType) // XXX the need for this function will be going away
-        }
-
         if podType.usesRileyLink {
             self.rileyLinkConnectionManagerState = rileyLinkConnectionManagerState
             self.controllerId = 0

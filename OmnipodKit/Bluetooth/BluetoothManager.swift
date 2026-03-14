@@ -261,7 +261,7 @@ class BluetoothManager: NSObject {
     
     private func startScanning() {
         log.default("Start scanning")
-        manager.scanForPeripherals(withServices: [OmnipodServiceUUID_advertisement_cbUUID], options: nil)
+        manager.scanForPeripherals(withServices: [podType.blePodProfile.advertisementServiceUUID], options: nil)
     }
 
     private func stopScanning() {
