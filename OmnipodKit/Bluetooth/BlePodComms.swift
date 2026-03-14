@@ -321,7 +321,9 @@ class BlePodComms: PodComms {
 
         // Only to be run for an O5 pod and before the SetupPod command has been run
         guard podType.isO5 && podState!.setupProgress.isPaired == false else {
-            log.error("[BlePodComms] cannot run handleO5Setup with podType=\(podType) and podState.setupProgress=\(podState!.setupProgress)")
+            log.error("[BlePodComms] cannot run handleO5Setup with podType=%{public}@ and podState.setupProgress=%{public}@",
+                      String(describing: podType),
+                      String(describing: podState!.setupProgress))
             return
         }
 
@@ -637,7 +639,7 @@ class BlePodComms: PodComms {
         log.default("bleRunSession starting %{public}@ with peripheral=%{public}@ state=%{public}@ needsSessionEstablishment=%{public}@",
                     name,
                     manager.peripheral.identifier.uuidString,
-                    manager.peripheral.state.description,
+                    String(describing: manager.peripheral.state),
                     String(describing: needsSessionEstablishment))
 
         manager.runSession(withName: name) { () in

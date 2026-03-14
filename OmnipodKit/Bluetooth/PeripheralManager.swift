@@ -220,8 +220,8 @@ extension PeripheralManager {
             self.log.info("runCommand guard failed - bluetooth not running or peripheral not connected: peripheral %@", peripheral)
             self.log.info("runCommand guard failed - not ready: peripheral=%{public}@ centralState=%{public}@ peripheralState=%{public}@ queueDepth=%{public}d commandConditions=%{public}@",
                           peripheral,
-                          central?.state.description ?? "nil",
-                          peripheral.state.description,
+                          central.map { String(describing: $0.state) } ?? "nil",
+                          String(describing: peripheral.state),
                           sessionQueue.operationCount,
                           String(describing: commandConditions))
             throw PeripheralManagerError.notReady
@@ -256,14 +256,14 @@ extension PeripheralManager {
 
         guard signaled else {
             self.log.info("runCommand lock timeout reached - not signalled")
-            let characteristicsReady = peripheral.getCommandCharacteristic() != nil && peripheral.getDataCharacteristic() != nil
+            let characteristicsReady = peripheral.getCommandCharacteristic(profile: profile) != nil && peripheral.getDataCharacteristic(profile: profile) != nil
             self.log.error("runCommand timeout - not signalled: timeout=%{public}.3f pendingConditions=%{public}@ characteristicsReady=%{public}@ queueDepth=%{public}d centralState=%{public}@ peripheralState=%{public}@",
                            timeout,
                            String(describing: commandConditions),
                            String(describing: characteristicsReady),
                            sessionQueue.operationCount,
-                           central?.state.description ?? "nil",
-                           peripheral.state.description)
+                           central.map { String(describing: $0.state) } ?? "nil",
+                           String(describing: peripheral.state))
             throw PeripheralManagerError.timeout(commandConditions)
         }
 
