@@ -9,6 +9,7 @@
 
 import RileyLinkBLEKit
 import LoopKit
+import os.log
 
 // XXX still needs be declared public with the current Trio implementation
 public struct OmniPumpManagerState: RawRepresentable, Equatable {
@@ -157,26 +158,34 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             (self.controllerId, self.podId) = initializeIds(podType: podType)
         }
 
+        log.debug("[OmniPumpManagerState] init finished: \(self.debugDescription)")
+
     }
 
     public init?(rawValue: RawValue) {
+        log.debug("[OmniPumpManagerState] init with rawValue: \(rawValue)")
 
         let isOnboarded = rawValue["isOnboarded"] as? Bool ?? false
 
-        let podType: PodType
-        if let podTypeRaw = rawValue["podType"] as? UInt8 {
-            podType = PodType(rawValue: podTypeRaw)
-        } else if rawValue["controllerId"] != nil {
-            podType = dashType // OmniBLE
-        } else {
-            podType = erosType // OmniKit
-        }
 
         let podState: PodState?
         if let podStateRaw = rawValue["podState"] as? PodState.RawValue {
             podState = PodState(rawValue: podStateRaw)
         } else {
             podState = nil
+        }
+
+        let podType: PodType
+        if let podTypeRaw = rawValue["podType"] as? UInt8 {
+            podType = PodType(rawValue: podTypeRaw)
+        } else if let podState = podState, let podStatePodType = podState.podType {
+            log.error("[OmniPumpManagerState] init with rawValue has no podType, using podState.podType=\(podState.podType)")
+            podType = podStatePodType
+        } else if rawValue["controllerId"] != nil {
+            log.error("[OmniPumpManagerState] init with rawValue has no podType, assuming dashType")
+            podType = dashType // OmniBLE
+        } else {
+            podType = erosType // OmniKit
         }
 
         let timeZone: TimeZone

@@ -321,6 +321,7 @@ class BlePodComms: PodComms {
 
         // Only to be run for an O5 pod and before the SetupPod command has been run
         guard podType.isO5 && podState!.setupProgress.isPaired == false else {
+            log.error("[BlePodComms] cannot run handleO5Setup with podType=\(podType) and podState.setupProgress=\(podState!.setupProgress)")
             return
         }
 
