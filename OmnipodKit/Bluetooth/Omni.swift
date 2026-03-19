@@ -13,10 +13,8 @@ class Omni {
     var manager: PeripheralManager
     var advertisement: PodAdvertisement?
 
-    private let log = OSLog(category: "Omni")
-
     init(peripheralManager: PeripheralManager, advertisement: PodAdvertisement?) {
-        self.manager = peripheralManager        
+        self.manager = peripheralManager
         self.advertisement = advertisement
     }
 }

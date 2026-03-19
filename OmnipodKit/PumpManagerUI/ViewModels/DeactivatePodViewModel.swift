@@ -140,10 +140,15 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
                 // Other occluded related 0x6? faults will be treated as a general pod error as per the PDM.
                 text = String(format: "%@. ", notificationString)
             default:
-                // Display the fault code value, the fault description and the pdmRef string for other errors.
-                text = String(format: "⚠️ %1$@ (0x%2$02X)\n%3$@\n", notificationString, faultEventCode.rawValue, faultEventCode.faultDescription)
-                if let pdmRef = fault?.pdmRef {
-                    text += LocalizedString("Ref: ", comment: "PDM Ref string line") + pdmRef + "\n\n"
+                if fault?.podProgressStatus == .activationTimeExceeded {
+                    // Display "Activation Time Exceeded" instead of "Critical Pod Fault 000\nNo fault"
+                    text = String(format: "⚠️ %1$@\n", PodCommsError.activationTimeExceeded.errorDescription!)
+                } else {
+                    // Display the fault code value, the fault description and the pdmRef string for other errors.
+                    text = String(format: "⚠️ %1$@ (0x%2$02X)\n%3$@\n", notificationString, faultEventCode.rawValue, faultEventCode.faultDescription)
+                    if let pdmRef = fault?.pdmRef {
+                        text += LocalizedString("Ref: ", comment: "PDM Ref string line") + pdmRef + "\n\n"
+                    }
                 }
             }
         }

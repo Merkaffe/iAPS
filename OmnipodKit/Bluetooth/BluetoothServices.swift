@@ -34,18 +34,25 @@ enum dashOmnipodServiceUUID: String, CBUUIDRawValue {
 }
 
 enum dashOmnipodCharacteristicUUID: String, CBUUIDRawValue {
-    case command = "1A7E2441-E3ED-4464-8B7E-751E03D0DC5F"       // dashOmnipodServiceUUID.service s/4024/2441/
-    case data =    "1A7E2442-E3ED-4464-8B7E-751E03D0DC5F"       // dashOmnipodServiceUUID.service s/4024/2442/
+    case command = "1A7E2441-E3ED-4464-8B7E-751E03D0DC5F"       // Similar to service UUID, but with 2441 instead of 4024
+    case data =    "1A7E2442-E3ED-4464-8B7E-751E03D0DC5F"       // Similar to service UUID, but with 2442 instead of 4024
+}
+
+// The o5OmnipodServiceUUID advertisement changes when paired to include the pdmId
+func o5ServiceAdvertisementUUID(_ pdmId: UInt32) -> CBUUID {
+    // See o5OmnipodServiceUUID.advertisement for the initial value
+    let uuidString = String(format: "CE1F923D-C539-48EA-7300-0A%08X00", pdmId)
+    return CBUUID(string: uuidString)
 }
 
 enum o5OmnipodServiceUUID: String, CBUUIDRawValue {
-    case advertisement = "CE1F923D-C539-48EA-7300-0AFFFFFFFE00" // Completely different than DASH & includes the podId
+    case advertisement = "CE1F923D-C539-48EA-7300-0AFFFFFFFE00" // i.e., o5ServiceAdvertisementUUID(0xFFFFFFFE).uuidString
     case service =       "1A7E4024-E3ED-4464-8B7E-751E03D0DC5F" // Same as DASH
 }
 
 enum o5OmnipodCharacteristicUUID: String, CBUUIDRawValue {
-    case command = "1A7E2441-E3ED-4464-8B7E-751E03D0DC5F"       // Same as DASH, dashOmnipodServiceUUID.service s/4024/2441/
-    case data =    "1A7E2443-E3ED-4464-8B7E-751E03D0DC5F"       // dashOmnipodServiceUUID.service s/4024/2443/, O5 has 1A7E2443- while DASH has 1A7E2442-
+    case command = "1A7E2441-E3ED-4464-8B7E-751E03D0DC5F"       // Same as DASH
+    case data =    "1A7E2443-E3ED-4464-8B7E-751E03D0DC5F"       // Similar to DASH, but with 2443 instead of 2442
 }
 
 // Omnipod 5 Heartbeat Service - used for O5 pod keep-alive

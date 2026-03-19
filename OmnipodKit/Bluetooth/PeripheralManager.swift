@@ -141,17 +141,16 @@ extension PeripheralManager {
 
             if self.needsConfiguration || self.peripheral.services == nil {
                 do {
-                    self.log.default("Applying configuration")
+                    self.log.bleDebug("Applying configuration")
                     try self.applyConfiguration()
                     self.needsConfiguration = false
 
                     if let delegate = self.delegate {
                         try delegate.completeConfiguration(for: self)
-                        
-                        self.log.default("Delegate configuration notified")
+                        self.log.bleDebug("Delegate configuration notified")
                     }
 
-                    self.log.default("Peripheral configuration completed")
+                    self.log.bleDebug("Peripheral configuration completed")
                 } catch let error {
                     self.log.error("Error applying peripheral configuration: %{public}@", String(describing: error))
                     // Will retry
