@@ -33,39 +33,22 @@ class BlePodComms: PodComms {
 
     private let bluetoothManager = BluetoothManager()
 
-    private func secondsSinceLastSuccessfulTransportMessage() -> TimeInterval? {
-        guard let last = BlePodMessageTransport.mostRecentSuccessfulExchangeTime() else {
-            return nil
-        }
-        return Date().timeIntervalSince(last)
-    }
-
-    private func logSessionEntryState(reason: StaticString) {
-        let managerExists = manager != nil
-        let peripheralUUID = manager?.peripheral.identifier.uuidString ?? "nil"
-        let peripheralState = manager.map { String(describing: $0.peripheral.state) } ?? "nil"
-        let activeBLEIdentifier = podState?.bleIdentifier ?? "nil"
-        let sinceLastMessage = secondsSinceLastSuccessfulTransportMessage()
-        log.error("bleRunSession abort (%{public}@): managerPresent=%{public}@ peripheralUUID=%{public}@ peripheralState=%{public}@ activePodBLEIdentifier=%{public}@ needsSessionEstablishment=%{public}@ secondsSinceLastSuccessfulPodMessage=%{public}@",
-                  String(describing: reason),
-                  String(describing: managerExists),
-                  peripheralUUID,
-                  peripheralState,
-                  activeBLEIdentifier,
-                  String(describing: needsSessionEstablishment),
-                  sinceLastMessage != nil ? String(format: "%.3f", sinceLastMessage!) : "nil")
-    }
-
     override init(podState: PodState?, podType: PodType, myId: UInt32 = 0, podId: UInt32 = 0) {
         super.init(podState: podState, podType: podType, myId: myId, podId: podId)
         bluetoothManager.podType = podType
         bluetoothManager.connectionDelegate = self
+        if podState != nil && myId != 0 {
+            bluetoothManager.setUuidPdmId(myId)
+        } else {
+            bluetoothManager.setUuidPdmId(nil)
+        }
         if let podState = podState, let bleIdentifier = podState.bleIdentifier {
             bluetoothManager.connectToDevice(uuidString: bleIdentifier)
         }
     }
 
     override func forgetPod() {
+        bluetoothManager.setUuidPdmId(nil)
         if let manager = manager {
             log.default("Removing %{public}@ from auto-connect ids", manager.peripheral)
             bluetoothManager.disconnectFromDevice(uuidString: manager.peripheral.identifier.uuidString)
@@ -143,6 +126,21 @@ class BlePodComms: PodComms {
             throw PodCommsError.podFault(fault: fault)
         }
 
+        // Got an error response which could be a result of sending a duplicate
+        // SetupPod command on a pairing retry if the response wasn't seen.
+        if let errorResponse = podMessageResponse.messageBlocks[0] as? ErrorResponse {
+            switch errorResponse.errorResponseType {
+            case .nonretryableError(let errorCode, let faultEventCode, let podProgress):
+                log.error("@@@ Pairing command error: code %u, %{public}@, pod progress %{public}@", errorCode, String(describing: faultEventCode), String(describing: podProgress))
+                if podState != nil, podState!.setupProgress != .podPaired {
+                    log.info("@@@ bleSendPairMessage: setting podPaired to avoid duplicate SetupPod command attempts")
+                    podState!.setupProgress = .podPaired
+                }
+            default:
+                break
+            }
+        }
+
         guard let versionResponse = podMessageResponse.messageBlocks[0] as? VersionResponse else {
             log.error("bleSendPairMessage unexpected response: %{public}@", String(describing: podMessageResponse))
             let responseType = podMessageResponse.messageBlocks[0].blockType
@@ -167,7 +165,7 @@ class BlePodComms: PodComms {
         let eapSeq: Int
 
         ids = Ids(myId: self.myId, podId: self.podId)
-        log.info("@@@ calling LTKExchanger for myId 0x%x podId 0x%x", ids.myIdAddr, ids.podIdAddr)
+        log.bleDebug("@@@ Calling LKExchanger for myId 0x%x podId 0x%x", ids.myIdAddr, ids.podIdAddr)
         switch podType {
         case dashType:
             let dashLTKExchanger = DashLTKExchanger(manager: manager, ids: ids)
@@ -227,6 +225,10 @@ class BlePodComms: PodComms {
 
         // podState setupProgress state should be addressAssigned
 
+        // After the SetupPod command has been run and the pod is finished pairing,
+        // O5 pods changes its service advertisement to use the pdm id in its uuid.
+        bluetoothManager.setUuidPdmId(myId)
+
         // Now that we have podState, check for an activation timeout condition that can be noted in setupProgress
         guard versionResponse.podProgressStatus != .activationTimeExceeded else {
             // The 2 hour window for the initial pairing has expired
@@ -234,7 +236,7 @@ class BlePodComms: PodComms {
             throw PodCommsError.activationTimeExceeded
         }
 
-        log.debug("@@@ pairPod: podState transport state is %{public}@", self.podState!.bleMessageTransportState.inlineDescription)
+        log.bleDebug("@@@ pairPod: podState transport state is %{public}@", self.podState!.bleMessageTransportState.inlineDescription)
     }
 
     private func establishSession(ltk: Data, eapSeq: Int, msgSeq: Int = 1, isPairing: Bool = true) throws -> BleMessageTransportState? {
@@ -287,10 +289,10 @@ class BlePodComms: PodComms {
             )
 
             if podState != nil {
-                log.debug("@@@ Setting podState transport state to %{public}@", transportState.inlineDescription)
+                log.bleDebug("@@@ Setting podState transport state to %{public}@", transportState.inlineDescription)
                 podState!.bleMessageTransportState = transportState
             } else {
-                log.debug("@@@ Used keys %{public}@ to create transport state %{public}@", String(describing: keys), transportState.inlineDescription)
+                log.bleDebug("@@@ Used keys %{public}@ to create transport state %{public}@", String(describing: keys), transportState.inlineDescription)
             }
             return transportState
         }
@@ -321,9 +323,6 @@ class BlePodComms: PodComms {
 
         // Only to be run for an O5 pod and before the SetupPod command has been run
         guard podType.isO5 && podState!.setupProgress.isPaired == false else {
-            log.error("[BlePodComms] cannot run handleO5Setup with podType=%{public}@ and podState.setupProgress=%{public}@",
-                      String(describing: podType),
-                      String(describing: podState!.setupProgress))
             return
         }
 
@@ -363,59 +362,59 @@ class BlePodComms: PodComms {
     private func o5SendAidSetupCommands(transport: BlePodMessageTransport) throws {
 
         // Command 1: UTC time
-        log.info("@@@ O5 AID [1/9]: UtcCommand — setting pod UTC time")
+        log.bleDebug("@@@ O5 AID [1/9]: UtcCommand — setting pod UTC time")
         do {
             let (payload, prefix) = O5AidCommands.UtcCommand.payload()
             let response = try transport.sendO5AidCommand(payload, responsePrefix: prefix)
             let responseStr = String(data: response, encoding: .utf8) ?? response.hexadecimalString
-            log.info("@@@ O5 AID [1/9]: UtcCommand response: %{public}@", responseStr)
+            log.bleDebug("@@@ O5 AID [1/9]: UtcCommand response: %{public}@", responseStr)
         } catch {
             log.error("@@@ O5 AID [1/9]: UtcCommand failed: %{public}@", String(describing: error))
             throw error
         }
 
         // Command 2: TDI (Therapy Delivery Information)
-        log.info("@@@ O5 AID [2/9]: TdiCommand — setting therapy delivery info")
+        log.bleDebug("@@@ O5 AID [2/9]: TdiCommand — setting therapy delivery info")
         do {
             let (payload, prefix) = O5AidCommands.TdiCommand.payload()
             let response = try transport.sendO5AidCommand(payload, responsePrefix: prefix)
             let responseStr = String(data: response, encoding: .utf8) ?? response.hexadecimalString
-            log.info("@@@ O5 AID [2/9]: TdiCommand response: %{public}@", responseStr)
+            log.bleDebug("@@@ O5 AID [2/9]: TdiCommand response: %{public}@", responseStr)
         } catch {
             log.error("@@@ O5 AID [2/9]: TdiCommand failed: %{public}@", String(describing: error))
             throw error
         }
 
         // Command 3: Target BG Profile (48 half-hour targets, all 110 mg/dL)
-        log.info("@@@ O5 AID [3/9]: TargetBgProfileCommand — setting 48 half-hour BG targets (all 110 mg/dL)")
+        log.bleDebug("@@@ O5 AID [3/9]: TargetBgProfileCommand — setting 48 half-hour BG targets (all 110 mg/dL)")
         do {
             let (payload, prefix) = O5AidCommands.TargetBgProfileCommand.payload()
             let response = try transport.sendO5AidCommand(payload, responsePrefix: prefix)
-            log.info("@@@ O5 AID [3/9]: TargetBgProfileCommand response: %{public}d bytes", response.count)
+            log.bleDebug("@@@ O5 AID [3/9]: TargetBgProfileCommand response: %{public}d bytes", response.count)
         } catch {
             log.error("@@@ O5 AID [3/9]: TargetBgProfileCommand failed: %{public}@", String(describing: error))
             throw error
         }
 
         // Command 4: DIA (Duration of Insulin Action)
-        log.info("@@@ O5 AID [4/9]: DiaCommand — setting DIA=8")
+        log.bleDebug("@@@ O5 AID [4/9]: DiaCommand — setting DIA=8")
         do {
             let (payload, prefix) = O5AidCommands.DiaCommand.payload()
             let response = try transport.sendO5AidCommand(payload, responsePrefix: prefix)
             let responseStr = String(data: response, encoding: .utf8) ?? response.hexadecimalString
-            log.info("@@@ O5 AID [4/9]: DiaCommand response: %{public}@", responseStr)
+            log.bleDebug("@@@ O5 AID [4/9]: DiaCommand response: %{public}@", responseStr)
         } catch {
             log.error("@@@ O5 AID [4/9]: DiaCommand failed: %{public}@", String(describing: error))
             throw error
         }
 
         // Command 5: EGV (Estimated Glucose Value config)
-        log.info("@@@ O5 AID [5/9]: EgvCommand — setting EGV config=3670015")
+        log.bleDebug("@@@ O5 AID [5/9]: EgvCommand — setting EGV config=3670015")
         do {
             let (payload, prefix) = O5AidCommands.EgvCommand.payload()
             let response = try transport.sendO5AidCommand(payload, responsePrefix: prefix)
             let responseStr = String(data: response, encoding: .utf8) ?? response.hexadecimalString
-            log.info("@@@ O5 AID [5/9]: EgvCommand response: %{public}@", responseStr)
+            log.bleDebug("@@@ O5 AID [5/9]: EgvCommand response: %{public}@", responseStr)
         } catch {
             log.error("@@@ O5 AID [5/9]: EgvCommand failed: %{public}@", String(describing: error))
             throw error
@@ -423,12 +422,12 @@ class BlePodComms: PodComms {
 
         // Commands 6-8: Algorithm Insulin History (3 batches of 24 zero records)
         for batch in 1...3 {
-            log.info("@@@ O5 AID [%{public}d/9]: AlgorithmInsulinHistoryCommand batch %{public}d/3", batch + 5, batch)
+            log.bleDebug("@@@ O5 AID [%{public}d/9]: AlgorithmInsulinHistoryCommand batch %{public}d/3", batch + 5, batch)
             do {
                 let (payload, prefix) = O5AidCommands.AlgorithmInsulinHistoryCommand.payload()
                 let response = try transport.sendO5AidCommand(payload, responsePrefix: prefix)
                 let responseStr = String(data: response, encoding: .utf8) ?? response.hexadecimalString
-                log.info("@@@ O5 AID [%{public}d/9]: AlgorithmInsulinHistory batch %{public}d/3 response: %{public}@",
+                log.bleDebug("@@@ O5 AID [%{public}d/9]: AlgorithmInsulinHistory batch %{public}d/3 response: %{public}@",
                              batch + 5, batch, responseStr)
             } catch {
                 log.error("@@@ O5 AID [%{public}d/9]: AlgorithmInsulinHistory batch %{public}d/3 failed: %{public}@",
@@ -442,19 +441,19 @@ class BlePodComms: PodComms {
         // so OK to just skip this command if majorVersion not available.
         let majorVersion = parseMajorVersion(from: podState!.firmwareVersion)
         if skipO5AID9 || majorVersion == nil {
-            log.info("@@@ O5 AID [9/9]: skipping Pod Status query...")
+            log.bleDebug("@@@ O5 AID [9/9]: skipping Pod Status query...")
         } else {
             do {
                 let useGen1AidPodStatus = o5PodIsV1(majorVersion: majorVersion!)
                 if useGen1AidPodStatus {
                     let (payload, prefix) = O5AidCommands.AidPodStatusCommand.payload()
                     let response = try transport.sendO5AidCommand(payload, responsePrefix: prefix)
-                    log.info("@@@ O5 AID [9/9]: AidPodStatusCommand (G3.11) response: %d bytes — %{public}@",
+                    log.bleDebug("@@@ O5 AID [9/9]: AidPodStatusCommand (G3.11) response: %d bytes — %{public}@",
                              response.count, response.hexadecimalString)
                 } else {
                     let (payload, prefix) = O5AidCommands.UnifiedAidPodStatusCommand.payload()
                     let response = try transport.sendO5AidCommand(payload, responsePrefix: prefix)
-                    log.info("@@@ O5 AID [9/9]: UnifiedAidPodStatusCommand (G3.12) response: %d bytes — %{public}@",
+                    log.bleDebug("@@@ O5 AID [9/9]: UnifiedAidPodStatusCommand (G3.12) response: %d bytes — %{public}@",
                              response.count, response.hexadecimalString)
                 }
             } catch {
@@ -487,7 +486,7 @@ class BlePodComms: PodComms {
         let transport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: podState!.bleMessageTransportState)
         transport.messageLogger = messageLogger
 
-        log.debug("@@@ setupPod() starting transport state %{public}@", transport.state.inlineDescription)
+        log.bleDebug("@@@ setupPod() starting transport state %{public}@", transport.state.inlineDescription)
 
         let dateComponents = SetupPodCommand.dateComponents(date: Date(), timeZone: timeZone)
         let setupPod = SetupPodCommand(address: podState!.address, dateComponents: dateComponents, lot: UInt32(podState!.lotNo), tid: podState!.lotSeq)
@@ -561,7 +560,7 @@ class BlePodComms: PodComms {
             return
         }
 
-        log.info("@@@ Attempting to pair using myId 0x%X and podId 0x%X", myId, podId)
+        log.info("@@@ Attempting to pair and setup pod using myId 0x%X and podId 0x%X", myId, podId)
 
         manager.runSession(withName: "Pair and setup pod") { [weak self] in
             do {
@@ -631,16 +630,9 @@ class BlePodComms: PodComms {
     func bleRunSession(withName name: String, _ block: @escaping (_ result: SessionRunResult) -> Void) {
 
         guard let manager = manager, manager.peripheral.state == .connected else {
-            logSessionEntryState(reason: "podNotConnected")
             block(.failure(PodCommsError.podNotConnected))
             return
         }
-
-        log.default("bleRunSession starting %{public}@ with peripheral=%{public}@ state=%{public}@ needsSessionEstablishment=%{public}@",
-                    name,
-                    manager.peripheral.identifier.uuidString,
-                    String(describing: manager.peripheral.state),
-                    String(describing: needsSessionEstablishment))
 
         manager.runSession(withName: name) { () in
 
@@ -678,53 +670,32 @@ class BlePodComms: PodComms {
 extension BlePodComms: OmniConnectionDelegate {
     func omnipodPeripheralWasRestored(manager: PeripheralManager) {
         if let podState = podState, manager.peripheral.identifier.uuidString == podState.bleIdentifier {
-            let previousManagerIdentifier = self.manager?.peripheral.identifier.uuidString
+            log.bleDebug("omnipodPeripheralWasRestored for %@", manager.peripheral.identifier.uuidString)
             self.manager = manager
-            log.default("omnipodPeripheralWasRestored: peripheral=%{public}@ activeManagerReplaced=%{public}@ previousManager=%{public}@",
-                        manager.peripheral.identifier.uuidString,
-                        String(describing: previousManagerIdentifier != manager.peripheral.identifier.uuidString),
-                        previousManagerIdentifier ?? "nil")
             delegate?.omnipodPeripheralWasRestored(manager: manager)
         }
     }
 
     func omnipodPeripheralDidConnect(manager: PeripheralManager) {
         if let podState = podState, manager.peripheral.identifier.uuidString == podState.bleIdentifier {
+            log.bleDebug("omnipodPeripheralDidConnect for %@", manager.peripheral.identifier.uuidString)
             needsSessionEstablishment = true
-            let previousManagerIdentifier = self.manager?.peripheral.identifier.uuidString
             self.manager = manager
-            log.default("omnipodPeripheralDidConnect: peripheral=%{public}@ activeManagerReplaced=%{public}@ previousManager=%{public}@ needsSessionEstablishment=%{public}@",
-                        manager.peripheral.identifier.uuidString,
-                        String(describing: previousManagerIdentifier != manager.peripheral.identifier.uuidString),
-                        previousManagerIdentifier ?? "nil",
-                        String(describing: needsSessionEstablishment))
             delegate?.omnipodPeripheralDidConnect(manager: manager)
         }
     }
 
     func omnipodPeripheralDidDisconnect(peripheral: CBPeripheral, error: Error?) {
         if let podState = podState, peripheral.identifier.uuidString == podState.bleIdentifier {
+            log.bleDebug("omnipodPeripheralDidDisconnect for %@", peripheral.identifier.uuidString)
             delegate?.omnipodPeripheralDidDisconnect(peripheral: peripheral, error: error)
-            let sinceLastMessage = secondsSinceLastSuccessfulTransportMessage()
-            log.error("omnipodPeripheralDidDisconnect: peripheral=%{public}@ error=%{public}@ needsSessionEstablishment=%{public}@ secondsSinceLastSuccessfulPodMessage=%{public}@ autoReconnectExpected=%{public}@",
-                      peripheral.identifier.uuidString,
-                      String(describing: error),
-                      String(describing: needsSessionEstablishment),
-                      sinceLastMessage != nil ? String(format: "%.3f", sinceLastMessage!) : "nil",
-                      "unknown")
         }
     }
 
     func omnipodPeripheralDidFailToConnect(peripheral: CBPeripheral, error: Error?) {
         if let podState = podState, peripheral.identifier.uuidString == podState.bleIdentifier {
+            log.bleDebug("omnipodPeripheralDidFailToConnect for %@", peripheral.identifier.uuidString)
             delegate?.omnipodPeripheralDidFailToConnect(peripheral: peripheral, error: error)
-            let sinceLastMessage = secondsSinceLastSuccessfulTransportMessage()
-            log.error("omnipodPeripheralDidFailToConnect: peripheral=%{public}@ error=%{public}@ needsSessionEstablishment=%{public}@ secondsSinceLastSuccessfulPodMessage=%{public}@ autoReconnectExpected=%{public}@",
-                      peripheral.identifier.uuidString,
-                      String(describing: error),
-                      String(describing: needsSessionEstablishment),
-                      sinceLastMessage != nil ? String(format: "%.3f", sinceLastMessage!) : "nil",
-                      "unknown")
         }
     }
 
@@ -745,12 +716,12 @@ extension BlePodComms: PeripheralManagerDelegate {
                 var attempts = 0
                 var maxWriteValue = manager.peripheral.maximumWriteValueLength(for: .withoutResponse)
                 while maxWriteValue < requiredMaxPayload && attempts < 10 {
-                    log.default("maximumWriteValueLength not yet settled (%{public}d < %{public}d), waiting... (attempt %{public}d/10)", maxWriteValue, requiredMaxPayload, attempts + 1)
+                    log.bleDebug("maximumWriteValueLength not yet settled (%{public}d < %{public}d), waiting... (attempt %{public}d/10)", maxWriteValue, requiredMaxPayload, attempts + 1)
                     Thread.sleep(forTimeInterval: 0.2)
                     maxWriteValue = manager.peripheral.maximumWriteValueLength(for: .withoutResponse)
                     attempts += 1
                 }
-                log.default("maximumWriteValueLength settled after %{public}d polls: maximumWriteValueLength=%{public}d (required=%{public}d)", attempts, maxWriteValue, requiredMaxPayload)
+                log.bleDebug("maximumWriteValueLength settled after %{public}d polls: maximumWriteValueLength=%{public}d (required=%{public}d)", attempts, maxWriteValue, requiredMaxPayload)
                 if maxWriteValue < requiredMaxPayload {
                     log.error("WARNING: maximumWriteValueLength (%{public}d) below required minimum (%{public}d). Large writes may be truncated!", maxWriteValue, requiredMaxPayload)
                 }
@@ -762,33 +733,11 @@ extension BlePodComms: PeripheralManagerDelegate {
             }
 
             do {
-                log.default("completeConfiguration: begin HELLO step for peripheral=%{public}@", manager.peripheral.identifier.uuidString)
-                do {
-                    try manager.sendHello(myId: myId)
-                } catch {
-                    log.error("completeConfiguration failed at HELLO: %{public}@", String(describing: error))
-                    throw error
-                }
-
-                log.default("completeConfiguration: begin notification enablement")
-                do {
-                    try manager.enableNotifications() // Seemingly this cannot be done before the hello command, or the pod disconnects
-                } catch {
-                    log.error("completeConfiguration failed at notification enablement: %{public}@", String(describing: error))
-                    throw error
-                }
-
-                log.default("completeConfiguration: begin session establishment")
-                do {
-                    try establishNewSession()
-                } catch {
-                    log.error("completeConfiguration failed at session establishment: %{public}@", String(describing: error))
-                    throw error
-                }
-
+                try manager.sendHello(myId: myId)
+                try manager.enableNotifications() // Seemingly this cannot be done before the hello command, or the pod disconnects
+                try establishNewSession()
                 needsSessionEstablishment = false
                 delegate?.podCommsDidEstablishSession(self)
-                log.default("completeConfiguration: session establishment complete")
             } catch {
                 log.error("Pod session sync error: %{public}@", String(describing: error))
             }

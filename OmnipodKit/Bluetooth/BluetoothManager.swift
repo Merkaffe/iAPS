@@ -36,7 +36,7 @@ extension BluetoothManagerError: LocalizedError {
             }
         }
     }
-        
+
     var recoverySuggestion: String? {
         switch self {
         case .bluetoothNotAvailable(let state):
@@ -64,7 +64,7 @@ protocol OmniConnectionDelegate: AnyObject {
      - parameter manager: The manager for the peripheral that was connected
      */
     func omnipodPeripheralDidConnect(manager: PeripheralManager)
-    
+
     /**
      Tells the delegate that a connected peripheral has been restored from session restoration
 
@@ -113,7 +113,23 @@ class BluetoothManager: NSObject {
             updateConnections()
         }
     }
-    
+
+    /// The uuidPdmId is set after pairing...
+    private var uuidPdmId: UInt32? = nil
+
+    /// The O5 changes its service advertisement uuid from using FFFFFFFE the pdmId after pairing.
+    /// This func is called to set this value to be used in uuid after pairing and with a nil (or 0) to reset.
+    func setUuidPdmId(_ pdmId: UInt32?) {
+        managerQueue.async {
+            if let pdmId = pdmId, pdmId != 0 {
+                self.log.bleDebug("Setting uuidPdmId to 0x%x", pdmId)
+                self.uuidPdmId = pdmId
+            } else {
+                self.uuidPdmId = nil
+            }
+        }
+    }
+
     /// Isolated to `managerQueue`
     private var hasDiscoveredAllAutoConnectDevices: Bool {
         dispatchPrecondition(condition: .onQueue(managerQueue))
@@ -249,7 +265,6 @@ class BluetoothManager: NSObject {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
         log.default("discoverPods()")
-        
 
         guard manager.state == .poweredOn else {
             completion(.bluetoothNotAvailable(manager.state))
@@ -269,10 +284,17 @@ class BluetoothManager: NSObject {
 
         completion(nil)
     }
-    
+
     private func startScanning() {
-        log.default("Start scanning")
-        manager.scanForPeripherals(withServices: [podType.blePodProfile.advertisementServiceUUID], options: nil)
+        let serviceUUID: CBUUID
+        if podType.isO5, let pdmId = uuidPdmId {
+            // The O5 service advertisement UUID is now using the pdmId
+            serviceUUID = o5ServiceAdvertisementUUID(pdmId)
+        } else {
+            serviceUUID = podType.blePodProfile.advertisementServiceUUID
+        }
+        log.default("Start scanning for %{public}@", serviceUUID.uuidString)
+        manager.scanForPeripherals(withServices: [serviceUUID], options: nil)
     }
 
     private func stopScanning() {
@@ -281,7 +303,7 @@ class BluetoothManager: NSObject {
     }
 
     // MARK: - Accessors
-    
+
     func getConnectedDevices() -> [Omni] {
         var connected: [Omni] = []
         managerQueue.sync {
@@ -409,39 +431,17 @@ extension BluetoothManager: CBCentralManagerDelegate {
         log.debug("%{public}@: %{public}@", #function, peripheral)
         
         // Proxy connection events to peripheral manager
-        var matchedManager = false
         for device in devices where device.manager.peripheral.identifier == peripheral.identifier {
-            matchedManager = true
             device.manager.centralManager(central, didConnect: peripheral)
             connectionDelegate?.omnipodPeripheralDidConnect(manager: device.manager)
 
-            let lastHeartbeatAge = PeripheralManager.mostRecentHeartbeatTime().map { Date().timeIntervalSince($0) }
-            let lastMessageAge = BlePodMessageTransport.mostRecentSuccessfulExchangeTime().map { Date().timeIntervalSince($0) }
-            log.default("[CONNECT] connected peripheral=%{public}@ managerMatched=%{public}@ autoConnect=%{public}@ devicesTracked=%{public}d heartbeatAgeSeconds=%{public}@ lastMessageAgeSeconds=%{public}@",
-                        peripheral.identifier.uuidString,
-                        String(describing: matchedManager),
-                        String(describing: autoConnectIDs.contains(peripheral.identifier.uuidString)),
-                        devices.count,
-                        lastHeartbeatAge != nil ? String(format: "%.3f", lastHeartbeatAge!) : "nil",
-                        lastMessageAge != nil ? String(format: "%.3f", lastMessageAge!) : "nil")
-
             // Get an RSSI reading for logging
             peripheral.readRSSI()
-        }
-
-        if !matchedManager {
-            log.error("[CONNECT] connected peripheral has no matching manager: %{public}@", peripheral.identifier.uuidString)
         }
     }
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
-        log.error("[DISCONNECT] %{public}@: error=%{public}@ domain=%{public}@ code=%{public}d peripheral=%{public}@",
-                  #function,
-                  error?.localizedDescription ?? "None",
-                  (error as NSError?)?.domain ?? "none",
-                  (error as NSError?)?.code ?? 0,
-                  peripheral)
 
         // Proxy disconnection events to peripheral manager
         for device in devices where device.manager.peripheral.identifier == peripheral.identifier {
@@ -452,15 +452,7 @@ extension BluetoothManager: CBCentralManagerDelegate {
 
         if autoConnectIDs.contains(peripheral.identifier.uuidString) {
             log.debug("Reconnecting disconnected autoconnect peripheral")
-            let lastHeartbeatAge = PeripheralManager.mostRecentHeartbeatTime().map { Date().timeIntervalSince($0) }
-            let lastMessageAge = BlePodMessageTransport.mostRecentSuccessfulExchangeTime().map { Date().timeIntervalSince($0) }
-            log.error("[DISCONNECT] scheduling auto-reconnect peripheral=%{public}@ state=%{public}@ heartbeatAgeSeconds=%{public}@ lastMessageAgeSeconds=%{public}@",
-                      peripheral.identifier.uuidString,
-                      String(describing: peripheral.state),
-                      lastHeartbeatAge != nil ? String(format: "%.3f", lastHeartbeatAge!) : "nil",
-                      lastMessageAge != nil ? String(format: "%.3f", lastMessageAge!) : "nil")
             central.connect(peripheral, options: nil)
-            log.default("[DISCONNECT] auto-reconnect requested peripheral=%{public}@", peripheral.identifier.uuidString)
         }
     }
 
@@ -472,15 +464,7 @@ extension BluetoothManager: CBCentralManagerDelegate {
         connectionDelegate?.omnipodPeripheralDidFailToConnect(peripheral: peripheral, error: error)
 
         if autoConnectIDs.contains(peripheral.identifier.uuidString) {
-            let lastHeartbeatAge = PeripheralManager.mostRecentHeartbeatTime().map { Date().timeIntervalSince($0) }
-            let lastMessageAge = BlePodMessageTransport.mostRecentSuccessfulExchangeTime().map { Date().timeIntervalSince($0) }
-            log.error("[FAIL-TO-CONNECT] scheduling auto-reconnect peripheral=%{public}@ state=%{public}@ heartbeatAgeSeconds=%{public}@ lastMessageAgeSeconds=%{public}@",
-                      peripheral.identifier.uuidString,
-                      String(describing: peripheral.state),
-                      lastHeartbeatAge != nil ? String(format: "%.3f", lastHeartbeatAge!) : "nil",
-                      lastMessageAge != nil ? String(format: "%.3f", lastMessageAge!) : "nil")
             central.connect(peripheral, options: nil)
-            log.default("[FAIL-TO-CONNECT] auto-reconnect requested peripheral=%{public}@", peripheral.identifier.uuidString)
         }
     }
 }

@@ -10,11 +10,11 @@
 import CoreBluetooth
 import os.log
 
-fileprivate var PeripheralManagerDebug = false
+fileprivate var bleDebugEnabled = false
 
 extension OSLog {
     func bleDebug(_ message: StaticString, _ args: CVarArg...) {
-        guard PeripheralManagerDebug else {
+        guard bleDebugEnabled else {
             return
         }
         let type: OSLogType = .default
