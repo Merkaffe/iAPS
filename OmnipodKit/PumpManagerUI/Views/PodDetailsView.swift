@@ -101,7 +101,7 @@ struct PodDetailsView: View {
 
     var body: some View {
         List {
-            row(LocalizedString("Pod Type", comment: "description label for pod type pod details row"), value: String(describing: podDetails.podType.localizedDescription))
+            row(LocalizedString("Pod Type", comment: "description label for pod type pod details row"), value: String(describing: podDetails.podType.description))
             if let deviceName = podDetails.deviceName {
                 row(LocalizedString("Device Name", comment: "description label for device name pod details row"), value: deviceName)
             }

@@ -157,7 +157,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             self.controllerId = 0
             self.podId = 0
         } else {
-            (self.controllerId, self.podId) = initializeIds(podType: podType)
+            (self.controllerId, self.podId) = nextIds(podType: podType)
         }
 
         log.debug("[OmniPumpManagerState] init finished: %{public}@",
@@ -170,7 +170,6 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
                   String(describing: rawValue))
 
         let isOnboarded = rawValue["isOnboarded"] as? Bool ?? false
-
 
         let podState: PodState?
         if let podStateRaw = rawValue["podState"] as? PodState.RawValue {
@@ -221,7 +220,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
         // Omnipod model specific values
         let rileyLinkConnectionManagerState: RileyLinkConnectionState?
-        let controllerId, podId: UInt32?
+        var controllerId, podId: UInt32?
         if podType.usesRileyLink {
             if let rileyLinkConnectionManagerStateRaw = rawValue["rileyLinkConnectionManagerState"] as? RileyLinkConnectionState.RawValue {
                 rileyLinkConnectionManagerState = RileyLinkConnectionState(rawValue: rileyLinkConnectionManagerStateRaw)
@@ -234,6 +233,33 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             rileyLinkConnectionManagerState = nil
             controllerId = rawValue["controllerId"] as? UInt32? ?? nil
             podId = rawValue["podId"] as? UInt32? ?? nil
+            /// O5 specific checks of controllerId with the O5CertificateStore
+            if podType.isO5, let myId = controllerId, myId != 0 {
+                // Verify that the O5CertificateStore contains info for myId
+                if O5CertificateStore.contains(myId) {
+                    log.default("@@@ Verified controller id 0x%08X has O5 certificate", myId)
+                } else if podState != nil {
+                    // Missing the needed cert and we already have a podState, punt for now
+                    // and continue running in a disabled mode where none of the signed commands
+                    // (insulin, cancellation and deactivation) can be successfully used.
+                    log.error("@@@ Missing O5 certificate for 0x%08X -- running in limited operation mode!", myId)
+                } else {
+                    // With no pod, we can just pick a new available controllerId to use
+                    let newId = O5CertificateStore.pickPdmId
+                    controllerId = newId
+                    if newId != 0 {
+                        podId = newId + 1
+                        log.default("@@@ Switching O5 ids for certificate for 0x%08X", newId)
+                    } else {
+                        // There are no O5Certificates for any pdmId.
+                        // Since we don't have a podState, just force a new
+                        // pod selection and the O5 type will be disabled.
+                        podType = unknownOmnipodType
+                        podId = 0
+                        log.error("@@@ No O5 certificates found -- disabled O5 pod type selection")
+                    }
+                }
+            }
         }
 
         self.init(
@@ -403,7 +429,7 @@ extension OmniPumpManagerState: CustomDebugStringConvertible {
             "* alertsWithPendingAcknowledgment: \(alertsWithPendingAcknowledgment)",
             "* acknowledgedTimeOffsetAlert: \(acknowledgedTimeOffsetAlert)",
             "* initialConfigurationCompleted: \(initialConfigurationCompleted)",
-            "* podType: \(podType.localizedDescription)",
+            "* podType: \(podType)",
             "",
         ].joined(separator: "\n")
         if podType.usesRileyLink {

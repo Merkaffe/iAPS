@@ -49,8 +49,11 @@ class O5KeyExchange {
         if let controllerID = controllerID {
             self.controllerID = controllerID
         } else {
-            var pdmid = O5CertificateStore.pdmid.bigEndian
-            self.controllerID = Data(bytes: &pdmid, count: 4)
+            let pdmId = O5CertificateStore.pickPdmId
+            guard pdmId != 0 else {
+                throw PodCommsError.noCertificateFound
+            }
+            self.controllerID = try O5CertificateStore(pdmId: pdmId).controllerID
         }
 
         pdmNonce = randomByteGenerator.nextBytes(length: O5KeyExchange.NONCE_SIZE)
@@ -72,8 +75,8 @@ class O5KeyExchange {
         ltk = Data(capacity: O5KeyExchange.CMAC_SIZE)
 
         log.default("O5KeyExchange init: controllerID=%{public}@", self.controllerID.hexadecimalString)
-        log.info("  pdmNonce:  %{public}@", pdmNonce.hexadecimalString)
-        log.info("  pdmPublic: %{public}@", pdmPublic.hexadecimalString)
+        log.bleDebug("  pdmNonce:  %{public}@", pdmNonce.hexadecimalString)
+        log.bleDebug("  pdmPublic: %{public}@", pdmPublic.hexadecimalString)
     }
 
     func o5updatePodPublicData(_ payload: Data) throws {
@@ -82,15 +85,15 @@ class O5KeyExchange {
         }
         podPublic = payload.subdata(in: 0..<O5KeyExchange.PUBLIC_KEY_SIZE)
         podNonce = payload.subdata(in: O5KeyExchange.PUBLIC_KEY_SIZE..<O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE)
-        log.info("  podPublic: %{public}@", podPublic.hexadecimalString)
-        log.info("  podNonce:  %{public}@", podNonce.hexadecimalString)
+        log.bleDebug("  podPublic: %{public}@", podPublic.hexadecimalString)
+        log.bleDebug("  podNonce:  %{public}@", podNonce.hexadecimalString)
         try o5generateKeys()
     }
 
     private func o5generateKeys() throws {
         let sharedSecret = try keyGenerator.computeSharedSecret(pdmPrivate, podPublic)
-        log.info("  sharedSecret: %{public}@", sharedSecret.hexadecimalString)
-        log.info("  KDF flags: controllerID source=fixed zeros")
+        log.bleDebug("  sharedSecret: %{public}@", sharedSecret.hexadecimalString)
+        log.bleDebug("  KDF flags: controllerID source=fixed zeros")
 
         var data = Data()
         data.append(withUnsafeBytes(of: UInt64(O5LTKExchanger.FIRMWARE_ID.count).bigEndian, { Data($0) }))

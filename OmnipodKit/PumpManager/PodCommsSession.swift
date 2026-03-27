@@ -42,6 +42,7 @@ enum PodCommsError: Error {
     case noPodsFound
     case tooManyPodsFound // BLE pods only
     case setupNotComplete
+    case noCertificateFound // O5 only
 }
 
 extension PodCommsError: LocalizedError {
@@ -110,6 +111,8 @@ extension PodCommsError: LocalizedError {
             return LocalizedString("Too many pods found", comment: "Error message for PodCommsError.tooManyPodsFound")
         case .setupNotComplete:
             return LocalizedString("Pod setup is not complete", comment: "Error description when pod setup is not complete")
+        case .noCertificateFound:
+            return LocalizedString("No certificate found", comment: "Error message when no certificate found")
         }
     }
 
@@ -182,6 +185,8 @@ extension PodCommsError: LocalizedError {
             return LocalizedString("Move to a new area away from any other pods and try again", comment: "Recovery suggestion for PodCommsError.tooManyPodsFound")
         case .setupNotComplete:
             return nil
+        case .noCertificateFound:
+            return LocalizedString("Rebuild app with needed certificate data", comment: "Recovery suggestion with missing certificate")
         }
     }
 
@@ -240,25 +245,6 @@ class PodCommsSession: MessageTransportDelegate {
     var mockCurrentDate: Date?
     var currentDate: Date {
         return mockCurrentDate ?? Date()
-    }
-
-    private func logExchangeSummary(context: StaticString, requestedBlocks: [MessageBlock], wrappedError: Error) {
-        let requested = requestedBlocks.map { String(describing: $0.blockType) }.joined(separator: ",")
-        let pendingCommand = podState.unacknowledgedCommand.map { String(describing: $0) } ?? "nil"
-        let lastDeliveryStatus = podState.lastDeliveryStatusReceived.map { String(describing: $0) } ?? "nil"
-        log.error("[%{public}@] podAddress=0x%08x requestedBlocks=%{public}@ pendingCommand=%{public}@ lastDeliveryStatus=%{public}@ wrappedError=%{public}@",
-                  String(describing: context),
-                  podState.address,
-                  requested,
-                  pendingCommand,
-                  lastDeliveryStatus,
-                  String(describing: wrappedError))
-
-        if let podProtocolError = wrappedError as? PodProtocolError {
-            log.error("[%{public}@] PodProtocolError=%{public}@", String(describing: context), String(describing: podProtocolError))
-        } else if case PodCommsError.commsError(let underlying) = wrappedError, let podProtocolError = underlying as? PodProtocolError {
-            log.error("[%{public}@] PodProtocolError(underlying)=%{public}@", String(describing: context), String(describing: podProtocolError))
-        }
     }
 
     init(podState: PodState, transport: MessageTransport, delegate: PodCommsSessionDelegate) {
@@ -379,13 +365,22 @@ class PodCommsSession: MessageTransportDelegate {
             let message = Message(address: podState.address, messageBlocks: blocksToSend, sequenceNum: messageNumber, expectFollowOnMessage: expectFollowOnMessage)
 
             // Clear the lastDeliveryStatusReceived variable which is used to guard against possible 0x31 pod faults
+            let savedLastDeliveryStatusReceived = podState.lastDeliveryStatusReceived
             podState.lastDeliveryStatusReceived = nil
 
             let response: Message
             do {
                 response = try transport.sendMessage(message)
             } catch {
-                logExchangeSummary(context: "sendMessageFailure", requestedBlocks: blocksToSend, wrappedError: error)
+                // Some transport errors are due to checks performed before attempting any IO.
+                // For these cases, restore lastDeliveryStatusReceived to its previous value
+                // to avoid having to do an extra getStatus to recover in tryToValidateComms().
+                if let podCommsError = error as? PodCommsError,
+                    case .podNotConnected = podCommsError, case .noCertificateFound = podCommsError
+                {
+                    log.debug("@@@ Restoring lastDeliveryStatusReceived for pre-check error")
+                    podState.lastDeliveryStatusReceived = savedLastDeliveryStatusReceived
+                }
                 throw error
             }
 
@@ -719,11 +714,9 @@ class PodCommsSession: MessageTransportDelegate {
         } catch PodCommsError.unacknowledgedMessage(let seq, let error) {
             podState.unacknowledgedCommand = podState.unacknowledgedCommand?.commsFinished
             log.error("Unacknowledged bolus: command seq = %d, error = %{public}@", seq, String(describing: error))
-            logExchangeSummary(context: "bolus.unacknowledged", requestedBlocks: [bolusScheduleCommand, bolusExtraCommand], wrappedError: error)
             return DeliveryCommandResult.unacknowledged(error: .commsError(error: error))
         } catch let error {
             podState.unacknowledgedCommand = nil
-            logExchangeSummary(context: "bolus.failure", requestedBlocks: [bolusScheduleCommand, bolusExtraCommand], wrappedError: error)
             return DeliveryCommandResult.certainFailure(error: .commsError(error: error))
         }
     }
@@ -753,11 +746,9 @@ class PodCommsSession: MessageTransportDelegate {
         } catch PodCommsError.unacknowledgedMessage(let seq, let error) {
             podState.unacknowledgedCommand = podState.unacknowledgedCommand?.commsFinished
             log.error("Unacknowledged temp basal: command seq = %d, error = %{public}@", seq, String(describing: error))
-            logExchangeSummary(context: "tempBasal.unacknowledged", requestedBlocks: [tempBasalCommand, tempBasalExtraCommand], wrappedError: error)
             return DeliveryCommandResult.unacknowledged(error: .commsError(error: error))
         } catch let error {
             podState.unacknowledgedCommand = nil
-            logExchangeSummary(context: "tempBasal.failure", requestedBlocks: [tempBasalCommand, tempBasalExtraCommand], wrappedError: error)
             return DeliveryCommandResult.certainFailure(error: .commsError(error: error))
         }
     }

@@ -13,7 +13,6 @@ import LoopKit
 import os.log
 
 fileprivate var skipO5AID9 = true // skips the 9th & slightly problematic O5 AID command that isn't even needed
-fileprivate var continuousMsgNum = true // true keeps continuous Omnipod mesg #'s behavior for new sessions
 
 class BlePodComms: PodComms {
 
@@ -181,14 +180,14 @@ class BlePodComms: PodComms {
         eapSeq = 1
 
         guard podId == response.address else {
-            log.debug("@@@ podId 0x%x doesn't match response value!: %{public}@", podId, String(describing: response))
+            log.error("@@@ podId 0x%x doesn't match response value!: %{public}@", podId, String(describing: response))
             throw PodCommsError.invalidAddress(address: response.address, expectedAddress: podId)
         }
 
         log.info("Establish an Eap Session")
         let msgSeq = Int(response.msgSeq)
         guard let bleMessageTransportState = try establishSession(ltk: ltk, eapSeq: eapSeq, msgSeq: msgSeq) else {
-            log.debug("@@@ pairPod: failed to establish session!")
+            log.error("@@@ pairPod: failed to establish session!")
             throw PodCommsError.noPodPaired
         }
 
@@ -208,7 +207,7 @@ class BlePodComms: PodComms {
         let versionResponse = try bleSendPairMessage(transport: transport, message: message)
 
         // Now create the real PodState using the current transport state and the versionResponse info
-        log.debug("@@@ pairPod: creating PodState for versionResponse %{public}@ and transport state %{public}@", String(describing: versionResponse), transport.state.inlineDescription)
+        log.bleDebug("@@@ pairPod: creating PodState for versionResponse %{public}@ and transport state %{public}@", String(describing: versionResponse), transport.state.inlineDescription)
 
         self.podState = PodState(
             address: podId,
@@ -249,37 +248,28 @@ class BlePodComms: PodComms {
         // SECONDARY mode was tested for O5 post-pairing reconnections (tests #24, #25)
         // but the pod never initiates an EAP-AKA challenge — it expects PRIMARY always.
         let sessionMode: SessionKeyMode = .PRIMARY
-        let eapAkaExchanger = try SessionEstablisher(manager: manager, ltk: ltk, eapSqn: eapSeq, myId: self.myId, podId: self.podId, msgSeq: msgSeq, podType: self.podType, mode: sessionMode)
+        let eapAkaExchanger = try SessionEstablisher(manager: manager, ltk: ltk, eapSqn: eapSeq, myId: myId, podId: podId, msgSeq: msgSeq, podType: podType, mode: sessionMode)
 
         let result = try eapAkaExchanger.negotiateSessionKeys()
 
         switch result {
         case .SessionNegotiationResynchronization(let keys):
-            log.debug("@@@ Received EAP SQN resynchronization: %@", keys.synchronizedEapSqn.data.hexadecimalString)
-            if self.podState != nil {
+            log.bleDebug("@@@ Received EAP SQN resynchronization: %@", keys.synchronizedEapSqn.data.hexadecimalString)
+            if podState != nil {
                 let eapSeq = keys.synchronizedEapSqn.toInt()
-                log.debug("@@@ Updating EAP SQN to: %d", eapSeq)
-                self.podState!.bleMessageTransportState.eapSeq = eapSeq
+                log.bleDebug("@@@ Updating EAP SQN to: %d", eapSeq)
+                podState!.bleMessageTransportState.eapSeq = eapSeq
             }
             return nil
         case .SessionKeys(let keys):
-            log.debug("@@@ Session Established, msgSequenceNumber: %{public}@", String(keys.msgSequenceNumber))
-            //log.debug("CK: %{public}@", keys.ck.hexadecimalString)
-            //log.debug("NoncePrefix: %{public}@", keys.nonce.prefix.hexadecimalString)
+            log.bleDebug("@@@ Session Established, msgSequenceNumber: %{public}@", String(keys.msgSequenceNumber))
+            //log.bleDebug("@@@ CK: %{public}@", keys.ck.hexadecimalString)
+            //log.bleDebug("@@@ NoncePrefix: %{public}@", keys.nonce.prefix.hexadecimalString)
 
-            // The O5 app sets the Omnipod Message # to 0 at the start of a new EAP-AKA session
-            // while OmniBLE would try to use the next sequential Omnipod message number.
-            // OmnipodKit handles them the save, albiet controlled by a patchable variable for now.
-            let omnipodMessageNumberOmniBLE = podState?.bleMessageTransportState.messageNumber ?? 0
-            let omnipodMessageNumber: Int
-            if continuousMsgNum {
-                omnipodMessageNumber = omnipodMessageNumberOmniBLE
-            } else {
-                omnipodMessageNumber = 0
-                if omnipodMessageNumberOmniBLE != 0 {
-                    log.debug("@@@ new session resetting Omnipod message number, would have been %{public}@", String(describing: omnipodMessageNumber))
-                }
-            }
+            // The O5 app seems to set the Omnipod message # to 0 at the start of a new EAP-AKA
+            // session while OmniBLE tries to use the next sequential Omnipod message number.
+            // OmnipodKit handles both like OmniBLE and trys to keep seqential message numbering.
+            let omnipodMessageNumber = podState?.bleMessageTransportState.messageNumber ?? 0
             let transportState = BleMessageTransportState(
                 ck: keys.ck,
                 noncePrefix: keys.nonce.prefix,
@@ -302,13 +292,13 @@ class BlePodComms: PodComms {
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
 
-        guard self.podState != nil, let ltk = self.podState!.ltk else {
+        guard let ltk = podState?.ltk else {
             throw PodCommsError.noPodPaired
         }
 
-        let mts = try establishSession(ltk: ltk, eapSeq: self.podState!.incrementEapSeq(), isPairing: false)
+        let mts = try establishSession(ltk: ltk, eapSeq: podState!.incrementEapSeq(), isPairing: false)
         if mts == nil {
-            let mts = try establishSession(ltk: ltk, eapSeq: self.podState!.incrementEapSeq(), isPairing: false)
+            let mts = try establishSession(ltk: ltk, eapSeq: podState!.incrementEapSeq(), isPairing: false)
             if mts == nil {
                 throw PodCommsError.diagnosticMessage(str: "Received resynchronization SQN for the second time")
             }
@@ -319,7 +309,7 @@ class BlePodComms: PodComms {
     /// To be call for an O5 only after pairPod() sucessfully creates a podState and before setupPod() is called.
     private func handleO5Setup() throws {
         // The AssignAddress command successfully run in pairPod() creates podState
-        assert(self.podState != nil, "handleO5Setup called with no podState")
+        assert(podState != nil, "handleO5Setup() called with no podState")
 
         // Only to be run for an O5 pod and before the SetupPod command has been run
         guard podType.isO5 && podState!.setupProgress.isPaired == false else {
@@ -332,7 +322,7 @@ class BlePodComms: PodComms {
         transport.messageLogger = messageLogger
 
         defer {
-            log.debug("@@@ Saving current message transport state %{public}@", transport.state.inlineDescription)
+            log.bleDebug("@@@ handleO5Setup(): saving current message transport state %{public}@", transport.state.inlineDescription)
             podState!.bleMessageTransportState = BleMessageTransportState(ck: transport.ck, noncePrefix: transport.noncePrefix, msgSeq: transport.msgSeq, nonceSeq: transport.nonceSeq, messageNumber: transport.messageNumber)
         }
 
@@ -349,7 +339,7 @@ class BlePodComms: PodComms {
     /// Sends the O5-specific AID setup commands between GetStatus and SetupPod.
     ///
     /// These 9 command exchanges use an ASCII key-value protocol (SET+GET, GET-only, Extended SET)
-    /// wrapped in SLPE, sent through the encrypted Type 1 transport. The sequence matches the
+    /// wrapped in SLPE, sent through the encrypted Type 1 transport.
     ///
     /// Command sequence:
     ///   1. UtcCommand — SE255.2=[unix_timestamp]
@@ -358,7 +348,7 @@ class BlePodComms: PodComms {
     ///   4. DiaCommand — S3.9=8,G3.9
     ///   5. EgvCommand — S3.7=3670015,G3.7
     ///   6-8. AlgorithmInsulinHistoryCommand x3 — SE2.1=00a8[168 bytes zeros]
-    ///   9. [not needed] AidPodStatusCommand — G3.11 (majorVersion < 7), else UnifiedAidPodStatusCommand — G3.12
+    ///   9. [not needed] AidPodStatusCommand — G3.11 (majorVersion less than 7), else UnifiedAidPodStatusCommand — G3.12
     private func o5SendAidSetupCommands(transport: BlePodMessageTransport) throws {
 
         // Command 1: UTC time
@@ -481,12 +471,12 @@ class BlePodComms: PodComms {
 
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
-        assert(self.podState != nil, "setupPod called with no podState!")
+        assert(podState != nil, "setupPod called with no podState!")
 
         let transport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: podState!.bleMessageTransportState)
         transport.messageLogger = messageLogger
 
-        log.bleDebug("@@@ setupPod() starting transport state %{public}@", transport.state.inlineDescription)
+        log.bleDebug("setupPod() starting transport state %{public}@", transport.state.inlineDescription)
 
         let dateComponents = SetupPodCommand.dateComponents(date: Date(), timeZone: timeZone)
         let setupPod = SetupPodCommand(address: podState!.address, dateComponents: dateComponents, lot: UInt32(podState!.lotNo), tid: podState!.lotSeq)

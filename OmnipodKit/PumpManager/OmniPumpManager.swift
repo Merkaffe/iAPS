@@ -47,11 +47,11 @@ extension OmniPumpManagerError: LocalizedError {
         case .insulinTypeNotConfigured:
             return LocalizedString("Insulin type not configured", comment: "Error description for insulin type not configured")
         case .notReadyForCannulaInsertion:
-            return LocalizedString("Pod is not in a state ready for cannula insertion.", comment: "Error message when cannula insertion fails because the pod is in an unexpected state")
+            return LocalizedString("Pod is not in a state ready for cannula insertion", comment: "Error message when cannula insertion fails because the pod is in an unexpected state")
         case .invalidSetting:
             return LocalizedString("Invalid Setting", comment: "Error description for invalid setting")
         case .podTypeNotConfigured:
-            return LocalizedString("Pod type not configured.", comment: "Error message when pod type is not configured")
+            return LocalizedString("Pod type not configured", comment: "Error message when pod type is not configured")
         case .communication(let error):
             if let error = error as? LocalizedError {
                 return error.errorDescription
@@ -113,7 +113,7 @@ public class OmniPumpManager: RileyLinkPumpManager {
         }
         self.lockedPodComms = Locked(podComms)
         self.dateGenerator = dateGenerator
-        self.localizedTitle = state.podType.localizedDescription
+        self.localizedTitle = state.podType.description
 
         super.init(rileyLinkDeviceProvider: rileyLinkDeviceProvider)
 
@@ -487,7 +487,7 @@ extension OmniPumpManager {
             return HKDevice(
                 name: pluginIdentifier,
                 manufacturer: "Insulet",
-                model: state.podType.localizedDescription,
+                model: state.podType.description,
                 hardwareVersion: String(state.podType.rawValue),
                 firmwareVersion: podState.firmwareVersion + " " + podState.iFirmwareVersion,
                 softwareVersion: String(OmnipodKitVersionNumber),
@@ -498,7 +498,7 @@ extension OmniPumpManager {
             return HKDevice(
                 name: pluginIdentifier,
                 manufacturer: "Insulet",
-                model: state.podType.localizedDescription,
+                model: state.podType.description,
                 hardwareVersion: nil,
                 firmwareVersion: nil,
                 softwareVersion: String(OmnipodKitVersionNumber),
@@ -909,11 +909,13 @@ extension OmniPumpManager {
             assert(state.podState == nil) // switching pod type only allowed with no pod
 
             if state.podType == unknownOmnipodType {
-                log.info("setting state podType to %{public}@", newValue.briefName)
+                log.info("Setting OmniPumpManager podType to %{public}@", newValue.briefName)
             } else if state.podType != newValue {
-                log.info("changing state podType from %{public}@ to %{public}@", state.podType.briefName, newValue.briefName)
+                log.info("Changing OmniPumpManager podType from %{public}@ to %{public}@", state.podType.briefName, newValue.briefName)
+            } else if newValue == omnipod5Type {
+                log.info("OmniPumpManager podType resetting %{public}@ state", omnipod5Type.briefName)
             } else {
-                log.info("state podType remains %{public}@", newValue.briefName)
+                log.info("OmniPumpManager podType remains %{public}@", newValue.briefName)
                 return
             }
 
@@ -930,7 +932,7 @@ extension OmniPumpManager {
             }
 
             self.lockedPodComms = Locked(podComms)
-            self.localizedTitle = newValue.localizedDescription
+            self.localizedTitle = newValue.description // set the OmniSettingsView title
 
             setState { (state) in
                 state.podType = newValue
@@ -987,25 +989,19 @@ extension OmniPumpManager {
                 // Eros doesn't use these id's
                 state.controllerId = 0
                 state.podId = 0
-                self.log.info("Resetting controllerId and podId for Eros pod")
+                self.log.info("@@@ prepForNewPod: resetting controllerId and podId for Eros pod")
 
             case dashType, omnipod5Type:
-                if state.controllerId == 0 {
-                    // Initialize the controllerId and podId based on the podType.
-                    (state.controllerId, state.podId) = initializeIds(podType: podType)
-                    self.log.info("Created initial BLE controllerId %08X and podId %08X", state.controllerId, state.podId)
-                } else {
-                    // The podId will cycle thru values of +1, +2, +3, +1... until the podType is changed.
-                    let lastPodId = state.podId
-                    state.podId = nextPodId(lastPodId: lastPodId)
-                    self.log.info("Advanced podId from %08X to %08X", lastPodId, state.podId)
-                }
+                // nextIds() will verify any existing O5 ids and then (re)set the
+                // controllerId as needed and advance podId to the next in the rotation.
+                (state.controllerId, state.podId) = nextIds(podType: podType, controllerId: state.controllerId, podId: state.podId)
+                self.log.info("@@@ prepForNewPod: set controllerId to 0x%08X and podId to 0x%08X", state.controllerId, state.podId)
 
             default:
-                // Reset the id's so they will be reinitialized when a BLE pod type is selected.
+                // Reset the id's so they will be initialized when the pod type is selected.
                 state.controllerId = 0
                 state.podId = 0
-                self.log.info("Resetting controllerId and podId")
+                self.log.info("@@@ prepForNewPod: resetting controllerId and podId")
             }
         }
 
@@ -1064,7 +1060,7 @@ extension OmniPumpManager {
         }
 
         self.lockedPodComms = Locked(podComms)
-        self.localizedTitle = state.podType.localizedDescription
+        self.localizedTitle = state.podType.description
 
         finishInit(podType: state.podType)
 
@@ -1122,6 +1118,8 @@ extension OmniPumpManager {
             }
         }
         #else
+
+        // Runs the priming session on the paired pod
         let primeSession = { (result: PodComms.SessionRunResult) in
             switch result {
             case .success(let session):
@@ -1162,11 +1160,26 @@ extension OmniPumpManager {
             return podState.setupProgress.isPaired == false
         })
 
-        // For a restart in the middle of pod setup, the pod can only continue
-        // if interruption happened after pod was completely paired.
-        // Unfortunately podState.setupProgress.isPaired can’t be relied on upon
-        // for some restarts. This code enables user to continue if they have a
-        // fully paired pod.
+        // Common code that invokes blePairAndSetupPod and then a primingSession if successful
+        func blePairSetupPrimePod(blePodComms: BlePodComms) {
+            blePodComms.blePairAndSetupPod(timeZone: .currentFixed, insulinType: insulinType, messageLogger: self) { (result) in
+                switch result {
+                case .success:
+                    // Calls completion
+                    primeSession(result)
+                case .failure(let error):
+                    self.log.error("blePairAndSetupAndPrimePod failed with %{public}@", String(describing: error))
+                    completion(.failure(.communication(error)))
+                }
+            }
+        }
+
+        // If an O5, verify we have the needed O5 certificate data before starting
+        if state.podType.isO5 && !O5CertificateStore.contains(state.controllerId) {
+            completion(.failure(.configuration(PodCommsError.noCertificateFound)))
+            return
+        }
+
         if needsPairing {
 
             self.log.default("Pairing pod before priming")
@@ -1210,27 +1223,23 @@ extension OmniPumpManager {
                     }
                 }
             } else if let blePodComms = self.podComms as? BlePodComms {
-                blePodComms.connectToNewPod { result in
-                    switch result {
-                    case .failure(let error):
-                        completion(.failure(.communication(error as? LocalizedError)))
-                    case .success:
-                        blePodComms.blePairAndSetupPod(timeZone: .currentFixed, insulinType: insulinType, messageLogger: self) { (result) in
-                            switch result {
-                            case .success:
-                                // Have new podState, reset all the per pod pump manager state
-                                self.resetPerPodPumpManagerState()
+                if state.podState != nil {
+                    // Already have a podState, but pairing not yet complete
+                    blePairSetupPrimePod(blePodComms: blePodComms)
+                } else {
+                    blePodComms.connectToNewPod { result in
+                        switch result {
+                        case .failure(let error):
+                            completion(.failure(.communication(error as? LocalizedError)))
+                        case .success:
+                            // Have new podState, reset all the per pod pump manager state
+                            self.resetPerPodPumpManagerState()
 
-                                self.pumpDelegate.notify { (delegate) in
-                                    delegate?.pumpManagerPumpWasReplaced(self)
-                                }
-
-                                // Calls completion
-                                primeSession(result)
-                            case .failure(let error):
-                                self.log.error("blePairAndSetupPod failed with %{public}@", String(describing: error))
-                                completion(.failure(.communication(error)))
+                            self.pumpDelegate.notify { (delegate) in
+                                delegate?.pumpManagerPumpWasReplaced(self)
                             }
+
+                            blePairSetupPrimePod(blePodComms: blePodComms)
                         }
                     }
                 }

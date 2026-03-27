@@ -23,29 +23,51 @@ class O5CertificateStore {
     /// The secondary P256 signing private key (SPS2.1 channel binding + pod commands).
     let signingKey: P256.Signing.PrivateKey
 
-    // MARK: - Static accessors (for Id.swift and other non-instance callers)
-
-    static var pdmid: UInt32 { O5RegistrationData.active.pdmid }
-    static var pdmidExtension: UInt32 { O5RegistrationData.active.pdmidExtension }
-    static var primaryPublicKeyRaw: Data? { O5RegistrationData.active.primaryPublicKeyRaw }
-    static var primaryCertificateDER: Data? { O5RegistrationData.active.primaryCertificateDER }
-    static var rootCAPublicKeyRaw: Data { O5RegistrationData.active.rootCAPublicKeyRaw }
-    static var intermediateCAPublicKeyRaw: Data { O5RegistrationData.active.intermediateCAPublicKeyRaw }
-
     // MARK: - Computed Properties
 
+    var pdmid: UInt32 { registration.pdmid }
     var controllerID: Data { registration.controllerID }
-    var controllerIDValue: UInt32 { registration.pdmid }
 
     var signingPublicKeyRaw: Data {
         return signingKey.publicKey.rawRepresentation
     }
 
+    // MARK: - Access aids
+
+    /// Randomly picks an available O5 pdmId or 0 if none available
+    static var pickPdmId: UInt32 {
+        loadOptionalO5Data()
+        if let data = O5RegistrationData.allValues.randomElement() {
+            return data.pdmid
+        }
+        return 0
+    }
+
+    // Returns true if no O5RegistrationData is available
+    static var isEmpty: Bool {
+        loadOptionalO5Data()
+        return O5RegistrationData.isEmpty
+    }
+
+    // Returns true if O5RegistrationData exists for the specific pdmId
+    static func contains(_ pdmId: UInt32) -> Bool {
+        loadOptionalO5Data()
+        return O5RegistrationData.get(pdmId) != nil
+    }
+
+
     // MARK: - Initialization
 
-    init() throws {
-        self.registration = O5RegistrationData.active
+    // init for the specified pdmid
+    init(pdmId: UInt32) throws {
 
+        loadOptionalO5Data()
+        guard let data = O5RegistrationData.get(pdmId) else {
+            log.debug("@@@ O5CertificateStore has no data for 0x%08X", pdmId)
+            throw PodCommsError.noCertificateFound
+        }
+
+        self.registration = data
         let scalar = registration.secondaryKeyScalar
         assert(scalar.count == 32, "Secondary key scalar must be exactly 32 bytes")
         self.signingKey = try P256.Signing.PrivateKey(rawRepresentation: scalar)
@@ -53,21 +75,14 @@ class O5CertificateStore {
         // Verify the signing key's public key matches the expected value
         let derivedPubKey = signingKey.publicKey.rawRepresentation
         if derivedPubKey != registration.secondaryPublicKeyRaw {
-            log.error("Signing key public key does NOT match expected secondary public key!")
+            log.error("Signing public key does NOT match expected secondary public key!")
+            throw PodCommsError.noCertificateFound
         }
 
-        log.debug("O5CertificateStore initialized, pdmid=%{public}u, controllerID=%{public}@",
-                   registration.pdmid, controllerID.hexadecimalString)
+        log.bleDebug("O5CertificateStore initialized for pdmid=0x%08X", registration.pdmid)
     }
 
     // MARK: - Signing (Secondary Key)
-
-    /// Sign data with the secondary private key using ECDSA SHA-256.
-    /// Returns the DER-encoded ECDSA signature.
-    func sign(_ data: Data) throws -> Data {
-        let signature = try signingKey.signature(for: data)
-        return Data(signature.derRepresentation)
-    }
 
     /// Sign data with the secondary key and return the raw signature (r || s, 64 bytes).
     func signRaw(_ data: Data) throws -> Data {
@@ -89,15 +104,6 @@ class O5CertificateStore {
             return pubKey.isValidSignature(rawSig, for: data)
         }
         return false
-    }
-
-    // MARK: - Public Key Helpers
-
-    /// Returns the uncompressed public key (65 bytes with 0x04 prefix) from raw representation.
-    static func uncompressedPublicKey(_ rawKey: Data) -> Data {
-        var result = Data([0x04])
-        result.append(rawKey)
-        return result
     }
 
     // MARK: - DER Certificate Key Extraction
@@ -206,46 +212,19 @@ class O5CertificateStore {
             return (len, offset + 1 + numLenBytes)
         }
     }
+}
 
-    /// Extract the Subject Alternative Name (SAN) DER value from a DER-encoded X.509 certificate.
-    ///
-    /// Searches for OID 2.5.29.17 (`06 03 55 1d 11`), then parses past any intervening
-    /// bytes to the OCTET STRING containing the GeneralNames SEQUENCE.
-    static func extractSANDER(fromDERCert certDER: Data) -> Data? {
-        // SAN OID: 2.5.29.17 = 06 03 55 1d 11
-        let sanOID = Data([0x06, 0x03, 0x55, 0x1d, 0x11])
-        guard let oidRange = certDER.range(of: sanOID) else { return nil }
+// MARK: - Runtime Installer
 
-        // After OID, skip to the OCTET STRING (tag 0x04) containing SAN value
-        var offset = oidRange.upperBound
-        while offset < certDER.count && certDER[offset] != 0x04 {
-            offset += 1
-        }
-        guard offset < certDER.count else { return nil }
-
-        // Parse OCTET STRING tag + length
-        offset += 1 // skip 0x04 tag
-        guard offset < certDER.count else { return nil }
-
-        let contentLen: Int
-        if certDER[offset] & 0x80 == 0 {
-            // Short-form length
-            contentLen = Int(certDER[offset])
-            offset += 1
-        } else {
-            // Long-form length
-            let numLenBytes = Int(certDER[offset] & 0x7f)
-            offset += 1
-            guard offset + numLenBytes <= certDER.count else { return nil }
-            var len = 0
-            for i in 0..<numLenBytes {
-                len = (len << 8) | Int(certDER[offset + i])
-            }
-            contentLen = len
-            offset += numLenBytes
-        }
-
-        guard contentLen > 0, offset + contentLen <= certDER.count else { return nil }
-        return certDER.subdata(in: offset..<(offset + contentLen))
+/// Load the data from the optional O5Data file if present by invoking its install() function using a unsafeBitCast
+fileprivate func loadOptionalO5Data() {
+    // Use RTLD_DEFAULT (-2) to find the symbol if it was compiled into the binary
+    if let installSym = dlsym(
+        UnsafeMutableRawPointer(bitPattern: -2),
+        "O5RegistrationDataInstall"
+    ) {
+        typealias InstallFunc = @convention(c) () -> Void
+        let install = unsafeBitCast(installSym, to: InstallFunc.self)
+        install()
     }
 }

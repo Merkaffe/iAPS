@@ -259,7 +259,7 @@ extension PeripheralManager {
                 let value = cmdQueue.remove(at: 0)
 
                 if command.rawValue == value[0] {
-                    log.default("waitForCommand: got expected 0x%{public}02x, full data=%{public}@ (%{public}d bytes)",
+                    log.bleDebug("waitForCommand: got expected 0x%{public}02x, full data=%{public}@ (%{public}d bytes)",
                                 command.rawValue, value.hexadecimalString, value.count)
                     queueLock.unlock()
                     commandLock.unlock()
@@ -269,7 +269,7 @@ extension PeripheralManager {
                 // During O5 pairing, pod sends intermediate PAIR_STATUS (0x08) commands
                 // before SUCCESS. Log and continue waiting for the expected command.
                 if value[0] == PodCommand.PAIR_STATUS.rawValue {
-                    log.default("waitForCommand: skipping intermediate PAIR_STATUS (0x08), data=%{public}@, waiting for 0x%{public}02x",
+                    log.bleDebug("waitForCommand: skipping intermediate PAIR_STATUS (0x08), data=%{public}@, waiting for 0x%{public}02x",
                                value.hexadecimalString, command.rawValue)
                     queueLock.unlock()
                     commandLock.unlock()
