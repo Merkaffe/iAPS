@@ -178,7 +178,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             podState = nil
         }
 
-        let podType: PodType
+        var podType: PodType
         if let podTypeRaw = rawValue["podType"] as? UInt8 {
             podType = PodType(rawValue: podTypeRaw)
         } else if let podState = podState {

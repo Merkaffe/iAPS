@@ -1855,7 +1855,7 @@
       }
     },
     "No certificate found" : {
-      "comment" : "Error message when no O5 certificate found"
+      "comment" : "Error message when no certificate found"
     },
     "No confidence reminders are used." : {
       "comment" : "Description for BeepPreference.silent",
@@ -2908,8 +2908,8 @@
         }
       }
     },
-    "Rebuild app with needed O5 certificate data" : {
-      "comment" : "Recovery suggestion with missing O5 certificate"
+    "Rebuild app with needed certificate data" : {
+      "comment" : "Recovery suggestion with missing certificate"
     },
     "Ref: " : {
       "comment" : "PDM Ref string line",
