@@ -41,20 +41,10 @@ class O5KeyExchange {
     private let keyGenerator: PrivateKeyGenerator
     let randomByteGenerator: RandomByteGenerator
 
-    init(_ keyGenerator: PrivateKeyGenerator, _ randomByteGenerator: RandomByteGenerator, controllerID: Data? = nil) throws {
+    init(_ keyGenerator: PrivateKeyGenerator, _ randomByteGenerator: RandomByteGenerator, controllerID: Data) throws {
         self.keyGenerator = keyGenerator
         self.randomByteGenerator = randomByteGenerator
-
-        // Use certificate-derived controller ID if provided, otherwise use pdmid from cert store
-        if let controllerID = controllerID {
-            self.controllerID = controllerID
-        } else {
-            let pdmId = O5CertificateStore.pickPdmId
-            guard pdmId != 0 else {
-                throw PodCommsError.noCertificateFound
-            }
-            self.controllerID = try O5CertificateStore(pdmId: pdmId).controllerID
-        }
+        self.controllerID = controllerID
 
         pdmNonce = randomByteGenerator.nextBytes(length: O5KeyExchange.NONCE_SIZE)
         pdmPrivate = keyGenerator.generatePrivateKey()
