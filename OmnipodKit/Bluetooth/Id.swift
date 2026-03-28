@@ -88,11 +88,12 @@ func nextIds(podType: PodType, controllerId: UInt32 = 0, podId: UInt32 = 0) -> (
     }
 
     if controllerId == 0 {
+        // Return the newly created controllerId with a podId of one more
         print("@@@ Created new controller id \(myControllerId)")
         return (controllerId: myControllerId, podId: myControllerId + 1)
     }
 
-    /// Return the old or created controllerId and the next podId in the rotation
+    // Return the original controllerId and the next podId in the rotation
     return (controllerId: myControllerId, podId: nextPodId(lastPodId: basePodId))
 }
 
