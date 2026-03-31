@@ -40,20 +40,20 @@ struct PodType: CustomStringConvertible, Equatable {
         self.rawValue = podType.rawValue
     }
 
-    var description: String {
+    var localizedDescription: String {
         switch podType {
         case .productIdEros:
-            return LocalizedString("Omnipod Classic pods (also known as Eros pods) have a clear needle tab with a 6-character LOT number starting with 'L'. These pods require the use of a RileyLink to communicate with the iPhone.", comment: "Description for Omnipod Classic pods")
+            return LocalizedString("Omnipod Classic Pods (also known as Eros Pods) have a clear needle tab with a 6-character LOT number starting with 'L'. These Pods require the use of a RileyLink to communicate with the iPhone.", comment: "Description for Omnipod Classic pods")
         case .productIdDash:
-            return LocalizedString("Omnipod DASH pods have a blue needle tab with a 12-character LOT number typically starting with 'PD1'.", comment: "Description for Omnipod DASH pods")
+            return LocalizedString("Omnipod DASH Pods have a blue needle tab with a 12-character LOT number typically starting with 'PD1'.", comment: "Description for Omnipod DASH pods")
         case .productIdOmnipod5:
-            return LocalizedString("Omnipod 5 pods have a clear needle tab with a 12-character LOT number typically starting with 'PH1'. The pod's \"SmartAdjust\" technology will not be used for closed loop control.", comment: "Description for Omnipod 5 pods")
+            return LocalizedString("Omnipod 5 Pods have a clear needle tab with a 12-character LOT number typically starting with 'PH1'. The Pod's \"SmartAdjust\" technology will not be used for closed loop control.", comment: "Description for Omnipod 5 pods")
         default:
             return LocalizedString("Unknown Omnipod Pod Type", comment: "Description for an unknown Omnipod pod type")
         }
     }
 
-    var localizedDescription: String {
+    var description: String {
         switch podType {
         case .productIdUnknown:
             return LocalizedString("Omnipod", comment: "Title string for an unknown Omnipod")

@@ -180,7 +180,8 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 self?.setupCanceled()
             }
  
-            let podTypeSelectionView = PodTypeSelection(initialValue: self.podType, supportedPodTypes: [erosType, dashType, omnipod5Type], didConfirm: didConfirm, didCancel: didCancel)
+            let o5NotAvailable = O5CertificateStore.isEmpty
+            let podTypeSelectionView = PodTypeSelection(initialValue: self.podType, o5NotAvailable: o5NotAvailable, didConfirm: didConfirm, didCancel: didCancel)
             let hostedView = hostingController(rootView: podTypeSelectionView)
             hostedView.navigationItem.title = LocalizedString("Omnipod Type", comment: "Title for Omnipod Type selection screen")
             return hostedView
@@ -216,7 +217,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             let viewModel = OmniSettingsViewModel(pumpManager: pumpManager)
             viewModel.didFinish = { [weak self] in
                 if self?.pumpManager.podType == unknownOmnipodType {
-                    print("returned from settings with pumpManager podType of unknownOmnipodType, resetting self?.podType from \(String(reflecting: self?.podType.briefName)) to unknownOmnpiPodType")
+                    print("Resetting OmniUICoordinator podType to unknownOmnipodType")
                     self?.podType = unknownOmnipodType
                 }
                 self?.stepFinished()

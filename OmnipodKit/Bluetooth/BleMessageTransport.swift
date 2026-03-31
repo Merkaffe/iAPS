@@ -206,6 +206,16 @@ class BlePodMessageTransport: MessageTransport {
             throw PodCommsError.podNotConnected
         }
 
+        // Check up front that we have the correct certStore if needed
+        var certStore: O5CertificateStore? = nil
+        if manager.podType.isO5 && requiresType4Signing(for: message.messageBlocks) {
+            // Need to use a Type 4 (ECDSA signed) message this O5 command
+            certStore = try? O5CertificateStore(pdmId: myId)
+            if certStore == nil {
+                throw PodCommsError.noCertificateFound
+            }
+        }
+
         messageNumber = message.sequenceNum // reset our Omnipod message # to given value
 
         incrementMessageNumber() // bump to match expected Omnipod message # in response
@@ -214,8 +224,8 @@ class BlePodMessageTransport: MessageTransport {
         log.default("Send(Hex): %{public}@", dataToSend.hexadecimalString)
         messageLogger?.didSend(dataToSend)
 
-        let sendMessage = try getCmdMessage(cmd: message)
-        log.default("[transport] send phase=write msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d",
+        let sendMessage = try getCmdMessage(cmd: message, certStore: certStore)
+        log.bleDebug("[transport] send phase=write msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d",
                     msgSeq, nonceSeq, messageNumber)
 
         let writeResult = manager.sendMessagePacket(sendMessage)
@@ -245,8 +255,8 @@ class BlePodMessageTransport: MessageTransport {
         }
     }
 
-    /// Creates either a Type 1 (encrypted) or Type 4 (encrypted+signed) command MessagePacket
-    private func getCmdMessage(cmd: Message) throws -> MessagePacket {
+    /// Creates either a Type 1 (encrypted) or Type 4 (encrypted+signed) command MessagePacket (if certStore != nil)
+    private func getCmdMessage(cmd: Message, certStore: O5CertificateStore? = nil) throws -> MessagePacket {
         guard let enDecrypt = self.enDecrypt else {
             throw PodCommsError.podNotConnected
         }
@@ -260,11 +270,8 @@ class BlePodMessageTransport: MessageTransport {
             payloads: [cmd.encoded(), Data()]
         )
 
-        // Use Type 4 (ECDSA signed) messages for the O5 commands requiring this
-        let needsSigning = manager.podType.isO5 && requiresType4Signing(for: cmd.messageBlocks)
-
         let msg = MessagePacket(
-            type: needsSigning ? MessageType.ENCRYPTED_SIGNED : MessageType.ENCRYPTED,
+            type: certStore != nil ? MessageType.ENCRYPTED_SIGNED : MessageType.ENCRYPTED,
             source: self.myId,
             destination: self.podId,
             payload: wrapped,
@@ -275,12 +282,10 @@ class BlePodMessageTransport: MessageTransport {
         incrementNonceSeq()
         let encrypted = try enDecrypt.encrypt(msg, nonceSeq)
 
-        guard needsSigning, let certStore = try? O5CertificateStore() else {
-            // No signing or certStore (i.e., DASH or O5 Type 1), we're done
-            return encrypted
+        guard let certStore = certStore else {
+            return encrypted // no certStore so no signing is needed, we're all done
         }
 
-        // An O5 Type 4 signed message: AAD (16 bytes TWi header) + ciphertext + tag (8 bytes)
         let signingInput = encrypted.asData(forEncryption: false).prefix(16) + encrypted.payload
         log.bleDebug("signing input (%{public}d bytes): AAD=%{public}@ payload=%{public}d bytes",
                   signingInput.count, signingInput.prefix(16).hexadecimalString, encrypted.payload.count)
@@ -299,7 +304,7 @@ class BlePodMessageTransport: MessageTransport {
     private func readAndAckResponse() throws -> Message {
         guard let enDecrypt = self.enDecrypt else { throw PodCommsError.podNotConnected }
 
-        log.default("[transport] receive phase=read msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d",
+        log.bleDebug("[transport] receive phase=read msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d",
                     msgSeq, nonceSeq, messageNumber)
         let readResponse = try manager.readMessagePacket()
         guard let readMessage = readResponse else {
@@ -345,7 +350,7 @@ class BlePodMessageTransport: MessageTransport {
         }
 
         BlePodMessageTransport.lastSuccessfulExchangeTime = Date()
-        log.default("[transport] exchange success msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d",
+        log.bleDebug("[transport] exchange success msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d",
                     msgSeq, nonceSeq, messageNumber)
 
         return response
@@ -365,7 +370,7 @@ class BlePodMessageTransport: MessageTransport {
                 throw error
             }
         }
-        log.debug("Received decrypted response: %{public}@ in packet: %{public}@", data.hexadecimalString, decrypted.payload.hexadecimalString)
+        log.bleDebug("Received decrypted response: %{public}@ in packet: %{public}@", data.hexadecimalString, decrypted.payload.hexadecimalString)
 
         // Dash pods generates a CRC16 for Omnipod Messages, but the actual algorithm is not understood and doesn't match the CRC16
         // that the pod enforces for incoming Omnipod command message. The Dash PDM explicitly ignores the CRC16 for incoming messages,

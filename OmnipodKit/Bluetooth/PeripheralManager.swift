@@ -535,7 +535,7 @@ extension PeripheralManager {
             /// completeConfiguration() polls until the maximumWriteValueLength settles before sending any protocol messages.
             /// For O5 withoutResponse, any writes exceeding maximumWriteValueLength are silently truncated — NOT fragmented.
             let maximumWriteValueLength = peripheral.maximumWriteValueLength(for: .withoutResponse)
-            self.log.default("PeripheralManager - didConnect - maximumWriteValueLength: %{public}d, packetMaxPayloadSize: %{public}d", maximumWriteValueLength, profile.packetLayout.maxPayloadSize)
+            self.log.bleDebug("PeripheralManager - didConnect - maximumWriteValueLength: %{public}d, packetMaxPayloadSize: %{public}d", maximumWriteValueLength, profile.packetLayout.maxPayloadSize)
 
             self.log.debug("PeripheralManager - didConnect - running assertConfiguration")
             assertConfiguration()
