@@ -46,9 +46,9 @@ index 1beabd3e0..a450e4f94 100644
  			isa = PBXGroup;
  			children = (
 +				B6E925122EB3932A0076D719 /* OmnipodKit.framework */,
+ 				3E54EF2B2E476DA40006F54D /* MedtrumKit.framework */,
  				3B4BA7882D8DC0EC0069D5B8 /* TidepoolServiceKit.framework */,
  				3B4BA7892D8DC0EC0069D5B8 /* TidepoolServiceKitUI.framework */,
- 				3B4BA75B2D8DBD690069D5B8 /* CGMBLEKit.framework */,
 diff --git a/Trio.xcworkspace/contents.xcworkspacedata b/Trio.xcworkspace/contents.xcworkspacedata
 index 8035089c5..260f34e0a 100644
 --- a/Trio.xcworkspace/contents.xcworkspacedata
@@ -64,10 +64,10 @@ index 8035089c5..260f34e0a 100644
        location = "group:LibreTransmitter/LibreTransmitter.xcodeproj">
     </FileRef>
 diff --git a/Trio/Sources/APS/DeviceDataManager.swift b/Trio/Sources/APS/DeviceDataManager.swift
-index 7d487be91..8c6dee912 100644
+index d835c39ab..7860fa3e2 100644
 --- a/Trio/Sources/APS/DeviceDataManager.swift
 +++ b/Trio/Sources/APS/DeviceDataManager.swift
-@@ -9,6 +9,7 @@ import MinimedKit
+@@ -10,9 +10,10 @@ import MinimedKit
  import MockKit
  import OmniBLE
  import OmniKit
@@ -75,25 +75,30 @@ index 7d487be91..8c6dee912 100644
  import ShareClient
  import SwiftDate
  import Swinject
-@@ -35,6 +36,7 @@ private let staticPumpManagers: [PumpManagerUI.Type] = [
+ import UserNotifications
+ 
+ protocol DeviceDataManager: GlucoseSource {
+@@ -39,7 +41,8 @@ private let staticPumpManagers: [PumpManagerUI.Type] = [
      MinimedPumpManager.self,
      OmnipodPumpManager.self,
      OmniBLEPumpManager.self,
 +    OmniPumpManager.self,
      DanaKitPumpManager.self,
+     MedtrumPumpManager.self,
      MockPumpManager.self
  ]
-@@ -43,6 +45,7 @@ private let staticPumpManagersByIdentifier: [String: PumpManagerUI.Type] = [
+@@ -48,7 +52,8 @@ private let staticPumpManagersByIdentifier: [String: PumpManagerUI.Type] = [
      MinimedPumpManager.pluginIdentifier: MinimedPumpManager.self,
      OmnipodPumpManager.pluginIdentifier: OmnipodPumpManager.self,
      OmniBLEPumpManager.pluginIdentifier: OmniBLEPumpManager.self,
 +    OmniPumpManager.pluginIdentifier: OmniPumpManager.self,
      DanaKitPumpManager.pluginIdentifier: DanaKitPumpManager.self,
+     MedtrumPumpManager.pluginIdentifier: MedtrumPumpManager.self,
      MockPumpManager.pluginIdentifier: MockPumpManager.self
  ]
-@@ -111,6 +114,13 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
+@@ -139,6 +145,13 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
+                         pumpActivatedAtDate.send(medtrumPump.state.patchActivatedAt)
                      }
-                     pumpExpiresAtDate.send(endTime)
                  }
 +                if let omni = pumpManager as? OmniPumpManager {
 +                    guard let endTime = omni.state.podState?.expiresAt else {
@@ -105,7 +110,7 @@ index 7d487be91..8c6dee912 100644
                  if let simulatorPump = pumpManager as? MockPumpManager {
                      pumpDisplayState.value = PumpDisplayState(name: simulatorPump.localizedTitle, image: simulatorPump.smallImage)
                      pumpName.send(simulatorPump.localizedTitle)
-@@ -480,6 +490,39 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
+@@ -548,6 +561,39 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
              }
          }
  
@@ -167,8 +172,8 @@ index 68b921400..3a5114bd8 100644
          case omnipodBLE
 +        case omni
          case dana
+         case medtrum
          case simulator
-     }
 diff --git a/Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift b/Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift
 index 975eec687..8591b32e2 100644
 --- a/Trio/Sources/Modules/PumpConfig/View/PumpConfigRootView.swift
@@ -221,12 +226,10 @@ diff --git a/scripts/swiftformat.sh b/scripts/swiftformat.sh
 index 4f60532d6..8fb527796 100755
 --- a/scripts/swiftformat.sh
 +++ b/scripts/swiftformat.sh
-@@ -110,5 +110,6 @@ trailingClosures \
-   RileyLinkKit, \
-   OmniBLE, \
+@@ -112,4 +112,5 @@ trailingClosures \
    MinimedKit, \
--  TidepoolService, \
--  DanaKit 
-+  TidepoolService, \
-+  DanaKit, \
+   TidepoolService, \
+   DanaKit, \
+-  MedtrumKit
++  MedtrumKit, \
 +  OmnipodKit
