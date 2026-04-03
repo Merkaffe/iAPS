@@ -515,17 +515,12 @@ final class CoreDataStorage {
     @NSManaged public var entries: Set<PresetMicronutrient>
 }
 
-@objc(Presets) class PresetMicronutrient: NSManagedObject {
+@objc(PresetMicronutrient) class PresetMicronutrient: NSManagedObject {
     @NSManaged public var id: UUID
     @NSManaged var amount: NSDecimalNumber?
     @NSManaged var per100: Bool
     @NSManaged var preset: Presets
     @NSManaged var micronutrient: Micronutrient
-}
-
-enum MicronutrientType: String {
-    case vitamin
-    case mineral
 }
 
 extension Presets {
@@ -643,25 +638,100 @@ extension Presets {
         }
 
         // Micro nutrients
-        let micros = micronutrientValues()
+        let micros = micronutrientValuesTyped()
 
-        for entry in micros {
-            if let name = entry.micronutrient.name,
-               let unit = entry.micronutrient.unit,
-               let amount = entry.amount?.decimalValue
-            {
-                results.append(
-                    NutrientValue(
-                        name: name,
-                        amount: amount,
-                        unit: unit
-                    )
+        for micro in micros {
+            results.append(
+                NutrientValue(
+                    name: micro.name,
+                    amount: micro.amount,
+                    unit: micro.unit
                 )
-            }
+            )
         }
 
         return results
     }
+    
+        func setMicronutrient(
+            _ nutrient: MicroNutrient,
+            amount: Decimal,
+            per100: Bool,
+            context: NSManagedObjectContext
+        ) throws {
+            
+            // 1. Fetch or create definition
+            let micronutrient: Micronutrient
+            
+            if let existing = try Micronutrient.fetchByName(nutrient.coreDataName, context: context) {
+                micronutrient = existing
+            } else {
+                let new = Micronutrient(context: context)
+                new.id = UUID()
+                new.name = nutrient.coreDataName
+                new.type = nutrient.coreDataType
+                new.unit = nutrient.unit
+                micronutrient = new
+            }
+            
+            let existingEntry = (self.micronutrients ?? [])
+                .first(where: { $0.micronutrient == micronutrient })
+            
+            if let entry = existingEntry {
+                entry.amount = NSDecimalNumber(decimal: amount)
+                entry.per100 = per100
+            } else {
+                let entry = PresetMicronutrient(context: context)
+                entry.id = UUID()
+                entry.amount = NSDecimalNumber(decimal: amount)
+                entry.per100 = per100
+                entry.preset = self
+                entry.micronutrient = micronutrient
+            }
+        }
+    
+   
+        func applyMicronutrients(
+            from values: [MicronutrientValue],
+            context: NSManagedObjectContext
+        ) throws {
+            for value in values {
+                try setMicronutrient(
+                    value.substance,
+                    amount: value.amountPer100,
+                    per100: true,
+                    context: context
+                )
+            }
+        }
+    
+        func micronutrientValuesTyped() -> [MicronutrientValue] {
+            let entries = micronutrients ?? []
+            return entries.compactMap { entry in
+                guard
+                    let name = entry.micronutrient.name,
+                    let substance = MicroNutrient(coreDataName: name),
+                    let amountPer100 = entry.amount?.decimalValue
+                else {
+                    return nil
+                }
+
+                let amount: Decimal
+
+                if let portion = portionSize?.decimalValue, entry.per100 {
+                    amount = (amountPer100 / 100) * portion
+                } else {
+                    amount = amountPer100
+                }
+
+                return MicronutrientValue(
+                    substance: substance,
+                    amount: amount,
+                    amountPer100: amountPer100
+                )
+            }
+            .sorted { $0.name < $1.name }
+        }
 }
 
 extension Micronutrient {
