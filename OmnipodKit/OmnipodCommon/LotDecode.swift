@@ -35,19 +35,18 @@ let MfgLoc: [Int: String] = [
 ]
 
 struct LotDecode {
-    var lotU32: UInt32
-    var lotHex: String
-    var prefix: String
-    var pcad: Int
-    var productCode: String
-    var manufacturingCode: Int
-    var manufacturingLocation: String
-    var dayOfYear: Int
-    var dateMMdd: String
-    var year: Int
-    var v3: Int
-    var nibbleHex: String
-    var readableText: String
+    let lot: UInt32
+    let lotHex: String
+    let prefix: String
+    let productNum: Int
+    let productCode: String
+    let locationNum: Int
+    let locationCode: String
+    let dateMMDD: String
+    let dateYY: Int
+    let line: Int
+    let batch: String
+    let readableText: String
 }
 
 /// Returns the decoded lot information for a modern Insulet 32-bit lot #.
@@ -55,44 +54,42 @@ struct LotDecode {
 func lotDecode(lot: UInt32) -> LotDecode {
     let prefix = (lot & 0x80000000) == 0 ? "P" : "E"
 
-    let pcad = Int((lot >> 25) & mask(6))
-    let productCode = ProductCode[UInt32(pcad)] ?? "XX"
+    let productNum = Int((lot >> 25) & mask(6))
+    let productCode = ProductCode[UInt32(productNum)] ?? "XX"
 
-    let manufacturingCode = Int((lot >> 22) & mask(3))
-    let manufacturingLocation = MfgLoc[manufacturingCode] ?? "X"
+    let locationNum = Int((lot >> 22) & mask(3))
+    let locationCode = MfgLoc[locationNum] ?? "X"
 
     let dayNumber = Int((lot >> 7) & mask(15))
-    let YY = dayNumber >> 9
-    let dayOfYear = dayNumber - (YY << 9)
+    let dateYY = dayNumber >> 9
+    let dayOfYear = dayNumber - (dateYY << 9)
 
-    let dateMMdd: String
+    let dateMMDD: String
     if dayOfYear > 0 {
-        let date = Calendar.current.date(from: DateComponents(year: Int(YY + 2000), month: 1, day: 1))!.addingTimeInterval(TimeInterval((dayOfYear - 1) * (60*60*24)))
+        let date = Calendar.current.date(from: DateComponents(year: Int(dateYY + 2000), month: 1, day: 1))!.addingTimeInterval(TimeInterval((dayOfYear - 1) * (60*60*24)))
         let formatter = DateFormatter()
         formatter.dateFormat = "MMdd"
-        dateMMdd = formatter.string(from: date)
+        dateMMDD = formatter.string(from: date)
     } else {
-        dateMMdd = "0000"
-    }
+        dateMMDD = "0000"    }
 
-    let v3 = Int((lot >> 4) & mask(3))
-    let nibbleHex = String(format: "%X", lot & mask(4))
+    let line = Int((lot >> 4) & mask(3))
+    let batch = String(format: "%X", lot & mask(4))
 
-    let readableText = "\(prefix)\(productCode)\(manufacturingLocation)\(dateMMdd)\(YY)\(v3)\(nibbleHex)"
+    let readableText = "\(prefix)\(productCode)\(locationCode)\(dateMMDD)\(dateYY)\(line)\(batch)"
 
     return LotDecode(
-        lotU32: lot,
+        lot: lot,
         lotHex: String(format: "0x%08X", lot),
         prefix: prefix,
-        pcad: pcad,
+        productNum: productNum,
         productCode: productCode,
-        manufacturingCode: manufacturingCode,
-        manufacturingLocation: manufacturingLocation,
-        dayOfYear: dayOfYear,
-        dateMMdd: dateMMdd,
-        year: YY + 2000,
-        v3: v3,
-        nibbleHex: nibbleHex,
+        locationNum: locationNum,
+        locationCode: locationCode,
+        dateMMDD: dateMMDD,
+        dateYY: dateYY,
+        line: line,
+        batch: batch,
         readableText: readableText
     )
 }

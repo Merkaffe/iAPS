@@ -9,6 +9,7 @@
 //
 
 import Foundation
+import CryptoKit
 import os.log
 
 struct BleMessageTransportState: MessageTransportState {
@@ -164,7 +165,9 @@ class BlePodMessageTransport: MessageTransport {
 
     private let myId: UInt32
     private let podId: UInt32
-    
+
+    private var signingKey: Data? // O5 only
+
     weak var messageLogger: MessageLogger?
     weak var delegate: MessageTransportDelegate?
 
@@ -174,7 +177,7 @@ class BlePodMessageTransport: MessageTransport {
         return lastSuccessfulExchangeTime
     }
 
-    init(manager: PeripheralManager, myId: UInt32, podId: UInt32, state: BleMessageTransportState) {
+    init(manager: PeripheralManager, myId: UInt32, podId: UInt32, state: BleMessageTransportState, signingKey: Data?) {
         self.manager = manager
         self.myId = myId
         self.podId = podId
@@ -183,6 +186,7 @@ class BlePodMessageTransport: MessageTransport {
         guard let noncePrefix = self.noncePrefix, let ck = self.ck else { return }
         self.nonce = Nonce(prefix: noncePrefix)
         self.enDecrypt = EnDecrypt(nonce: self.nonce!, ck: ck)
+        self.signingKey = signingKey
     }
 
     private func incrementMsgSeq(_ count: Int = 1) {
@@ -206,16 +210,6 @@ class BlePodMessageTransport: MessageTransport {
             throw PodCommsError.podNotConnected
         }
 
-        // Check up front that we have the correct certStore if needed
-        var certStore: O5CertificateStore? = nil
-        if manager.podType.isO5 && requiresType4Signing(for: message.messageBlocks) {
-            // Need to use a Type 4 (ECDSA signed) message this O5 command
-            certStore = try? O5CertificateStore(pdmId: myId)
-            if certStore == nil {
-                throw PodCommsError.noCertificateFound
-            }
-        }
-
         messageNumber = message.sequenceNum // reset our Omnipod message # to given value
 
         incrementMessageNumber() // bump to match expected Omnipod message # in response
@@ -224,7 +218,7 @@ class BlePodMessageTransport: MessageTransport {
         log.default("Send(Hex): %{public}@", dataToSend.hexadecimalString)
         messageLogger?.didSend(dataToSend)
 
-        let sendMessage = try getCmdMessage(cmd: message, certStore: certStore)
+        let sendMessage = try getCmdMessage(cmd: message)
         log.bleDebug("[transport] send phase=write msgSeq=%{public}d nonceSeq=%{public}d messageNumber=%{public}d",
                     msgSeq, nonceSeq, messageNumber)
 
@@ -256,12 +250,25 @@ class BlePodMessageTransport: MessageTransport {
     }
 
     /// Creates either a Type 1 (encrypted) or Type 4 (encrypted+signed) command MessagePacket (if certStore != nil)
-    private func getCmdMessage(cmd: Message, certStore: O5CertificateStore? = nil) throws -> MessagePacket {
+    private func getCmdMessage(cmd: Message) throws -> MessagePacket {
         guard let enDecrypt = self.enDecrypt else {
             throw PodCommsError.podNotConnected
         }
 
         incrementMsgSeq()
+
+        let privateKey: P256.Signing.PrivateKey?
+        if manager.podType.isO5 && requiresType4Signing(for: cmd.messageBlocks) {
+            // Need to use a Type 4 (ECDSA signed) message for this O5 command.
+            // Verify we can have the needed signingKey before proceeding.
+            if signingKey == nil {
+                // This happens if running in a limited mode w/o the needed cert data
+                throw PodCommsError.noCertificateFound
+            }
+            privateKey = try P256.Signing.PrivateKey(rawRepresentation: signingKey!)
+        } else {
+            privateKey = nil
+        }
 
         // Standard Omnipod commands always use ",G0.0" for both O5 and DASH.
         // AID-specific commands (3.2, 3.12, etc.) use their own suffixes via sendO5AidCommand().
@@ -271,9 +278,9 @@ class BlePodMessageTransport: MessageTransport {
         )
 
         let msg = MessagePacket(
-            type: certStore != nil ? MessageType.ENCRYPTED_SIGNED : MessageType.ENCRYPTED,
-            source: self.myId,
-            destination: self.podId,
+            type: privateKey != nil ? MessageType.ENCRYPTED_SIGNED : MessageType.ENCRYPTED,
+            source: myId,
+            destination: podId,
             payload: wrapped,
             sequenceNumber: UInt8(msgSeq),
             eqos: 1
@@ -282,15 +289,16 @@ class BlePodMessageTransport: MessageTransport {
         incrementNonceSeq()
         let encrypted = try enDecrypt.encrypt(msg, nonceSeq)
 
-        guard let certStore = certStore else {
-            return encrypted // no certStore so no signing is needed, we're all done
+        guard let signingKey = privateKey else {
+            return encrypted // no signingKey, so we're all done
         }
 
         let signingInput = encrypted.asData(forEncryption: false).prefix(16) + encrypted.payload
         log.bleDebug("signing input (%{public}d bytes): AAD=%{public}@ payload=%{public}d bytes",
                   signingInput.count, signingInput.prefix(16).hexadecimalString, encrypted.payload.count)
 
-        let signature = try certStore.signRaw(signingInput)
+        let signed = try signingKey.signature(for: signingInput)
+        let signature = Data(signed.rawRepresentation)
         assert(signature.count == 64, "ECDSA raw signature must be 64 bytes")
 
         // Store signature separately — it's appended after payload in asData()

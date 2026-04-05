@@ -40,8 +40,8 @@ class O5LTKExchanger {
     init(manager: PeripheralManager, ids: Ids) throws {
         self.manager = manager
         self.ids = ids
-        self.certStore = try O5CertificateStore(pdmId: ids.myIdAddr)
-        self.keyExchange = try O5KeyExchange(P256KeyGenerator(), OmniRandomByteGenerator(), controllerID: certStore.controllerID)
+        self.certStore = try O5CertificateStore(controllerId: ids.myIdAddr)
+        self.keyExchange = try O5KeyExchange(P256KeyGenerator(), OmniRandomByteGenerator(), controllerIdData: certStore.controllerIdData)
     }
 
     func o5negotiateLTK() throws -> PairResult {
