@@ -36,15 +36,15 @@ class O5KeyExchange {
     var ltk: Data
 
     /// The certificate-derived controller ID (4 bytes, big-endian)
-    let controllerID: Data
+    let controllerIdData: Data
 
     private let keyGenerator: PrivateKeyGenerator
     let randomByteGenerator: RandomByteGenerator
 
-    init(_ keyGenerator: PrivateKeyGenerator, _ randomByteGenerator: RandomByteGenerator, controllerID: Data) throws {
+    init(_ keyGenerator: PrivateKeyGenerator, _ randomByteGenerator: RandomByteGenerator, controllerIdData: Data) throws {
         self.keyGenerator = keyGenerator
         self.randomByteGenerator = randomByteGenerator
-        self.controllerID = controllerID
+        self.controllerIdData = controllerIdData
 
         pdmNonce = randomByteGenerator.nextBytes(length: O5KeyExchange.NONCE_SIZE)
         pdmPrivate = keyGenerator.generatePrivateKey()
@@ -64,7 +64,7 @@ class O5KeyExchange {
 
         ltk = Data(capacity: O5KeyExchange.CMAC_SIZE)
 
-        log.default("O5KeyExchange init: controllerID=%{public}@", self.controllerID.hexadecimalString)
+        log.default("O5KeyExchange init: controllerId=%{public}@", self.controllerIdData.hexadecimalString)
         log.bleDebug("  pdmNonce:  %{public}@", pdmNonce.hexadecimalString)
         log.bleDebug("  pdmPublic: %{public}@", pdmPublic.hexadecimalString)
     }

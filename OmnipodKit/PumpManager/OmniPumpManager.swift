@@ -2627,7 +2627,7 @@ extension OmniPumpManager: PumpManager {
                     completion(nil)
                 case .unacknowledged(let error):
                     self.log.error("Temp basal uncertain error: %@", String(describing: error))
-                    completion(nil)
+                    completion(.communication(error))
                 case .certainFailure(let error):
                     self.log.error("setTempBasal failed: %{public}@", String(describing: error))
                     completion(.communication(error))

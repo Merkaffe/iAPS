@@ -11,7 +11,7 @@
 import Foundation
 
 // See OmnipodKit/Eros/ErosMessageTransport.swift and OmnipodKit/Bluetooth/BleMessageTransport.swift
-// for specific implementations of MesasgerTransportState and MessageTransport
+// for specific implementations of MessageTransportState and MessageTransport
 
 protocol MessageTransportState: Equatable, RawRepresentable {
 

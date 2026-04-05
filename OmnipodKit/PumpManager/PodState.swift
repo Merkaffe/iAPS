@@ -33,11 +33,11 @@ enum SetupProgress: Int {
     var primingNeverAttempted: Bool {
         return self.rawValue < SetupProgress.startingPrime.rawValue
     }
-    
+
     var primingNeeded: Bool {
         return self.rawValue < SetupProgress.priming.rawValue
     }
-    
+
     var needsInitialBasalSchedule: Bool {
         return self.rawValue < SetupProgress.initialBasalScheduleSet.rawValue
     }
@@ -123,10 +123,11 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         return false
     }
 
-    // Dash specific variables
+    // BLE specific variables
     var bleMessageTransportState: BleMessageTransportState
     var ltk: Data? = nil
     var bleIdentifier: String? = nil
+    var signingKey: Data? = nil // O5 only
 
     // Eros specific variables
     var erosMessageTransportState: ErosMessageTransportState
@@ -148,6 +149,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         bleMessageTransportState: BleMessageTransportState? = nil,
         ltk: Data? = nil,
         bleIdentifier: String? = nil,
+        signingKey: Data? = nil, // O5 only
 
         // Eros specific variables
         erosMessageTransportState: ErosMessageTransportState? = nil,
@@ -188,6 +190,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             // BLE specific initializations
             self.ltk = ltk
             self.bleIdentifier = bleIdentifier
+            self.signingKey = signingKey // O5 only
             if let bleMessageTransportState = bleMessageTransportState {
                 self.bleMessageTransportState = bleMessageTransportState
             } else {
@@ -466,8 +469,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
     // MARK: - RawRepresentable
     public init?(rawValue: RawValue) {
-        log.debug("[PodState] init with rawValue: %{public}@",
-                  String(describing: rawValue))
+        log.bleDebug("[PodState] init with rawValue: %{public}@", String(describing: rawValue))
 
         guard
             let address = rawValue["address"] as? UInt32,
@@ -645,10 +647,6 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
                 let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
             {
                 self.erosMessageTransportState = erosMessageTransportState
-            } else if let erosMessageTransportStateRaw = rawValue["messageTransportState"] as? ErosMessageTransportState.RawValue,
-                let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
-            {
-                self.erosMessageTransportState = erosMessageTransportState
             } else {
                 self.erosMessageTransportState = ErosMessageTransportState()
             }
@@ -675,6 +673,27 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
                 self.bleIdentifier = bleIdentifier
             }
 
+            if podType.isO5 {
+                if let signingKeyString = rawValue["signingKey"] as? String {
+                    // This is the normal path for new O5 pods which should
+                    // have the 32-byte signingKey initialized during pairing.
+                    self.signingKey = Data(hexadecimalString: signingKeyString)
+                } else {
+                    // One time during conversion due to adding signingKey to PodState,
+                    // for new pods this will automatically be initialized during pairing.
+                    let controllerId = controllerIdForPodId(podId: address)
+                    self.signingKey = try? O5CertificateStore(controllerId: controllerId).signingKey.rawRepresentation
+                    if self.signingKey == nil {
+                        // Without a saved signingKey as well as the needed certificate for pdmId,
+                        // this pod will not be able to do any insulin, cancel, or deactivation commands.
+                        // This should only occur for an artificially created testing situation.
+                        log.default("@@@ initializion failed for 0x%08X, continuing in limited mode...", controllerId)
+                    } else {
+                        log.default("@@@ PodState signingKey initialized for 0x%08X", controllerId)
+                    }
+                }
+            }
+
         default:
             return nil
         }
@@ -689,7 +708,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "lotNo": lotNo,
             "lotSeq": lotSeq,
             "suspendState": suspendState.rawValue,
-            "finalizedDoses": finalizedDoses.map( { $0.rawValue }),
+            "finalizedDoses": finalizedDoses.map({ $0.rawValue }),
             "alerts": activeAlertSlots.rawValue,
             "setupProgress": setupProgress.rawValue,
             "insulinType": insulinType.rawValue,
@@ -710,7 +729,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         rawValue["podTime"] = podTime
         rawValue["podTimeUpdated"] = podTimeUpdated
         rawValue["setupUnitsDelivered"] = setupUnitsDelivered
-        
+
         if configuredAlerts.count > 0 {
             let rawConfiguredAlerts = Dictionary(uniqueKeysWithValues:
                                                     configuredAlerts.map { slot, alarm in (String(describing: slot.rawValue), alarm.rawValue) })
@@ -726,6 +745,10 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             }
             if let ltk = ltk {
                 rawValue["ltk"] = ltk.hexadecimalString
+            }
+            // O5 only
+            if let signingKey = signingKey {
+                rawValue["signingKey"] = signingKey.hexadecimalString
             }
         }
 

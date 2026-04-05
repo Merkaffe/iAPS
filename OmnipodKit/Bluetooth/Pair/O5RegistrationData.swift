@@ -2,8 +2,6 @@
 //  O5RegistrationData.swift
 //  OmnipodKit
 //
-//  Extracted O5 registration data — keys, certificates, and PDM identity.
-//
 //  Copyright © 2026 LoopKit Authors. All rights reserved.
 //
 
@@ -18,13 +16,13 @@ struct O5RegistrationData {
     static func install(_ value: O5RegistrationData) {
         lock.lock()
         defer { lock.unlock() }
-        _registry[value.pdmid] = value
+        _registry[value.controllerId] = value
     }
 
-    static func get(_ pdmid: UInt32) -> O5RegistrationData? {
+    static func get(_ controllerId: UInt32) -> O5RegistrationData? {
         lock.lock()
         defer { lock.unlock() }
-        return _registry[pdmid]
+        return _registry[controllerId]
     }
 
     static func getRandom() -> O5RegistrationData? {
@@ -55,26 +53,17 @@ struct O5RegistrationData {
 
     // MARK: - Identity
 
-    /// PDM ID from the TLS certificate SAN — becomes the 4-byte controller ID.
-    let pdmid: UInt32
+    /// Becomes the 4-byte controller ID.
+    let controllerId: UInt32
 
-    // MARK: - Secondary Key (main signing key, SPS2.1 + pod commands)
+    // MARK: - Secondary Key (main signing key, SPS2.1 + certain pod commands)
 
-    /// Secondary EC P-256 private key scalar (32 bytes hex).
     let secondaryKeyScalarHex: String
-
-    /// Secondary key public key (64 bytes hex, x || y, no 04 prefix).
     let secondaryPublicKeyHex: String
 
-    // MARK: - Certificate Chain (downloaded via register/download)
+    // MARK: - Certificate Chain
 
-    /// Intermediate CA certificate (issued by Root CA certificate, DER base64).
-    /// Sent as encrypted payload during SPS2.1
     let intermediateCACertDERBase64: String
-
-    /// TLS Certificate (issued by Intermediate CA certificate, DER base64).
-    /// Its public key matches the secondary signing key.
-    /// Sent as encrypted payload during SPS2
     let tlsCertificateDERBase64: String
 
 
@@ -86,8 +75,8 @@ struct O5RegistrationData {
     var tlsCertificateDER: Data? { Data(base64Encoded: tlsCertificateDERBase64) }
     var intermediateCACertDER: Data? { Data(base64Encoded: intermediateCACertDERBase64) }
 
-    var controllerID: Data {
-        var value = pdmid.bigEndian
+    var controllerIdData: Data {
+        var value = controllerId.bigEndian
         return Data(bytes: &value, count: 4)
     }
 }

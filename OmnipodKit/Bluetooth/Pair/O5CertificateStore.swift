@@ -25,8 +25,8 @@ class O5CertificateStore {
 
     // MARK: - Computed Properties
 
-    var pdmid: UInt32 { registration.pdmid }
-    var controllerID: Data { registration.controllerID }
+    var controllerId: UInt32 { registration.controllerId }
+    var controllerIdData: Data { registration.controllerIdData }
 
     var signingPublicKeyRaw: Data {
         return signingKey.publicKey.rawRepresentation
@@ -34,11 +34,11 @@ class O5CertificateStore {
 
     // MARK: - Access aids
 
-    /// Randomly picks an available O5 pdmId or 0 if none available
-    static var pickPdmId: UInt32 {
+    /// Randomly picks an available O5 controllerId with or 0 if none available
+    static var pickControllerId: UInt32 {
         loadOptionalO5Data()
         if let data = O5RegistrationData.allValues.randomElement() {
-            return data.pdmid
+            return data.controllerId
         }
         return 0
     }
@@ -49,21 +49,21 @@ class O5CertificateStore {
         return O5RegistrationData.isEmpty
     }
 
-    // Returns true if O5RegistrationData exists for the specific pdmId
-    static func contains(_ pdmId: UInt32) -> Bool {
+    // Returns true if O5RegistrationData exists for the specific controllerId
+    static func contains(_ controllerId: UInt32) -> Bool {
         loadOptionalO5Data()
-        return O5RegistrationData.get(pdmId) != nil
+        return O5RegistrationData.get(controllerId) != nil
     }
 
 
     // MARK: - Initialization
 
-    // init for the specified pdmid
-    init(pdmId: UInt32) throws {
+    // init for the specified controllerId
+    init(controllerId: UInt32) throws {
 
         loadOptionalO5Data()
-        guard let data = O5RegistrationData.get(pdmId) else {
-            log.debug("@@@ O5CertificateStore has no data for 0x%08X", pdmId)
+        guard let data = O5RegistrationData.get(controllerId) else {
+            log.debug("@@@ O5CertificateStore has no data for 0x%08X", controllerId)
             throw PodCommsError.noCertificateFound
         }
 
@@ -79,7 +79,7 @@ class O5CertificateStore {
             throw PodCommsError.noCertificateFound
         }
 
-        log.bleDebug("O5CertificateStore initialized for pdmid=0x%08X", registration.pdmid)
+        log.bleDebug("O5CertificateStore initialized for 0x%08X", registration.controllerId)
     }
 
     // MARK: - Signing (Secondary Key)

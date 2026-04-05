@@ -162,6 +162,7 @@ class BlePodComms: PodComms {
         let response: PairResult
         let ltk: Data
         let eapSeq: Int
+        let signingKey: Data?
 
         ids = Ids(myId: self.myId, podId: self.podId)
         log.bleDebug("@@@ Calling LKExchanger for myId 0x%x podId 0x%x", ids.myIdAddr, ids.podIdAddr)
@@ -170,10 +171,12 @@ class BlePodComms: PodComms {
             let dashLTKExchanger = DashLTKExchanger(manager: manager, ids: ids)
             response = try dashLTKExchanger.negotiateLTK()
             ltk = response.ltk
+            signingKey = nil
         case omnipod5Type:
             let o5LTKExchanger = try O5LTKExchanger(manager: manager, ids: ids)
             response = try o5LTKExchanger.o5negotiateLTK()
             ltk = response.ltk
+            signingKey = try? O5CertificateStore(controllerId: myId).signingKey.rawRepresentation
         default:
             throw OmniPumpManagerError.podTypeNotConfigured
         }
@@ -194,7 +197,7 @@ class BlePodComms: PodComms {
         log.info("LTK and encrypted transport now ready, messageTransportState: %{public}@", bleMessageTransportState.inlineDescription)
 
         // If we get here, we have the LTK all set up and we should be able use encrypted pod messages
-        let transport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: bleMessageTransportState)
+        let transport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: bleMessageTransportState, signingKey: signingKey)
         transport.messageLogger = messageLogger
 
         // This command doesn't actually assign the address (podId) any more for
@@ -219,7 +222,8 @@ class BlePodComms: PodComms {
             podType: versionResponse.podType,
             bleMessageTransportState: transport.state,
             ltk: ltk,
-            bleIdentifier: manager.peripheral.identifier.uuidString
+            bleIdentifier: manager.peripheral.identifier.uuidString,
+            signingKey: signingKey,
         )
 
         // podState setupProgress state should be addressAssigned
@@ -318,7 +322,7 @@ class BlePodComms: PodComms {
 
         guard let manager = manager else { throw PodCommsError.podNotConnected }
 
-        let transport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: podState!.bleMessageTransportState)
+        let transport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: podState!.bleMessageTransportState, signingKey: podState?.signingKey)
         transport.messageLogger = messageLogger
 
         defer {
@@ -473,7 +477,7 @@ class BlePodComms: PodComms {
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
         assert(podState != nil, "setupPod called with no podState!")
 
-        let transport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: podState!.bleMessageTransportState)
+        let transport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: podState!.bleMessageTransportState, signingKey: podState!.signingKey)
         transport.messageLogger = messageLogger
 
         log.bleDebug("setupPod() starting transport state %{public}@", transport.state.inlineDescription)
@@ -603,7 +607,7 @@ class BlePodComms: PodComms {
                 }
 
                 // Now create the pod comms session to be returned for the post-pairing commands
-                let transport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: podState!.bleMessageTransportState)
+                let transport = BlePodMessageTransport(manager: manager, myId: myId, podId: podId, state: podState!.bleMessageTransportState, signingKey: podState!.signingKey)
                 transport.messageLogger = messageLogger
 
                 let podSession = PodCommsSession(podState: podState!, transport: transport, delegate: self)
@@ -637,7 +641,7 @@ class BlePodComms: PodComms {
                 return
             }
 
-            let transport = BlePodMessageTransport(manager: manager, myId: self.myId, podId: self.podId, state: self.podState!.bleMessageTransportState)
+            let transport = BlePodMessageTransport(manager: manager, myId: self.myId, podId: self.podId, state: self.podState!.bleMessageTransportState, signingKey: self.podState!.signingKey)
             transport.messageLogger = self.messageLogger
 
             let podSession = PodCommsSession(podState: self.podState!, transport: transport, delegate: self)

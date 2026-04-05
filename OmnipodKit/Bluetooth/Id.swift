@@ -78,7 +78,7 @@ func nextIds(podType: PodType, controllerId: UInt32 = 0, podId: UInt32 = 0) -> (
     } else {
         // For O5, the created controllerId must match a value in the O5 CertificateStore
         if controllerId == 0 || !O5CertificateStore.contains(controllerId) {
-            myControllerId = O5CertificateStore.pickPdmId
+            myControllerId = O5CertificateStore.pickControllerId
             basePodId = myControllerId // so nextPodId will be myControllerId + 1
             if controllerId != 0 {
                 print("@@@ Switched O5 controller id from \(controllerId) to \(myControllerId)")
@@ -98,12 +98,18 @@ func nextIds(podType: PodType, controllerId: UInt32 = 0, podId: UInt32 = 0) -> (
 }
 
 /// The podId's cycle between 3 #'s of +1,+2,+3,+1, ...
-/// For far, this seems to be required for O5 pods, but not for DASH pods
+/// This seems to be required for O5 pods, but not for DASH pods
+fileprivate let controllerIdBitMask: UInt32 = 0b11
+
+/// Returns the controllerId for the specified podId
+func controllerIdForPodId(podId: UInt32) -> UInt32 {
+    return podId & ~controllerIdBitMask
+}
+
 fileprivate func nextPodId(lastPodId: UInt32) -> UInt32 {
-    let bitMask: UInt32 = 0b11
-    if (lastPodId & bitMask) == bitMask {
+    if (lastPodId & controllerIdBitMask) == controllerIdBitMask {
         // start over at the base + 1
-        return (lastPodId & ~bitMask) + 1
+        return (lastPodId & ~controllerIdBitMask) + 1
     }
     // return the next sequential podId #
     return lastPodId + 1

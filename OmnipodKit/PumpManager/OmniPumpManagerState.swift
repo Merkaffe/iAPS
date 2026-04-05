@@ -166,8 +166,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
     }
 
     public init?(rawValue: RawValue) {
-        log.debug("[OmniPumpManagerState] init with rawValue: %{public}@",
-                  String(describing: rawValue))
+        log.bleDebug("[OmniPumpManagerState] init with rawValue: %{public}@", String(describing: rawValue))
 
         let isOnboarded = rawValue["isOnboarded"] as? Bool ?? false
 
@@ -238,14 +237,9 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
                 // Verify that the O5CertificateStore contains info for myId
                 if O5CertificateStore.contains(myId) {
                     log.default("@@@ Verified controller id 0x%08X has O5 certificate", myId)
-                } else if podState != nil {
-                    // Missing the needed cert and we already have a podState, punt for now
-                    // and continue running in a disabled mode where none of the signed commands
-                    // (insulin, cancellation and deactivation) can be successfully used.
-                    log.error("@@@ Missing O5 certificate for 0x%08X -- running in limited operation mode!", myId)
-                } else {
-                    // With no pod, we can just pick a new available controllerId to use
-                    let newId = O5CertificateStore.pickPdmId
+                } else if podState == nil {
+                    // With no pod, just pick a new available controllerId to use
+                    let newId = O5CertificateStore.pickControllerId
                     controllerId = newId
                     if newId != 0 {
                         podId = newId + 1
