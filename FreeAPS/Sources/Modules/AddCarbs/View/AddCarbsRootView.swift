@@ -186,104 +186,101 @@ extension AddCarbs {
         }
 
         private var mealView: some View {
-            NutritionListView(nutrition: viewModel.aggregatedNutrition)
+            Form {
+                if let carbsReq = state.carbsRequired, state.carbs < carbsReq {
+                    Section {
+                        HStack {
+                            Text("Carbs required")
+                            Spacer()
+                            Text((Self.formatter.string(from: carbsReq as NSNumber) ?? "") + " g")
+                        }
+                    }
+                }
 
-            /*
-             Form {
-                 if let carbsReq = state.carbsRequired, state.carbs < carbsReq {
-                     Section {
-                         HStack {
-                             Text("Carbs required")
-                             Spacer()
-                             Text((Self.formatter.string(from: carbsReq as NSNumber) ?? "") + " g")
-                         }
-                     }
-                 }
+                Section {
+                    HStack {
+                        Text("Carbs").fontWeight(.semibold)
+                        Spacer()
+                        DecimalTextField(
+                            "0",
+                            value: $state.carbs,
+                            formatter: Self.formatter,
+                            autofocus: false,
+                            liveEditing: true
+                        )
+                        Text("grams").foregroundColor(.secondary)
+                    }
 
-                 Section {
-                     HStack {
-                         Text("Carbs").fontWeight(.semibold)
-                         Spacer()
-                         DecimalTextField(
-                             "0",
-                             value: $state.carbs,
-                             formatter: Self.formatter,
-                             autofocus: false,
-                             liveEditing: true
-                         )
-                         Text("grams").foregroundColor(.secondary)
-                     }
+                    if state.useFPUconversion {
+                        proteinAndFat()
+                    }
 
-                     if state.useFPUconversion {
-                         proteinAndFat()
-                     }
+                    // Time
+                    HStack {
+                        Text("Time")
+                        Spacer()
+                        if !pushed {
+                            Button {
+                                pushed = true
+                            } label: { Text("Now") }.buttonStyle(.borderless).foregroundColor(.secondary).padding(.trailing, 5)
+                        } else {
+                            Button { state.date = state.date.addingTimeInterval(-15.minutes.timeInterval) }
+                            label: { Image(systemName: "minus.circle") }.tint(.blue).buttonStyle(.borderless)
+                            DatePicker(
+                                "Time",
+                                selection: $state.date,
+                                displayedComponents: [.hourAndMinute]
+                            ).controlSize(.mini)
+                                .labelsHidden()
+                            Button {
+                                state.date = state.date.addingTimeInterval(15.minutes.timeInterval)
+                            }
+                            label: { Image(systemName: "plus.circle") }.tint(.blue).buttonStyle(.borderless)
+                        }
+                    }
+                }
 
-                     // Time
-                     HStack {
-                         Text("Time")
-                         Spacer()
-                         if !pushed {
-                             Button {
-                                 pushed = true
-                             } label: { Text("Now") }.buttonStyle(.borderless).foregroundColor(.secondary).padding(.trailing, 5)
-                         } else {
-                             Button { state.date = state.date.addingTimeInterval(-15.minutes.timeInterval) }
-                             label: { Image(systemName: "minus.circle") }.tint(.blue).buttonStyle(.borderless)
-                             DatePicker(
-                                 "Time",
-                                 selection: $state.date,
-                                 displayedComponents: [.hourAndMinute]
-                             ).controlSize(.mini)
-                                 .labelsHidden()
-                             Button {
-                                 state.date = state.date.addingTimeInterval(15.minutes.timeInterval)
-                             }
-                             label: { Image(systemName: "plus.circle") }.tint(.blue).buttonStyle(.borderless)
-                         }
-                     }
-                 }
+                if !empty, !saved {
+                    Button { saveAsPreset() }
+                    label: {
+                        Text("Save as preset").foregroundStyle(.orange)
+                    }
+                    .buttonStyle(.borderless)
+                    .listRowBackground(Color(.systemGroupedBackground))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
 
-                 if !empty, !saved {
-                     Button { saveAsPreset() }
-                     label: {
-                         Text("Save as preset").foregroundStyle(.orange)
-                     }
-                     .buttonStyle(.borderless)
-                     .listRowBackground(Color(.systemGroupedBackground))
-                     .frame(maxWidth: .infinity, alignment: .trailing)
-                 }
+                // Optional Hypo Treatment
+                if state.carbs > 0, let profile = state.id, profile != "None", state.carbsRequired != nil {
+                    Section {
+                        Button {
+                            state.hypoTreatment = true
+                            button.toggle()
+                            if button { state.add(override, fetch: editMode) }
+                        }
+                        label: {
+                            Text("Hypo Treatment")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    }.listRowBackground(Color(.orange).opacity(0.9)).tint(.white)
+                }
 
-                 // Optional Hypo Treatment
-                 if state.carbs > 0, let profile = state.id, profile != "None", state.carbsRequired != nil {
-                     Section {
-                         Button {
-                             state.hypoTreatment = true
-                             button.toggle()
-                             if button { state.add(override, fetch: editMode) }
-                         }
-                         label: {
-                             Text("Hypo Treatment")
-                         }
-                         .frame(maxWidth: .infinity, alignment: .center)
-                     }.listRowBackground(Color(.orange).opacity(0.9)).tint(.white)
-                 }
-
-                 Section {
-                     Button {
-                         button.toggle()
-                         if button { state.add(override, fetch: editMode) }
-                     }
-                     label: {
-                         Text(
-                             ((state.skipBolus && !override && !editMode) || state.carbs <= 0) ? "Save" :
-                                 "Continue"
-                         ) }
-                         .disabled(empty)
-                         .frame(maxWidth: .infinity, alignment: .center)
-                 }.listRowBackground(!empty ? Color(.systemBlue) : Color(.systemGray4))
-                     .tint(.white)
-             }
-             .sheet(isPresented: $presentPresets, content: { presetView })*/
+                Section {
+                    Button {
+                        button.toggle()
+                        if button { state.add(override, fetch: editMode) }
+                    }
+                    label: {
+                        Text(
+                            ((state.skipBolus && !override && !editMode) || state.carbs <= 0) ? "Save" :
+                                "Continue"
+                        ) }
+                        .disabled(empty)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }.listRowBackground(!empty ? Color(.systemBlue) : Color(.systemGray4))
+                    .tint(.white)
+            }
+            .sheet(isPresented: $presentPresets, content: { presetView })
         }
 
         private var meal: Bool {
