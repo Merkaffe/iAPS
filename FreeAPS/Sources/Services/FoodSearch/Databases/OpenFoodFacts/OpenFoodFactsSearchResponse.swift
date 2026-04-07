@@ -238,8 +238,12 @@ extension OpenFoodFactsProduct: Codable {
     }
 }
 
-/// Nutritional information for a food product - simplified to essential nutrients only
+import Foundation
+
+/// Nutritional information for a food product
 struct Nutriments: Codable {
+    // MARK: - Macro nutrients
+
     let carbohydrates: Decimal?
     let proteins: Decimal?
     let fat: Decimal?
@@ -248,28 +252,28 @@ struct Nutriments: Codable {
     let fiber: Decimal?
     let energy: Decimal?
 
+    // MARK: - Micronutrients (dynamic)
+
+    /// Key = normalized nutrient name (e.g. "vitamin_c", "iron")
+    let micronutrients: [String: Decimal]
+
+    // MARK: - Coding Keys
+
     enum CodingKeys: String, CodingKey {
-        case carbohydratesServing = "carbohydrates_serving"
         case carbohydrates100g = "carbohydrates_100g"
-        case proteinsServing = "proteins_serving"
         case proteins100g = "proteins_100g"
-        case fatServing = "fat_serving"
         case fat100g = "fat_100g"
-        case caloriesServing = "energy-kcal_serving"
         case calories100g = "energy-kcal_100g"
-        case sugarsServing = "sugars_serving"
         case sugars100g = "sugars_100g"
-        case fiberServing = "fiber_serving"
         case fiber100g = "fiber_100g"
-        case energyServing = "energy_serving"
         case energy100g = "energy_100g"
     }
+
+    // MARK: - Decoder
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        // Use 100g values as base since serving sizes are often incorrect in the database
-        // The app will handle serving size calculations based on actual product weight
         carbohydrates = try container.decodeIfPresent(Decimal.self, forKey: .carbohydrates100g)
         proteins = try container.decodeIfPresent(Decimal.self, forKey: .proteins100g)
         fat = try container.decodeIfPresent(Decimal.self, forKey: .fat100g)
@@ -277,30 +281,62 @@ struct Nutriments: Codable {
         sugars = try container.decodeIfPresent(Decimal.self, forKey: .sugars100g)
         fiber = try container.decodeIfPresent(Decimal.self, forKey: .fiber100g)
         energy = try container.decodeIfPresent(Decimal.self, forKey: .energy100g)
+
+        let rawContainer = try decoder.singleValueContainer()
+        let raw = (try? rawContainer.decode([String: AnyDecodable].self)) ?? [:]
+
+        var micros: [String: Decimal] = [:]
+
+        for (key, value) in raw {
+            guard key.contains("_100g"),
+                  let decimal = value.decimalValue else { continue }
+
+            // Skip known macros
+            if key.contains("carbohydrates") ||
+                key.contains("proteins") ||
+                key.contains("fat") ||
+                key.contains("energy") ||
+                key.contains("sugars") ||
+                key.contains("fiber")
+            {
+                continue
+            }
+
+            let cleanKey = key
+                .replacingOccurrences(of: "_100g", with: "")
+                .replacingOccurrences(of: "-", with: "_")
+                .lowercased()
+
+            micros[cleanKey] = decimal
+        }
+
+        micronutrients = micros
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
-        // Encode as 100g values since that's what we're using internally
-        try container.encode(carbohydrates, forKey: .carbohydrates100g)
+        try container.encodeIfPresent(carbohydrates, forKey: .carbohydrates100g)
         try container.encodeIfPresent(proteins, forKey: .proteins100g)
         try container.encodeIfPresent(fat, forKey: .fat100g)
         try container.encodeIfPresent(calories, forKey: .calories100g)
         try container.encodeIfPresent(sugars, forKey: .sugars100g)
         try container.encodeIfPresent(fiber, forKey: .fiber100g)
         try container.encodeIfPresent(energy, forKey: .energy100g)
+
+        // NOTE: Micronutrients are not re-encoded to original API keys
+        // (intentional: this is an internal normalized representation)
     }
 
-    /// Manual initializer for programmatic creation (e.g., AI analysis)
     init(
-        carbohydrates: Decimal,
-        proteins: Decimal? = nil,
-        fat: Decimal? = nil,
-        calories: Decimal? = nil,
-        sugars: Decimal? = nil,
-        fiber: Decimal? = nil,
-        energy: Decimal? = nil
+        carbohydrates: Decimal?,
+        proteins: Decimal?,
+        fat: Decimal?,
+        calories: Decimal?,
+        sugars: Decimal?,
+        fiber: Decimal?,
+        energy: Decimal?,
+        micronutrients: [String: Decimal] = [:]
     ) {
         self.carbohydrates = carbohydrates
         self.proteins = proteins
@@ -309,12 +345,126 @@ struct Nutriments: Codable {
         self.sugars = sugars
         self.fiber = fiber
         self.energy = energy
+        self.micronutrients = micronutrients
     }
 
     static func empty() -> Nutriments {
-        Nutriments(carbohydrates: 0.0, proteins: nil, fat: nil, calories: nil, sugars: nil, fiber: nil, energy: nil)
+        Nutriments(
+            carbohydrates: 0,
+            proteins: nil,
+            fat: nil,
+            calories: nil,
+            sugars: nil,
+            fiber: nil,
+            energy: nil,
+            micronutrients: [:]
+        )
     }
 }
+
+struct AnyDecodable: Decodable {
+    let value: Any
+
+    var decimalValue: Decimal? {
+        if let d = value as? Double { return Decimal(d) }
+        if let i = value as? Int { return Decimal(i) }
+        if let s = value as? String { return Decimal(string: s) }
+        return nil
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+
+        if let int = try? container.decode(Int.self) {
+            value = int
+        } else if let double = try? container.decode(Double.self) {
+            value = double
+        } else if let string = try? container.decode(String.self) {
+            value = string
+        } else {
+            value = ""
+        }
+    }
+}
+
+/*
+ /// Nutritional information for a food product - simplified to essential nutrients only
+ struct Nutriments: Codable {
+     let carbohydrates: Decimal?
+     let proteins: Decimal?
+     let fat: Decimal?
+     let calories: Decimal?
+     let sugars: Decimal?
+     let fiber: Decimal?
+     let energy: Decimal?
+
+     enum CodingKeys: String, CodingKey {
+         case carbohydratesServing = "carbohydrates_serving"
+         case carbohydrates100g = "carbohydrates_100g"
+         case proteinsServing = "proteins_serving"
+         case proteins100g = "proteins_100g"
+         case fatServing = "fat_serving"
+         case fat100g = "fat_100g"
+         case caloriesServing = "energy-kcal_serving"
+         case calories100g = "energy-kcal_100g"
+         case sugarsServing = "sugars_serving"
+         case sugars100g = "sugars_100g"
+         case fiberServing = "fiber_serving"
+         case fiber100g = "fiber_100g"
+         case energyServing = "energy_serving"
+         case energy100g = "energy_100g"
+     }
+
+     init(from decoder: Decoder) throws {
+         let container = try decoder.container(keyedBy: CodingKeys.self)
+
+         // Use 100g values as base since serving sizes are often incorrect in the database
+         // The app will handle serving size calculations based on actual product weight
+         carbohydrates = try container.decodeIfPresent(Decimal.self, forKey: .carbohydrates100g)
+         proteins = try container.decodeIfPresent(Decimal.self, forKey: .proteins100g)
+         fat = try container.decodeIfPresent(Decimal.self, forKey: .fat100g)
+         calories = try container.decodeIfPresent(Decimal.self, forKey: .calories100g)
+         sugars = try container.decodeIfPresent(Decimal.self, forKey: .sugars100g)
+         fiber = try container.decodeIfPresent(Decimal.self, forKey: .fiber100g)
+         energy = try container.decodeIfPresent(Decimal.self, forKey: .energy100g)
+     }
+
+     func encode(to encoder: Encoder) throws {
+         var container = encoder.container(keyedBy: CodingKeys.self)
+
+         // Encode as 100g values since that's what we're using internally
+         try container.encode(carbohydrates, forKey: .carbohydrates100g)
+         try container.encodeIfPresent(proteins, forKey: .proteins100g)
+         try container.encodeIfPresent(fat, forKey: .fat100g)
+         try container.encodeIfPresent(calories, forKey: .calories100g)
+         try container.encodeIfPresent(sugars, forKey: .sugars100g)
+         try container.encodeIfPresent(fiber, forKey: .fiber100g)
+         try container.encodeIfPresent(energy, forKey: .energy100g)
+     }
+
+     /// Manual initializer for programmatic creation (e.g., AI analysis)
+     init(
+         carbohydrates: Decimal,
+         proteins: Decimal? = nil,
+         fat: Decimal? = nil,
+         calories: Decimal? = nil,
+         sugars: Decimal? = nil,
+         fiber: Decimal? = nil,
+         energy: Decimal? = nil
+     ) {
+         self.carbohydrates = carbohydrates
+         self.proteins = proteins
+         self.fat = fat
+         self.calories = calories
+         self.sugars = sugars
+         self.fiber = fiber
+         self.energy = energy
+     }
+
+     static func empty() -> Nutriments {
+         Nutriments(carbohydrates: 0.0, proteins: nil, fat: nil, calories: nil, sugars: nil, fiber: nil, energy: nil)
+     }
+ }*/
 
 enum OpenFoodFactsError: Error, LocalizedError {
     case invalidURL
@@ -380,5 +530,45 @@ enum OpenFoodFactsError: Error, LocalizedError {
         case .serverError:
             return "OpenFoodFacts server is experiencing issues"
         }
+    }
+}
+
+extension Nutriments {
+    func toMicronutrientValues() -> [MicronutrientValue] {
+        micronutrients.compactMap { key, value in
+            guard let micro = MicroNutrient(coreDataName: key) else { return nil }
+
+            return MicronutrientValue(
+                substance: micro,
+                amount: value,
+                amountPer100: value
+            )
+        }
+    }
+}
+
+extension OpenFoodFactsProduct {
+    var micronutrientValues: [MicronutrientValue] {
+        nutriments.toMicronutrientValues()
+    }
+}
+
+extension OpenFoodFactsProduct {
+    func toFoodItemDetailed() -> FoodItemDetailed {
+        FoodItemDetailed(
+            name: displayName,
+            nutrition: .per100(
+                values: [
+                    .carbs: nutriments.carbohydrates ?? 0,
+                    .protein: nutriments.proteins ?? 0,
+                    .fat: nutriments.fat ?? 0,
+                    .fiber: nutriments.fiber ?? 0,
+                    .sugars: nutriments.sugars ?? 0
+                ],
+                portionSize: 100
+            ),
+            micronutrients: micronutrientValues,
+            source: .database
+        )
     }
 }

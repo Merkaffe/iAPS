@@ -171,31 +171,49 @@ extension MicroNutrient {
             $0.apiKey == apiKey
         } ?? .vitaminC
     }
-    
-        var coreDataName: String {
-            displayName
+
+    var coreDataName: String {
+        displayName
+    }
+
+    var coreDataType: String {
+        switch self {
+        case .vitaminA,
+             .vitaminB1,
+             .vitaminB2,
+             .vitaminB3,
+             .vitaminB5,
+             .vitaminB6,
+             .vitaminB7,
+             .vitaminB9,
+             .vitaminB12,
+             .vitaminC,
+             .vitaminD,
+             .vitaminE,
+             .vitaminK:
+            return "vitamin"
+        default:
+            return "mineral"
+        }
+    }
+
+    init?(coreDataName: String) {
+        let normalized = coreDataName
+            .lowercased()
+            .replacingOccurrences(of: "_", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let match = MicroNutrient.allCases.first(where: {
+            $0.displayName.lowercased() == normalized
+        }) else {
+            return nil
         }
 
-        var coreDataType: String {
-            switch self {
-            case .vitaminA, .vitaminB1, .vitaminB2, .vitaminB3,
-                 .vitaminB5, .vitaminB6, .vitaminB7, .vitaminB9,
-                 .vitaminB12, .vitaminC, .vitaminD, .vitaminE, .vitaminK:
-                return "vitamin"
-            default:
-                return "mineral"
-            }
-        }
-    
-        init?(coreDataName: String) {
-            self = MicroNutrient.allCases.first {
-                $0.displayName.caseInsensitiveCompare(coreDataName) == .orderedSame
-            } ?? <#default value#>
-        }
- 
+        self = match
+    }
 }
 
-struct MicronutrientValue: Identifiable {
+struct MicronutrientValue: Identifiable, Equatable {
     let id = UUID()
     let substance: MicroNutrient
     let amount: Decimal
@@ -203,6 +221,23 @@ struct MicronutrientValue: Identifiable {
 
     var unit: String { substance.unit }
     var name: String { substance.displayName }
+
+    var isVitamin: Bool {
+        substance.coreDataType == "vitamin"
+    }
+}
+
+extension MicronutrientValue {
+    var formattedAmount: String {
+        let formatter = NumberFormatter()
+        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 0
+
+        let number = NSDecimalNumber(decimal: amount)
+
+        let formatted = formatter.string(from: number) ?? "\(number)"
+        return "\(formatted) \(unit)"
+    }
 }
 
 struct DynamicCodingKey: CodingKey {

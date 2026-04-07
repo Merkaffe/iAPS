@@ -159,6 +159,10 @@ struct FoodItemDetailed: Identifiable, Equatable {
 
     let nutrition: FoodNutrition
 
+    let micronutrients: [MicronutrientValue]
+
+    // let micronutrients: [MicroNutrient: Decimal]?
+
     let assessmentNotes: String?
 
     let imageURL: String?
@@ -182,6 +186,7 @@ struct FoodItemDetailed: Identifiable, Equatable {
             lhs.glycemicIndex == rhs.glycemicIndex &&
             lhs.standardName == rhs.standardName &&
             lhs.nutrition == rhs.nutrition &&
+            lhs.micronutrients == rhs.micronutrients &&
             lhs.assessmentNotes == rhs.assessmentNotes &&
             lhs.imageURL == rhs.imageURL &&
             lhs.tags == rhs.tags &&
@@ -193,6 +198,7 @@ struct FoodItemDetailed: Identifiable, Equatable {
         id: UUID? = nil,
         name: String,
         nutrition: FoodNutrition,
+        micronutrients: [MicronutrientValue],
         confidence: ConfidenceLevel? = nil,
         brand: String? = nil,
         standardServing: String? = nil,
@@ -220,6 +226,7 @@ struct FoodItemDetailed: Identifiable, Equatable {
         self.visualCues = visualCues
         self.glycemicIndex = glycemicIndex
         self.nutrition = nutrition
+        self.micronutrients = micronutrients
         self.assessmentNotes = assessmentNotes
         self.imageURL = imageURL
         self.tags = tags
@@ -253,6 +260,7 @@ extension FoodItemDetailed {
         id: UUID? = nil,
         name: String? = nil,
         nutrition: FoodNutrition? = nil,
+        micronutrients: [MicronutrientValue]? = nil,
         confidence: ConfidenceLevel?? = nil,
         brand: String?? = nil,
         standardServing: String?? = nil,
@@ -271,7 +279,7 @@ extension FoodItemDetailed {
         FoodItemDetailed(
             id: id ?? self.id,
             name: name ?? self.name,
-            nutrition: nutrition ?? self.nutrition,
+            nutrition: nutrition ?? self.nutrition, micronutrients: micronutrients ?? self.micronutrients,
             confidence: confidence ?? self.confidence,
             brand: brand ?? self.brand,
             standardServing: standardServing ?? self.standardServing,
@@ -341,4 +349,27 @@ extension FoodItemDetailed {
             nutrition: newNutrition
         )
     }
+
+    /*
+     func micronutrient(_ nutrient: MicroNutrient) -> Decimal? {
+         micronutrients?[nutrient]
+     }
+
+     var micronutrientList: [MicronutrientValue] {
+         (micronutrients ?? [:]).map {
+             MicronutrientValue(
+                 substance: $0.key,
+                 amount: $0.value,
+                 amountPer100: $0.value // adjust if needed
+             )
+         }
+         .sorted { $0.name < $1.name }
+     }*/
 }
+
+/*
+ struct FullNutrition {
+     let macros: FoodNutrition
+     let micros: [MicroNutrient: Decimal]
+ }
+ */

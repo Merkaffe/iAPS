@@ -118,6 +118,7 @@
 		19E1F7EC29D082FE005C8D20 /* IconConfigStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19E1F7EB29D082FE005C8D20 /* IconConfigStateModel.swift */; };
 		19E1F7EF29D08EBA005C8D20 /* IconConfigRootWiew.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19E1F7EE29D08EBA005C8D20 /* IconConfigRootWiew.swift */; };
 		19E90A632DC0BF8400483802 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 19E90A612DC0BF8400483802 /* InfoPlist.strings */; };
+		19EDD1D52F82C55800C09BCC /* MicroNutrienrs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19EDD1D42F82C54200C09BCC /* MicroNutrienrs.swift */; };
 		19F191DC2BE4F97000F6297E /* SharingDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F191DB2BE4F97000F6297E /* SharingDataFlow.swift */; };
 		19F191DE2BE4F97F00F6297E /* SharingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F191DD2BE4F97F00F6297E /* SharingProvider.swift */; };
 		19F191E02BE4F98F00F6297E /* SharingStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F191DF2BE4F98F00F6297E /* SharingStateModel.swift */; };
@@ -798,6 +799,7 @@
 		19E1F7EB29D082FE005C8D20 /* IconConfigStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconConfigStateModel.swift; sourceTree = "<group>"; };
 		19E1F7EE29D08EBA005C8D20 /* IconConfigRootWiew.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconConfigRootWiew.swift; sourceTree = "<group>"; };
 		19E90A622DC0BF8400483802 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		19EDD1D42F82C54200C09BCC /* MicroNutrienrs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicroNutrienrs.swift; sourceTree = "<group>"; };
 		19F191DB2BE4F97000F6297E /* SharingDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingDataFlow.swift; sourceTree = "<group>"; };
 		19F191DD2BE4F97F00F6297E /* SharingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingProvider.swift; sourceTree = "<group>"; };
 		19F191DF2BE4F98F00F6297E /* SharingStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingStateModel.swift; sourceTree = "<group>"; };
@@ -2070,9 +2072,10 @@
 				F2FEE7032D2DB1A000A91BB2 /* BGTextField.swift */,
 				38EA05FF262091870064E39B /* BolusProgressViewStyle.swift */,
 				3883581B25EE79BB00E024B2 /* DecimalTextField.swift */,
-				F292C1D02F5F0BF300B08D81 /* OptionalDecimalTextField.swift */,
-				F292C1CE2F5EF08300B08D81 /* DismissableTextField.swift */,
 				195F00472B5C267D00DAC71A /* DescriptionView.swift */,
+				F292C1CE2F5EF08300B08D81 /* DismissableTextField.swift */,
+				19EDD1D42F82C54200C09BCC /* MicroNutrienrs.swift */,
+				F292C1D02F5F0BF300B08D81 /* OptionalDecimalTextField.swift */,
 				383420D825FFEB3F002D46C1 /* Popup.swift */,
 				38DF1785276A73D400B3528F /* TagCloudView.swift */,
 				389ECDFD2601061500D86C4F /* View+Snapshot.swift */,
@@ -3667,6 +3670,7 @@
 				F90692AA274B7AAE0037068D /* HealthKitManager.swift in Sources */,
 				F2FEE7042D2DB1A000A91BB2 /* BGTextField.swift in Sources */,
 				19C3C7442E97AE7B0000BE4D /* ModernCameraView.swift in Sources */,
+				19EDD1D52F82C55800C09BCC /* MicroNutrienrs.swift in Sources */,
 				19C3C7462E97AE7B0000BE4D /* FoodSearchSettingsView.swift in Sources */,
 				19C3C7472E97AE7B0000BE4D /* BarcodeScannerView.swift in Sources */,
 				19C3C7492E97AE7B0000BE4D /* FoodSearchView.swift in Sources */,
