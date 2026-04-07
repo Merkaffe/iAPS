@@ -25,6 +25,43 @@ struct AggregatedNutrition {
     }
 }
 
+extension AggregatedNutrition {
+    var macroDisplay: [DisplayNutrient] {
+        NutrientType.allCases.compactMap { type in
+            guard let value = macros[type], value > 0 || type.isPrimary else { return nil }
+
+            return DisplayNutrient(
+                name: type.localizedLabel,
+                value: value,
+                unit: "g",
+                isPrimary: type.isPrimary
+            )
+        }
+    }
+
+    var microDisplay: [DisplayNutrient] {
+        micros
+            .filter { $0.value > 0 }
+            .sorted { $0.key.displayName < $1.key.displayName }
+            .map { key, value in
+                DisplayNutrient(
+                    name: key.displayName,
+                    value: value,
+                    unit: key.unit,
+                    isPrimary: false
+                )
+            }
+    }
+}
+
+struct DisplayNutrient: Identifiable {
+    let id = UUID()
+    let name: String
+    let value: Decimal
+    let unit: String
+    let isPrimary: Bool
+}
+
 enum MealUnits: String, Codable {
     case grams
     case milliliters
@@ -292,7 +329,8 @@ extension FoodItemDetailed {
         FoodItemDetailed(
             id: id ?? self.id,
             name: name ?? self.name,
-            nutrition: nutrition ?? self.nutrition, micronutrients: micronutrients ?? self.micronutrients,
+            nutrition: nutrition ?? self.nutrition,
+            micronutrients: micronutrients ?? self.micronutrients,
             confidence: confidence ?? self.confidence,
             brand: brand ?? self.brand,
             standardServing: standardServing ?? self.standardServing,

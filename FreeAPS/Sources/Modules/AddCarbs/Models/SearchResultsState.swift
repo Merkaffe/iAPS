@@ -160,7 +160,7 @@ class SearchResultsState: ObservableObject {
         }
         return values
     }
-    
+
     func micronutrientValues(for items: [FoodItemDetailed]) -> [MicroNutrient: Decimal] {
         var result: [MicroNutrient: Decimal] = [:]
 
@@ -195,5 +195,11 @@ class SearchResultsState: ObservableObject {
             }
         }
         return total
+    }
+}
+
+extension SearchResultsState {
+    var mealMicronutrientValues: [MicroNutrient: Decimal] {
+        NutritionAggregator.micronutrients(from: nonDeletedItems)
     }
 }

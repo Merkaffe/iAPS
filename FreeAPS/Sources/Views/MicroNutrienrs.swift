@@ -138,3 +138,49 @@ struct AllNutrientsView: View {
         }
     }
 }
+
+struct NutritionListView: View {
+    let nutrition: AggregatedNutrition
+
+    var body: some View {
+        List {
+            // MARK: Macros
+
+            Section(header: Text("Macronutrients")) {
+                ForEach(nutrition.macroDisplay) { nutrient in
+                    NutrientRow(nutrient: nutrient)
+                }
+            }
+
+            // MARK: Micros
+
+            if !nutrition.microDisplay.isEmpty {
+                Section(header: Text("Micronutrients")) {
+                    ForEach(nutrition.microDisplay) { nutrient in
+                        NutrientRow(nutrient: nutrient)
+                    }
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+    }
+}
+
+struct NutrientRow: View {
+    let nutrient: DisplayNutrient
+
+    var body: some View {
+        HStack {
+            Text(nutrient.name)
+
+            Spacer()
+
+            Text(formattedValue)
+                .fontWeight(nutrient.isPrimary ? .semibold : .regular)
+        }
+    }
+
+    private var formattedValue: String {
+        "\(NSDecimalNumber(decimal: nutrient.value).doubleValue, default: "%.1f") \(nutrient.unit)"
+    }
+}
