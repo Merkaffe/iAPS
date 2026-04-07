@@ -295,7 +295,7 @@ extension AddCarbs {
         private func saveAsPreset() {
             foodSearchState.newFoodEntryToEdit = FoodItemDetailed(
                 name: "New",
-                nutrition: FoodNutrition.perServing(
+                nutrition: .perServing(
                     values: [
                         .carbs: state.carbs,
                         .protein: state.protein,
@@ -303,6 +303,7 @@ extension AddCarbs {
                     ],
                     servingsMultiplier: 1.0
                 ),
+                micronutrients: [],
                 source: .manual
             )
             foodSearchState.showNewSavedFoodEntry = true
