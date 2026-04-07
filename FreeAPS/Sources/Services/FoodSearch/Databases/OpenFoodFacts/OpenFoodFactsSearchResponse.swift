@@ -252,8 +252,6 @@ struct Nutriments: Codable {
     let fiber: Decimal?
     let energy: Decimal?
 
-    // MARK: - Micronutrients (dynamic)
-
     /// Key = normalized nutrient name (e.g. "vitamin_c", "iron")
     let micronutrients: [String: Decimal]
 

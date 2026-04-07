@@ -12,6 +12,19 @@ enum NutrientType: String, Equatable, Identifiable, CaseIterable {
 
 typealias NutritionValues = [NutrientType: Decimal]
 
+struct AggregatedNutrition {
+    let macros: NutritionValues
+    let micros: [MicroNutrient: Decimal]
+
+    func value(for macro: NutrientType) -> Decimal {
+        macros[macro] ?? 0
+    }
+
+    func value(for micro: MicroNutrient) -> Decimal {
+        micros[micro] ?? 0
+    }
+}
+
 enum MealUnits: String, Codable {
     case grams
     case milliliters

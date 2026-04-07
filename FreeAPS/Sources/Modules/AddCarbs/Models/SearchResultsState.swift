@@ -160,6 +160,28 @@ class SearchResultsState: ObservableObject {
         }
         return values
     }
+    
+    func micronutrientValues(for items: [FoodItemDetailed]) -> [MicroNutrient: Decimal] {
+        var result: [MicroNutrient: Decimal] = [:]
+
+        for item in items {
+            for micro in item.micronutrients {
+                let value: Decimal
+
+                switch item.nutrition {
+                case let .per100(_, portion):
+                    value = micro.amountPer100 / 100 * portion
+
+                case let .perServing(_, multiplier):
+                    value = micro.amount * multiplier
+                }
+
+                result[micro.substance, default: 0] += value
+            }
+        }
+
+        return result
+    }
 
     func aggregateServingSize(for items: [FoodItemDetailed]) -> Decimal? {
         var total: Decimal = 0

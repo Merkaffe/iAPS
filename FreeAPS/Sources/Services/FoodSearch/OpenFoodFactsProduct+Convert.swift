@@ -14,6 +14,14 @@ extension OpenFoodFactsProduct {
             if let fiber = item.nutriments.fiber { nutritionValues[.fiber] = fiber }
             if let sugars = item.nutriments.sugars { nutritionValues[.sugars] = sugars }
 
+            let micros: [MicronutrientValue] = item.nutriments.toMicronutrientValues().map {
+                MicronutrientValue(
+                    substance: $0.substance,
+                    amount: $0.amount,
+                    amountPer100: $0.amountPer100
+                )
+            }
+
             let nutrition: FoodNutrition
             if let servingQuantity = item.servingQuantity {
                 nutrition = .per100(values: nutritionValues, portionSize: servingQuantity)
@@ -24,6 +32,7 @@ extension OpenFoodFactsProduct {
             return FoodItemDetailed(
                 name: item.productName ?? "Product without name",
                 nutrition: nutrition,
+                micronutrients: micros,
                 confidence: confidence,
                 brand: item.brands,
                 standardServing: item.servingSize,
