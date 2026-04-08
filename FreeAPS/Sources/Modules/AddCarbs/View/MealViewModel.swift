@@ -60,7 +60,7 @@ final class MealViewModel: ObservableObject {
         return values
     }
 
-    // MARK: - Micro Aggregation (IMPORTANT)
+    // MARK: - Micro Aggregation
 
     func micronutrientValues(for items: [FoodItemDetailed]) -> [MicroNutrient: Decimal] {
         var result: [MicroNutrient: Decimal] = [:]

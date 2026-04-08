@@ -34,7 +34,8 @@ extension AIAnalysisResult {
                     values: nutritionValues,
                     portionSize: item.portionEstimateSize ?? 100
                 ),
-                micronutrients: micros, confidence: confidence,
+                micronutrients: micros,
+                confidence: confidence,
                 brand: item.brand,
                 standardServing: item.standardServing,
                 standardServingSize: item.standardServingSize,

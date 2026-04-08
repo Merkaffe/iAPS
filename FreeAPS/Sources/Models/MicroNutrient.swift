@@ -9,7 +9,6 @@ enum MicroNutrient: String, CaseIterable, Codable, Identifiable {
     var id: String { rawValue }
 
     // MARK: - Vitamins
-
     case vitaminA
     case vitaminB1
     case vitaminB2
@@ -25,7 +24,6 @@ enum MicroNutrient: String, CaseIterable, Codable, Identifiable {
     case vitaminK
 
     // MARK: - Minerals
-
     case calcium
     case iron
     case magnesium
@@ -109,6 +107,8 @@ extension MicroNutrient {
              .vitaminD,
              .vitaminK:
             return "µg"
+        case .sodium:
+            return "g"
         default:
             return "mg"
         }
@@ -196,7 +196,7 @@ extension MicroNutrient {
             return "mineral"
         }
     }
-    
+
     var dimension: Dimension {
         switch unit {
         case "g":
@@ -226,45 +226,5 @@ extension MicroNutrient {
         }
 
         self = match
-    }
-}
-
-struct MicronutrientValue: Identifiable, Equatable {
-    let id = UUID()
-    let substance: MicroNutrient
-    let amount: Decimal
-    let amountPer100: Decimal
-
-    var unit: String { substance.unit }
-    var name: String { substance.displayName }
-
-    var isVitamin: Bool {
-        substance.coreDataType == "vitamin"
-    }
-}
-
-extension MicronutrientValue {
-    var formattedAmount: String {
-        let formatter = NumberFormatter()
-        formatter.maximumFractionDigits = 2
-        formatter.minimumFractionDigits = 0
-
-        let number = NSDecimalNumber(decimal: amount)
-
-        let formatted = formatter.string(from: number) ?? "\(number)"
-        return "\(formatted) \(unit)"
-    }
-}
-
-struct DynamicCodingKey: CodingKey {
-    var stringValue: String
-    var intValue: Int? { nil }
-
-    init?(stringValue: String) {
-        self.stringValue = stringValue
-    }
-
-    init?(intValue _: Int) {
-        nil
     }
 }
