@@ -196,6 +196,22 @@ extension MicroNutrient {
             return "mineral"
         }
     }
+    
+    var dimension: Dimension {
+        switch unit {
+        case "g":
+            return UnitMass.grams
+        case "mg":
+            return UnitMass.milligrams
+        case "ug",
+             "µg":
+            return UnitMass.micrograms
+        case "ml":
+            return UnitVolume.milliliters
+        default:
+            return UnitMass.grams
+        }
+    }
 
     init?(coreDataName: String) {
         let normalized = coreDataName
