@@ -68,13 +68,13 @@ class O5CertificateStore {
         }
 
         self.registration = data
-        let scalar = registration.secondaryKeyScalar
+        let scalar = registration.privateKey
         assert(scalar.count == 32, "Secondary key scalar must be exactly 32 bytes")
         self.signingKey = try P256.Signing.PrivateKey(rawRepresentation: scalar)
 
         // Verify the signing key's public key matches the expected value
         let derivedPubKey = signingKey.publicKey.rawRepresentation
-        if derivedPubKey != registration.secondaryPublicKeyRaw {
+        if derivedPubKey != registration.publicKey {
             log.error("Signing public key does NOT match expected secondary public key!")
             throw PodCommsError.noCertificateFound
         }

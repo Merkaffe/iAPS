@@ -345,7 +345,7 @@ class O5LTKExchanger {
     ///
     /// The ECDSA channel-binding signature goes in SPS2 (not here).
     private func o5sps2_1() throws -> Data {
-        guard let certDER = certStore.registration.intermediateCACertDER else {
+        guard let certDER = certStore.registration.intermediateCA else {
             throw PodProtocolError.pairingException("SPS2.1: intermediate CA certificate DER is nil")
         }
         log.default("SPS2.1: using cert (%{public}d bytes, cert-only short path)", certDER.count)
@@ -429,7 +429,7 @@ class O5LTKExchanger {
     /// The 64-byte ECDSA signature is over the 171-byte channel-binding transcript,
     /// signed with the secondary key.
     private func o5sps2() throws -> Data {
-        guard let certDER = certStore.registration.tlsCertificateDER else {
+        guard let certDER = certStore.registration.tlsCertificate else {
             throw PodProtocolError.pairingException("SPS2: TLS certificate DER is nil")
         }
 
