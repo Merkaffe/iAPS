@@ -630,9 +630,15 @@ struct OmniSettingsView: View  {
     }
 
     var switchInsulinDeliveryDeviceActionSheet: ActionSheet {
-        ActionSheet(title: FrameworkLocalText("Switch Insulin Delivery Device", comment: "Title for switch insulin delivery device action sheet."),
-            message: FrameworkLocalText("Please select if you'd like to switch from using \(self.viewModel.podType) pods to another pod type or to some other pump type.",
-                comment: "Message for switch insulin device action sheet"),
+        let promptMessage = String(format: LocalizedString(
+            "Please select if you'd like to switch from using %1@ pods to another pod type or to some other pump type.",
+            comment: "Message for switch insulin device action sheet (1: pod type)"),
+            self.viewModel.podType.description
+        )
+        return ActionSheet(
+            title: FrameworkLocalText("Switch Insulin Delivery Device",
+                comment: "Title for switch insulin delivery device action sheet."),
+            message: Text(promptMessage),
             buttons: [
                 .destructive(FrameworkLocalText("Switch pod type",
                     comment: "Button text to confirm switching pod type")) {

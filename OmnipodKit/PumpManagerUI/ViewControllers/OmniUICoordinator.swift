@@ -183,7 +183,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             let o5NotAvailable = O5CertificateStore.isEmpty
             let podTypeSelectionView = PodTypeSelection(initialValue: self.podType, o5NotAvailable: o5NotAvailable, didConfirm: didConfirm, didCancel: didCancel)
             let hostedView = hostingController(rootView: podTypeSelectionView)
-            hostedView.navigationItem.title = LocalizedString("Omnipod Type", comment: "Title for Omnipod Type selection screen")
+            hostedView.navigationItem.title = LocalizedString("Pod Type", comment: "Title for Pod Type selection screen")
             return hostedView
 
         case .rileyLinkSetup:

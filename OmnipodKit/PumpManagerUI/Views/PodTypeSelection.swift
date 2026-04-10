@@ -82,7 +82,8 @@ struct PodTypeChooser: View {
     }
 
     var body: some View {
-        ForEach([erosType, dashType, omnipod5Type], id: \.rawValue) { podType in
+        let types = [ erosType, dashType, o5NotAvailable ? nil : omnipod5Type ].compactMap { $0 }
+        ForEach(types, id: \.rawValue) { podType in
             HStack {
                 CheckmarkListItem(
                     title: Text(podType.description),
@@ -95,7 +96,7 @@ struct PodTypeChooser: View {
                                     }
                                 }
                     )
-                ).disabled(podType == omnipod5Type && o5NotAvailable)
+                )
             }
         }
     }

@@ -2143,9 +2143,6 @@
         }
       }
     },
-    "Omnipod Type" : {
-      "comment" : "Title for Omnipod Type selection screen"
-    },
     "oneNotUsed" : {
       "comment" : "Pod state oneNotUsed",
       "localizations" : {
@@ -2390,8 +2387,8 @@
         }
       }
     },
-    "Please select if you'd like to switch from using %@ pods to another pod type or to some other pump type." : {
-
+    "Please select if you'd like to switch from using %1@ pods to another pod type or to some other pump type." : {
+      "comment" : "Message for switch insulin device action sheet (1: pod type)"
     },
     "Please try repositioning the pod or the RileyLink and try again" : {
       "comment" : "Recovery suggestion when no response is received from pod",
@@ -2716,7 +2713,7 @@
       "comment" : "The format string for Pod Time: (1: formatted time)"
     },
     "Pod Type" : {
-      "comment" : "description label for pod type pod details row"
+      "comment" : "Title for Pod Type selection screen\ndescription label for pod type pod details row"
     },
     "Pod type not configured" : {
       "comment" : "Error message when pod type is not configured"
