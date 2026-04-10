@@ -56,24 +56,24 @@ struct O5RegistrationData {
     /// Becomes the 4-byte controller ID.
     let controllerId: UInt32
 
-    // MARK: - Secondary Key (main signing key, SPS2.1 + certain pod commands)
+    // MARK: - Keypair (main signing key private + public)
 
-    let secondaryKeyScalarHex: String
-    let secondaryPublicKeyHex: String
+    let privateKeyHex: String
+    let publicKeyHex: String
 
     // MARK: - Certificate Chain
 
-    let intermediateCACertDERBase64: String
-    let tlsCertificateDERBase64: String
+    let intermediateCABase64: String
+    let tlsCertificateBase64: String
 
 
     // MARK: - Convenience
 
-    var secondaryKeyScalar: Data { Data(hex: secondaryKeyScalarHex) }
-    var secondaryPublicKeyRaw: Data { Data(hex: secondaryPublicKeyHex) }
+    var privateKey: Data { Data(hex: privateKeyHex) }
+    var publicKey: Data { Data(hex: publicKeyHex) }
 
-    var tlsCertificateDER: Data? { Data(base64Encoded: tlsCertificateDERBase64) }
-    var intermediateCACertDER: Data? { Data(base64Encoded: intermediateCACertDERBase64) }
+    var intermediateCA: Data? { Data(base64Encoded: intermediateCABase64) }
+    var tlsCertificate: Data? { Data(base64Encoded: tlsCertificateBase64) }
 
     var controllerIdData: Data {
         var value = controllerId.bigEndian
