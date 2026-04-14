@@ -9,6 +9,7 @@ enum MicroNutrient: String, CaseIterable, Codable, Identifiable {
     var id: String { rawValue }
 
     // MARK: - Vitamins
+
     case vitaminA
     case vitaminB1
     case vitaminB2
@@ -24,6 +25,7 @@ enum MicroNutrient: String, CaseIterable, Codable, Identifiable {
     case vitaminK
 
     // MARK: - Minerals
+
     case calcium
     case iron
     case magnesium

@@ -305,7 +305,7 @@ extension AddCarbs {
                     ],
                     servingsMultiplier: 1.0
                 ),
-                micronutrients: [],
+                micronutrients: state.micronutrients,
                 source: .manual
             )
             foodSearchState.showNewSavedFoodEntry = true

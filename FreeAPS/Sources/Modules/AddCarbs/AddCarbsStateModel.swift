@@ -26,6 +26,8 @@ extension AddCarbs {
         @Published var presetToEdit: Presets?
         @Published var edit = false
         @Published var ai = false
+        
+        @Published var micronutrients: [MicronutrientValue]?
 
         @Published var combinedPresets: [(preset: Presets?, portions: Double)] = []
 

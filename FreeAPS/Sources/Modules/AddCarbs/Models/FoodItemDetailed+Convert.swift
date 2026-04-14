@@ -32,7 +32,6 @@ extension FoodItemDetailed {
                     let amount = entry.amount?.decimalValue
                 else { return nil }
 
-                // Map to your enum
                 guard let micro = MicroNutrient(coreDataName: substanceName) else { return nil }
 
                 let amountPer100: Decimal
