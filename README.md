@@ -1,5 +1,7 @@
 # OmnipodKit
 
+## Overview
+
 OmnipodKit is a new universal Omnipod pump manager that
 
 * Handles all supported Omnipod types
@@ -30,45 +32,33 @@ any OmniKit or OmniBLE state (including for a currently active pod)
 with minor app changes and the OmniKit and OmniBLE pump managers
 will no longer be available and eventually unsupported.
 
-## Status as of March 6, 2026
-Pod Details now displays the printed lot information
-along with the decimal lot value for all pod types.
+### Status as of April 14, 2026
 
-A work in progress with many still to be worked out,
-but pairing and communications working with real O5 pods
-in side branch! No nudge or heartbeat services as of yet,
+Support for Omnipod 5 pod type was added to `main` with certain caveats
+
+* the required information to work with O5 (*O5 data*) is not included in the repository
+* future work will add the ability to get *O5 data* with a method that is under development
+* developers who have access to this private repository also have access to *O5 data* to be able to test the O5 pod type
+* if the *O5 data* is not available, the repository provides full support for Classic (Eros) and DASH pod types
+    * for this case, the `Omnipod Type` view display
+only the `Omnipod Classic` and `Omnipod DASH` pod types
+
+
+No nudge or heartbeat services as of yet,
 so time between loop operations can vary a lot without a CGM
 providing a "heartbeat" service.
 
-## Status as of January 20, 2026
+### New feature available (as of March 6, 2026)
+Pod Details now displays the printed lot information
+along with the decimal lot value for all pod types.
 
-Since the OmnipodKit repository is still private
-and limited to selected developers,
-`Omnipod 5` is currently available as a selection
-in the `Omnipod Type` view even though it is not working
-since the encrypted pairing sequence is not yet
-understood well enough to do O5 pod pairing.
-The `Omnipod 5` choice should not be selected except
-for developers doing Omnipod 5 DIY development work.
-If OmnipodKit is made public before the O5 support
-is ready for possible limited test use,
-the `Omnipod Type` view will be modified to display
-only the `Omnipod Classic` and `Omnipod DASH` pod types.
-
+* The interpretation of the electronic lot number provided by the pod for DASH or O5 is converted to the Px1xMMDDYYLb number that appears on the packaging and back of pod and is thus available to the users in the current and previous Pod Details.
 
 ## Developer Notes
 
-The Omnipod 5 (O5) pod ids are still be worked on, but for
-now are a limited set of values with a 0x00 in the type byte
-DIY DASH pod ids will continue to start with 0x17 and
-Eros addresses (pod ids) start with 0x1F in both DIY and PDM.
-The pump settings shows the name of the selected pod type.
-`Pod Diagnostics` -> `Pump Manager Details` can be used
-to examine details of attributes of the new unified
-Pump Manager and Pod state used by OmnipodKit.
+The OmnipodKit submodule must be added to the workspace for the OS-AID that will use it. To assist in adding the submodule, several patch files are available.  The one for Trio requires update when other managers are incorporated into Trio.
 
-
-## To Add to LoopWorkspace
+### To Add to LoopWorkspace
 
 Included in the OmnipodKit repository is the patch to add the OmnipodKit (private repo) pump manager to a fresh clone of [LoopWorkspace](https://github.com/LoopKit/LoopWorkspace/).
 
@@ -95,16 +85,18 @@ When Xcode opens, if questioned, select use the version on disk.
 After building Loop, be sure to select the new `All Omnipod Types`
 when doing an `Add Pump` to use the new OmnipodKit pump manager.
 
-## To Add to the Public Beta for Trio
+### To Add to Trio
 
 Included in the OmnipodKit repository is the patch to add OmnipodKit to a fresh clone of [Trio](https://github.com/nightscout/Trio/).
 
-* This patch only works with the open beta, Trio 0.6.x, `dev` branch
-* This patch does not work with Trio 0.2.x, `main` branch
+> The Trio patch requires an update when new submodules are incorporated into Trio.
+
+* This patch only works with Trio 0.6.0.72 or newer (30 March 2026)
+* This patch does not work with Trio 0.2.x, `main` branch but will work with `main` when 0.7.0 is released
 
 The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio directory.
 This patch handles all the Trio pump manager integration requirements to add the
-OmnipodKit (private repo) pump manager to the open-beta Trio, `dev` branch.
+OmnipodKit (private repo) pump manager to Trio, with caveats listed above.
 
 If Trio is open in Xcode, then before executing these commands:
 
@@ -127,31 +119,39 @@ After building with Xcode, this file will be modified as well: `Trio/Sources/Loc
 After building Loop, be sure to select the new `All Omnipod Types`
 when doing an `Add Pump` to use the new OmnipodKit pump manager.
 
-## To Add to the Private Repository Trio-dev
+### Manually Add a Plugin to LoopWorkspace
 
-Included in the OmnipodKit repository is the patch to add OmnipodKit to a fresh clone of [Trio](https://github.com/nightscout/Trio-dev/). Because this is a private repository, most people will not have access to it.
+This section is here for convenience. It provides instructions on how to add a new plugin to Loop using OmnipodKit as an example. 
 
-The commands below should be pasted into Terminal with the path at the top-of-a-buildable Trio directory.
-This patch handles all the Trio pump manager integration requirements to add the
-OmnipodKit (private repo) pump manager to Trio-dev (private repo).
+**When you use the patch method, above, this section is not required.**
 
-If Trio is open in Xcode, then before executing these commands:
 
-* select Product, Clean Build Folder
-* select File, Close Workspace
-
-```
-git switch -c add_omnipodkit_trio-dev
-git submodule add https://github.com/loopandlearn/OmnipodKit
-git apply OmnipodKit/patches/add_omnipodkit_to_Trio-dev.patch
-git add .
-git commit -am "add submodule OmnipodKit"
-xed .
+```quote
+$ cd <the-top-of-LoopWorkspace-directory>
+$ git submodule add https://github.com/loopandlearn/OmnipodKit
+$ xed .
 ```
 
-When Xcode opens, if questioned, select use the version on disk.
+In Xcode, select File->'Add Files to "LoopWorkspace"...'
 
-After building with Xcode, this file will be modified as well: `Trio/Sources/Localizations/Main/Localizable.xcstrings`
+* Scroll down to select and double click to open the "OmnipodKit" directory
+* Select the "OmnipodKit.xcodeproj" file and tap the blue (Add) button
+* Tap the blue (Finish) button
 
-After building Loop, be sure to select the new `All Omnipod Types`
-when doing an `Add Pump` to use the new OmnipodKit pump manager.
+In Xcode with the LoopWorkspace selected, select Product->Scheme->Edit Scheme...
+
+* Make sure that the Build tab on the top of the left panel is selected
+* Click on the "+" in the bottom left corner above the blue (Duplicate Scheme) button
+* Scroll down to select "OmnipodKitPlugin" icon (under OmnipodKit) and tap the blue (Add) button
+* Drag "OmnipodKitPlugin OmnipodKit" from the bottom of the list up until immediately before "OmniKitPlugin OmniKit"
+* Tap (Close)
+
+#### Optional: Add Tests
+
+To add the OmniTests to the LoopWorkspace tests in Xcode:
+
+* verify that the LoopWorkspace scheme is selected
+* click on the diamond with the check near the top of the lefthand panel to display the Test Navigator panel
+* right click on OmniTests under the "Other Tests" section near the end of the panel
+* select "Add to LoopWorkspace".
+
