@@ -87,7 +87,7 @@ struct VersionResponse : MessageBlock {
             address = encodedData[19...].toBigEndian(UInt32.self)
 
             // The gain and RSSI fields are only valid for Eros pods in the shorter 0x15 VersionResponse
-            if podType == erosType {
+            if podType.isEros {
                 gain = (encodedData[18] & 0xc0) >> 6
                 rssi = encodedData[18] & 0x3f
             } else {
@@ -165,7 +165,7 @@ extension VersionResponse: CustomDebugStringConvertible {
     var debugDescription: String {
 
         // Common fields valid in both types of VersionResponses
-        var retVal = "VersionResponse(lot:\(lot), tid:\(tid), address:\(Data(bigEndian: address).hexadecimalString), firmwareVersion:\(firmwareVersion), iFirmwareVersion:\(iFirmwareVersion), podType:\(podType.localizedDescription), podProgressStatus:\(podProgressStatus)"
+        var retVal = "VersionResponse(lot:\(lot), tid:\(tid), address:\(Data(bigEndian: address).hexadecimalString), firmwareVersion:\(firmwareVersion), iFirmwareVersion:\(iFirmwareVersion), podType:\(podType), podProgressStatus:\(podProgressStatus)"
 
         // The optional gain and RSSI fields are only valid for Eros pods in the shorter AssignAddress VersionResponse
         if let gain = gain, let rssi = rssi {

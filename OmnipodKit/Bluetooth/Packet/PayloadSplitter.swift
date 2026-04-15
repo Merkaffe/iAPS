@@ -12,28 +12,30 @@ import CryptoSwift
 
 class PayloadSplitter {
     private let payload: Data
-    
-    init(payload: Data) {
+    private let layout: BlePacketLayout
+
+    init(payload: Data, layout: BlePacketLayout) {
         self.payload = payload
+        self.layout = layout
     }
     
     func splitInPackets() -> Array<BlePacket> {
-        if (payload.count <= FirstBlePacket_CAPACITY_WITH_THE_OPTIONAL_PLUS_ONE_PACKET) {
+        if (payload.count <= layout.firstPacketCapacityWithOptionalPlusOnePacket) {
             return splitInOnePacket()
         }
         var ret = Array<BlePacket>()
         let crc32 = payload.crc32()
-        let middleFragments = (payload.count - FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS) / MiddleBlePacket_CAPACITY
-        let rest = UInt8((payload.count - middleFragments * MiddleBlePacket_CAPACITY) - FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS)
+        let middleFragments = (payload.count - layout.firstPacketCapacityWithMiddlePackets) / layout.middlePacketCapacity
+        let rest = UInt8((payload.count - middleFragments * layout.middlePacketCapacity) - layout.firstPacketCapacityWithMiddlePackets)
         ret.append(
             FirstBlePacket(
                 fullFragments: middleFragments + 1,
-                payload: payload.subdata(in: 0..<FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS)
+                payload: payload.subdata(in: 0..<layout.firstPacketCapacityWithMiddlePackets)
             )
         )
         if (middleFragments > 0) {
             for i in 1...middleFragments {
-                let p = payload.subdata(in: (FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS + (i - 1) * MiddleBlePacket_CAPACITY)..<(FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS + i * MiddleBlePacket_CAPACITY))
+                let p = payload.subdata(in: (layout.firstPacketCapacityWithMiddlePackets + (i - 1) * layout.middlePacketCapacity)..<(layout.firstPacketCapacityWithMiddlePackets + i * layout.middlePacketCapacity))
                 ret.append(
                     MiddleBlePacket(
                         index: UInt8(i),
@@ -42,21 +44,21 @@ class PayloadSplitter {
                 )
             }
         }
-        let end = min(LastBlePacket_CAPACITY, Int(rest))
+        let end = min(layout.lastPacketCapacity, Int(rest))
         ret.append(
             LastBlePacket(
                 index: UInt8(middleFragments + 1),
                 size: rest,
-                payload: payload.subdata(in: middleFragments * MiddleBlePacket_CAPACITY + FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS..<middleFragments * MiddleBlePacket_CAPACITY + FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS + end),
+                payload: payload.subdata(in: middleFragments * layout.middlePacketCapacity + layout.firstPacketCapacityWithMiddlePackets..<middleFragments * layout.middlePacketCapacity + layout.firstPacketCapacityWithMiddlePackets + end),
                 crc32: crc32
             )
         )
-        if (rest > LastBlePacket_CAPACITY) {
+        if (rest > layout.lastPacketCapacity) {
             ret.append(
                 LastOptionalPlusOneBlePacket(
                     index: UInt8(middleFragments + 2),
-                    payload: payload.subdata(in: middleFragments * MiddleBlePacket_CAPACITY + FirstBlePacket_CAPACITY_WITH_MIDDLE_PACKETS + LastBlePacket_CAPACITY..<payload.count),
-                    size: UInt8(Int(rest) - LastBlePacket_CAPACITY)
+                    payload: payload.subdata(in: middleFragments * layout.middlePacketCapacity + layout.firstPacketCapacityWithMiddlePackets + layout.lastPacketCapacity..<payload.count),
+                    size: UInt8(Int(rest) - layout.lastPacketCapacity)
                 )
             )
         }
@@ -66,7 +68,7 @@ class PayloadSplitter {
     private func splitInOnePacket() -> Array<BlePacket> {
         var ret = Array<BlePacket>()
         let crc32 = payload.crc32()
-        let end = min(FirstBlePacket_CAPACITY_WITHOUT_MIDDLE_PACKETS, payload.count)
+        let end = min(layout.firstPacketCapacityWithoutMiddlePackets, payload.count)
         ret.append(
             FirstBlePacket(
                 fullFragments: 0,
@@ -75,7 +77,7 @@ class PayloadSplitter {
                 crc32: crc32
             )
         )
-        if (payload.count > FirstBlePacket_CAPACITY_WITHOUT_MIDDLE_PACKETS) {
+        if (payload.count > layout.firstPacketCapacityWithoutMiddlePackets) {
             ret.append(
                 LastOptionalPlusOneBlePacket(
                     index: 1,

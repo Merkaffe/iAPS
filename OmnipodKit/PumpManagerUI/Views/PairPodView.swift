@@ -27,7 +27,7 @@ struct PairPodView: View {
                         [
                             String(format: LocalizedString("Fill a new %1$@ pod with U-100 Insulin (leave %2$@ needle cap on). Listen for 2 beeps.",
                                 comment: "Label text for step 1 of Eros pair pod instructions (1: pod type name) (2: pod tab color"),
-                                self.viewModel.podType.localizedDescription, self.viewModel.podType.tabColor),
+                                   self.viewModel.podType.description, self.viewModel.podType.tabColor),
                             LocalizedString("Keep the RileyLink about 6 inches from the pod during pairing.",
                                 comment: "Label text for step 2 of Eros pair pod instructions")
                         ]
@@ -35,7 +35,7 @@ struct PairPodView: View {
                         [
                             String(format: LocalizedString("Fill a new %1$@ pod with U-100 Insulin (leave %2$@ needle cap on).",
                                 comment: "Label text for step 1 of non-Eros pair pod instructions (1: pod type name) (2: pod tab color"),
-                                self.viewModel.podType.localizedDescription, self.viewModel.podType.tabColor),
+                                self.viewModel.podType.description, self.viewModel.podType.tabColor),
                             LocalizedString("Listen for 2 beeps.",
                                 comment: "Label text for step 2 of non-Eros pair pod instructions")
                         ]

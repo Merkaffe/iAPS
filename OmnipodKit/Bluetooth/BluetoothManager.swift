@@ -36,7 +36,7 @@ extension BluetoothManagerError: LocalizedError {
             }
         }
     }
-        
+
     var recoverySuggestion: String? {
         switch self {
         case .bluetoothNotAvailable(let state):
@@ -64,7 +64,7 @@ protocol OmniConnectionDelegate: AnyObject {
      - parameter manager: The manager for the peripheral that was connected
      */
     func omnipodPeripheralDidConnect(manager: PeripheralManager)
-    
+
     /**
      Tells the delegate that a connected peripheral has been restored from session restoration
 
@@ -113,7 +113,23 @@ class BluetoothManager: NSObject {
             updateConnections()
         }
     }
-    
+
+    /// The uuidPdmId is set after pairing...
+    private var uuidPdmId: UInt32? = nil
+
+    /// The O5 changes its service advertisement uuid from using FFFFFFFE the pdmId after pairing.
+    /// This func is called to set this value to be used in uuid after pairing and with a nil (or 0) to reset.
+    func setUuidPdmId(_ pdmId: UInt32?) {
+        managerQueue.async {
+            if let pdmId = pdmId, pdmId != 0 {
+                self.log.bleDebug("Setting uuidPdmId to 0x%x", pdmId)
+                self.uuidPdmId = pdmId
+            } else {
+                self.uuidPdmId = nil
+            }
+        }
+    }
+
     /// Isolated to `managerQueue`
     private var hasDiscoveredAllAutoConnectDevices: Bool {
         dispatchPrecondition(condition: .onQueue(managerQueue))
@@ -183,7 +199,38 @@ class BluetoothManager: NSObject {
     func connectToDevice(uuidString: String) {
         managerQueue.async {
             self.autoConnectIDs.insert(uuidString)
+            // If powered on and peripheral not yet in devices, retrieve it now.
+            // This handles the user-terminated app restart where willRestoreState wasn't called.
+            if self.manager.state == .poweredOn,
+               !self.devices.contains(where: { $0.manager.peripheral.identifier.uuidString == uuidString }),
+               let uuid = UUID(uuidString: uuidString),
+               let peripheral = self.manager.retrievePeripherals(withIdentifiers: [uuid]).first
+            {
+                self.log.default("connectToDevice: retrieved peripheral %{public}@ via retrievePeripherals", uuidString)
+                self.addPeripheral(peripheral, podAdvertisement: nil)
+                self.manager.connect(peripheral, options: nil)
+            }
         }
+    }
+
+    /// Retrieve a known peripheral by UUID (without scanning), add it to devices, and initiate connection.
+    /// Returns the Omni device synchronously; the actual BLE connection completes asynchronously.
+    func retrieveAndConnectKnownPod(uuidString: String) -> Omni? {
+        var result: Omni?
+        managerQueue.sync {
+            guard manager.state == .poweredOn, let uuid = UUID(uuidString: uuidString) else { return }
+            let peripherals = manager.retrievePeripherals(withIdentifiers: [uuid])
+            guard let peripheral = peripherals.first else {
+                log.error("retrieveAndConnectKnownPod: no peripheral found for UUID %{public}@", uuidString)
+                return
+            }
+            let device = addPeripheral(peripheral, podAdvertisement: nil)
+            autoConnectIDs.insert(uuidString)
+            manager.connect(peripheral, options: nil)
+            log.default("retrieveAndConnectKnownPod: initiating connection to %{public}@", peripheral)
+            result = device
+        }
+        return result
     }
     
     func disconnectFromDevice(uuidString: String) {
@@ -218,7 +265,6 @@ class BluetoothManager: NSObject {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
         log.default("discoverPods()")
-        
 
         guard manager.state == .poweredOn else {
             completion(.bluetoothNotAvailable(manager.state))
@@ -238,10 +284,17 @@ class BluetoothManager: NSObject {
 
         completion(nil)
     }
-    
+
     private func startScanning() {
-        log.default("Start scanning")
-        manager.scanForPeripherals(withServices: [OmnipodServiceUUID_advertisement_cbUUID], options: nil)
+        let serviceUUID: CBUUID
+        if podType.isO5, let pdmId = uuidPdmId {
+            // The O5 service advertisement UUID is now using the pdmId
+            serviceUUID = o5ServiceAdvertisementUUID(pdmId)
+        } else {
+            serviceUUID = podType.blePodProfile.advertisementServiceUUID
+        }
+        log.default("Start scanning for %{public}@", serviceUUID.uuidString)
+        manager.scanForPeripherals(withServices: [serviceUUID], options: nil)
     }
 
     private func stopScanning() {
@@ -250,7 +303,7 @@ class BluetoothManager: NSObject {
     }
 
     // MARK: - Accessors
-    
+
     func getConnectedDevices() -> [Omni] {
         var connected: [Omni] = []
         managerQueue.sync {
@@ -292,6 +345,19 @@ extension BluetoothManager: CBCentralManagerDelegate {
                 }
             }
 
+            // Recover peripherals from autoConnectIDs that aren't yet in devices.
+            // This handles the user-terminated app restart where willRestoreState wasn't called.
+            let knownDeviceIDs = Set(devices.map { $0.manager.peripheral.identifier.uuidString })
+            for uuidString in autoConnectIDs where !knownDeviceIDs.contains(uuidString) {
+                if let uuid = UUID(uuidString: uuidString),
+                   let peripheral = central.retrievePeripherals(withIdentifiers: [uuid]).first
+                {
+                    log.default("Recovered peripheral from autoConnectIDs: %{public}@", uuidString)
+                    addPeripheral(peripheral, podAdvertisement: nil)
+                    central.connect(peripheral, options: nil)
+                }
+            }
+
             updateConnections()
             
             if (discoveryModeEnabled || !hasDiscoveredAllAutoConnectDevices) && !manager.isScanning {
@@ -319,8 +385,9 @@ extension BluetoothManager: CBCentralManagerDelegate {
                         connectionDelegate?.omnipodPeripheralWasRestored(manager: device.manager)
                     }
                 } else if peripheral.state == .connected || peripheral.state == .connecting {
-                    // For some reason iOS is maintaining a connection to a device that isn't in our list.
-                    manager.cancelPeripheralConnection(peripheral)
+                    // Don't disconnect — autoConnectIDs may not be populated yet due to init ordering.
+                    // updateConnections() will clean up any truly unwanted peripherals after autoConnectIDs is set.
+                    log.info("Restored peripheral %{public}@ not yet in autoConnectIDs, deferring cleanup to updateConnections", peripheral.identifier.uuidString)
                 }
             }
         }
@@ -330,7 +397,11 @@ extension BluetoothManager: CBCentralManagerDelegate {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
         log.debug("%{public}@: %{public}@, %{public}@", #function, peripheral, advertisementData)
-        
+
+        if let mfgData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data {
+            log.default("[SCAN] ManufacturerData: %{public}@ (%{public}d bytes)", mfgData.hexadecimalString, mfgData.count)
+        }
+
         if let podAdvertisement = PodAdvertisement(advertisementData, podType: podType) {
             addPeripheral(peripheral, podAdvertisement: podAdvertisement)
             
@@ -371,7 +442,6 @@ extension BluetoothManager: CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
-        log.debug("%{public}@: error=%{public}@ %{public}@", #function, error?.localizedDescription ?? "None", peripheral)
 
         // Proxy disconnection events to peripheral manager
         for device in devices where device.manager.peripheral.identifier == peripheral.identifier {

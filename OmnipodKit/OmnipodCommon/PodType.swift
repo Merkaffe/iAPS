@@ -40,20 +40,20 @@ struct PodType: CustomStringConvertible, Equatable {
         self.rawValue = podType.rawValue
     }
 
-    var description: String {
+    var localizedDescription: String {
         switch podType {
         case .productIdEros:
-            return LocalizedString("Omnipod Classic pods (also known as Eros pods) have a clear needle tab with a 6-character LOT number starting with 'L'. These pods require the use of a RileyLink to communicate with the iPhone.", comment: "Description for Omnipod Classic pods")
+            return LocalizedString("Omnipod Classic Pods (also known as Eros Pods) have a clear needle tab with a 6-character LOT number starting with 'L'. These Pods require the use of a RileyLink to communicate with the iPhone.", comment: "Description for Omnipod Classic pods")
         case .productIdDash:
-            return LocalizedString("Omnipod DASH pods have a blue needle tab with a 12-character LOT number typically starting with 'PD1'.", comment: "Description for Omnipod DASH pods")
+            return LocalizedString("Omnipod DASH Pods have a blue needle tab with a 12-character LOT number typically starting with 'PD1'.", comment: "Description for Omnipod DASH pods")
         case .productIdOmnipod5:
-            return LocalizedString("Omnipod 5 pods have a clear needle tab with a 12-character LOT number typically starting with 'PH1' or 'PP1'. The pod's \"SmartAdjust\" technology will not be used for closed loop control.", comment: "Description for Omnipod 5 pods")
+            return LocalizedString("Omnipod 5 Pods have a clear needle tab with a 12-character LOT number typically starting with 'PH1'. The Pod's \"SmartAdjust\" technology will not be used for closed loop control.", comment: "Description for Omnipod 5 pods")
         default:
             return LocalizedString("Unknown Omnipod Pod Type", comment: "Description for an unknown Omnipod pod type")
         }
     }
 
-    var localizedDescription: String {
+    var description: String {
         switch podType {
         case .productIdUnknown:
             return LocalizedString("Omnipod", comment: "Title string for an unknown Omnipod")
@@ -149,8 +149,9 @@ struct PodType: CustomStringConvertible, Equatable {
 
     // The Eros PDM uses 0x1F for the top byte of the 32 bit Id address.
     // The Dash PDM uses the PDM's SN << 2 for the bottom 5 nibbles and some
-    // unknown values for the top 3 nibbles of its fixed 32-bit controller ID.
-    // Loop uses 0x17 for top byte for Dash and 0x15 for top byte for Omnipod 5.
+    // unknown values for the top 3 nibbles of its fixed 32-bit controller Id.
+    // The Omnipod 5 PDM also seems to use the PDM's SN << 2 for the basis
+    // of the its fixed 32-bit controller Id that pod Id's will be derived from.
     var topIdByte: UInt8 {
         switch podType {
         case .productIdEros:
@@ -158,10 +159,22 @@ struct PodType: CustomStringConvertible, Equatable {
         case .productIdDash:
             return 0x17
         case .productIdOmnipod5:
-            return 0x15
+            return 0x00 // place holder until we can get created podId working
         default:
             return 0x0
         }
+    }
+
+    var isEros: Bool {
+        return podType == .productIdEros
+    }
+
+    var isDash: Bool {
+        return podType == .productIdDash
+    }
+
+    var isO5: Bool {
+        return podType == .productIdOmnipod5
     }
 }
 

@@ -42,6 +42,7 @@ enum PodCommsError: Error {
     case noPodsFound
     case tooManyPodsFound // BLE pods only
     case setupNotComplete
+    case noCertificateFound // O5 only
 }
 
 extension PodCommsError: LocalizedError {
@@ -90,7 +91,8 @@ extension PodCommsError: LocalizedError {
         case .unacknowledgedCommandPending:
             return LocalizedString("Communication issue: Unacknowledged command pending.", comment: "Error message when command is rejected because an unacknowledged command is pending.")
         case .rejectedMessage(let errorCode):
-            return String(format: LocalizedString("Command error %1$u", comment: "Format string for invalid message error code (1: error code number)"), errorCode)
+            let codeDescription = ErrorResponseCode.descriptionFor(code: errorCode)
+            return String(format: LocalizedString("Command error %1$u: %2$@", comment: "Format string for invalid message error code (1: error code number) (2: error description)"), errorCode, codeDescription)
         case .podChange:
             return LocalizedString("Unexpected pod change", comment: "Format string for unexpected pod change")
         case .activationTimeExceeded:
@@ -109,6 +111,8 @@ extension PodCommsError: LocalizedError {
             return LocalizedString("Too many pods found", comment: "Error message for PodCommsError.tooManyPodsFound")
         case .setupNotComplete:
             return LocalizedString("Pod setup is not complete", comment: "Error description when pod setup is not complete")
+        case .noCertificateFound:
+            return LocalizedString("No certificate found", comment: "Error message when no certificate found")
         }
     }
 
@@ -181,6 +185,8 @@ extension PodCommsError: LocalizedError {
             return LocalizedString("Move to a new area away from any other pods and try again", comment: "Recovery suggestion for PodCommsError.tooManyPodsFound")
         case .setupNotComplete:
             return nil
+        case .noCertificateFound:
+            return LocalizedString("Rebuild app with needed certificate data", comment: "Recovery suggestion with missing certificate")
         }
     }
 
@@ -359,9 +365,24 @@ class PodCommsSession: MessageTransportDelegate {
             let message = Message(address: podState.address, messageBlocks: blocksToSend, sequenceNum: messageNumber, expectFollowOnMessage: expectFollowOnMessage)
 
             // Clear the lastDeliveryStatusReceived variable which is used to guard against possible 0x31 pod faults
+            let savedLastDeliveryStatusReceived = podState.lastDeliveryStatusReceived
             podState.lastDeliveryStatusReceived = nil
 
-            let response = try transport.sendMessage(message)
+            let response: Message
+            do {
+                response = try transport.sendMessage(message)
+            } catch {
+                // Some transport errors are due to checks performed before attempting any IO.
+                // For these cases, restore lastDeliveryStatusReceived to its previous value
+                // to avoid having to do an extra getStatus to recover in tryToValidateComms().
+                if let podCommsError = error as? PodCommsError,
+                    case .podNotConnected = podCommsError, case .noCertificateFound = podCommsError
+                {
+                    log.debug("@@@ Restoring lastDeliveryStatusReceived for pre-check error")
+                    podState.lastDeliveryStatusReceived = savedLastDeliveryStatusReceived
+                }
+                throw error
+            }
 
             // Simulate fault
             //let podInfoResponse = try PodInfoResponse(encodedData: Data(hexadecimalString: "0216020d0000000000ab6a038403ff03860000285708030d0000")!)
@@ -420,8 +441,11 @@ class PodCommsSession: MessageTransportDelegate {
         // If priming has never been attempted on this pod, handle the pre-prime setup tasks.
         // A FaultConfig can only be done before the prime bolus or the pod will generate an 049 fault.
         if podState.setupProgress.primingNeverAttempted {
-            // This FaultConfig command will set Tab5[$16] to 0 during pairing, which disables $6x faults
-            let _: StatusResponse = try send([FaultConfigCommand(nonce: podState.currentNonce, tab5Sub16: 0, tab5Sub17: 0)])
+            if !podState.podType.isO5 {
+                // This FaultConfig command will set Tab5[$16] to 0 during pairing, which disables $6x faults.
+                // This command can't be used (like this at least) on an O5 as it will return error 11.
+                let _: StatusResponse = try send([FaultConfigCommand(nonce: podState.currentNonce, tab5Sub16: 0, tab5Sub17: 0)])
+            }
 
             // Set up the finish pod setup reminder alert which beeps every 5 minutes for 1 hour
             let finishSetupReminder = PodAlert.finishSetupReminder
@@ -443,7 +467,16 @@ class PodCommsSession: MessageTransportDelegate {
 
         let timeBetweenPulses = TimeInterval(seconds: Pod.secondsPerPrimePulse)
         let scheduleCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, units: Pod.primeUnits, timeBetweenPulses: timeBetweenPulses)
-        let bolusExtraCommand = BolusExtraCommand(units: Pod.primeUnits, timeBetweenPulses: timeBetweenPulses)
+        let bolusInfo: BolusInfo?
+        if podState.podType.isO5 {
+            // O5 uses an BolusExtraCommand format with bolusInfo
+            bolusInfo = BolusInfo()
+        } else {
+            // Eros or DASH doesn't use bolusInfo
+            bolusInfo = nil
+        }
+
+        let bolusExtraCommand = BolusExtraCommand(units: Pod.primeUnits, timeBetweenPulses: timeBetweenPulses, bolusInfo: bolusInfo)
         let status: StatusResponse = try send([scheduleCommand, bolusExtraCommand])
         podState.updateFromStatusResponse(status, at: currentDate)
         podState.setupProgress = .priming
@@ -554,7 +587,8 @@ class PodCommsSession: MessageTransportDelegate {
         }
     }
 
-    func insertCannula(optionalAlerts: [PodAlert] = [], silent: Bool) throws -> TimeInterval {
+    func insertCannula(basalSchedule: BasalSchedule? = nil, scheduleOffset: TimeInterval = 0, optionalAlerts: [PodAlert] = [], silent: Bool) throws -> TimeInterval {
+
         let cannulaInsertionUnits = Pod.cannulaInsertionUnits + Pod.cannulaInsertionUnitsExtra
 
         guard podState.activatedAt != nil else {
@@ -587,9 +621,17 @@ class PodCommsSession: MessageTransportDelegate {
 
         let timeBetweenPulses = TimeInterval(seconds: Pod.secondsPerPrimePulse)
         let bolusScheduleCommand = SetInsulinScheduleCommand(nonce: podState.currentNonce, units: cannulaInsertionUnits, timeBetweenPulses: timeBetweenPulses)
+        let bolusInfo: BolusInfo?
+        if podState.podType.isO5 {
+            // O5 uses an extended format including bolusInfo
+            bolusInfo = BolusInfo()
+        } else {
+            // Eros or DASH doesn't use bolusInfo
+            bolusInfo = nil
+        }
 
         podState.setupProgress = .startingInsertCannula
-        let bolusExtraCommand = BolusExtraCommand(units: cannulaInsertionUnits, timeBetweenPulses: timeBetweenPulses)
+        let bolusExtraCommand = BolusExtraCommand(units: cannulaInsertionUnits, timeBetweenPulses: timeBetweenPulses, bolusInfo: bolusInfo)
         let status2: StatusResponse = try send([bolusScheduleCommand, bolusExtraCommand])
         podState.updateFromStatusResponse(status2, at: currentDate)
 
@@ -652,7 +694,16 @@ class PodCommsSession: MessageTransportDelegate {
             }
         }
 
-        let bolusExtraCommand = BolusExtraCommand(units: units, timeBetweenPulses: timeBetweenPulses, extendedUnits: extendedUnits, extendedDuration: extendedDuration, acknowledgementBeep: acknowledgementBeep, completionBeep: completionBeep, programReminderInterval: programReminderInterval)
+        let bolusInfo: BolusInfo?
+        if podState.podType.isO5 {
+            // O5 uses an extended format including bolusInfo
+            bolusInfo = BolusInfo(mealUnits: units)
+        } else {
+            // Eros or DASH doesn't use bolusInfo
+            bolusInfo = nil
+        }
+
+        let bolusExtraCommand = BolusExtraCommand(units: units, timeBetweenPulses: timeBetweenPulses, extendedUnits: extendedUnits, extendedDuration: extendedDuration, acknowledgementBeep: acknowledgementBeep, completionBeep: completionBeep, programReminderInterval: programReminderInterval, bolusInfo: bolusInfo)
         do {
             podState.unacknowledgedCommand = PendingCommand.program(.bolus(volume: units, automatic: automatic), transport.messageNumber, currentDate)
             let statusResponse: StatusResponse = try send([bolusScheduleCommand, bolusExtraCommand])
@@ -925,7 +976,7 @@ class PodCommsSession: MessageTransportDelegate {
     // Throws PodCommsError
     func getStatus(noSeqGetStatus: Bool = false, beepBlock: MessageBlock? = nil) throws -> StatusResponse {
         // For noSeqSetStatus, use alternative noSeqStatus (type 7) request if not an Eros pod type instead of a normal (type 0) request
-        let statusType: PodInfoResponseSubType = (noSeqGetStatus && podState.podType != erosType) ? .noSeqStatus : .normal
+        let statusType: PodInfoResponseSubType = (noSeqGetStatus && !podState.podType.isEros) ? .noSeqStatus : .normal
         let statusResponse: StatusResponse = try send([GetStatusCommand(podInfoType: statusType)], beepBlock: beepBlock)
 
         if podState.unacknowledgedCommand != nil {

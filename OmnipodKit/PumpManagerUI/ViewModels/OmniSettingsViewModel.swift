@@ -149,7 +149,7 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     var viewTitle: String {
-        return pumpManager.podType.localizedDescription // "Omnipod Classic", "Omnipod DASH" or "Omnipod 5"
+        return pumpManager.podType.description // "Omnipod Classic", "Omnipod DASH" or "Omnipod 5"
     }
 
     var isClockOffset: Bool {
@@ -275,7 +275,7 @@ class OmniSettingsViewModel: ObservableObject {
         // Trigger refresh
         pumpManager.getPodStatus() { _ in }
 
-        if pumpManager.podType == erosType {
+        if pumpManager.podType.usesRileyLink {
             pumpManager.updateRLConnectionStatus()
         }
     }

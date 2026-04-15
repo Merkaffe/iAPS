@@ -15,13 +15,13 @@ struct PodTypeSelection: View {
     @Environment(\.appName) private var appName
 
     @State private var podType: PodType?
-    private var supportedPodTypes: [PodType]
+    private let o5NotAvailable: Bool
     private var didConfirm: (PodType) -> Void
     private var didCancel: () -> Void
 
-    init(initialValue: PodType, supportedPodTypes: [PodType], didConfirm: @escaping (PodType) -> Void, didCancel: @escaping () -> Void) {
+    init(initialValue: PodType, o5NotAvailable: Bool, didConfirm: @escaping (PodType) -> Void, didCancel: @escaping () -> Void) {
         self.podType = initialValue
-        self.supportedPodTypes = supportedPodTypes
+        self.o5NotAvailable = o5NotAvailable
         self.didConfirm = didConfirm
         self.didCancel = didCancel
     }
@@ -38,10 +38,10 @@ struct PodTypeSelection: View {
         VStack(alignment: .leading) {
             List {
                 Section {
-                    Text(String(format: LocalizedString("Select the particular Omnipod pod type to use with %1$@. Be sure to select the correct pod type or %2$@ will not be able to communicate with it.", comment: "Help text for Omnipod pod type selection (1: appName) (2: appName)"), self.appName, self.appName))
+                    Text(String(format: LocalizedString("Select the particular Omnipod Pod type to use with %1$@. Be sure to select the correct Pod type or %2$@ will not be able to communicate with it.", comment: "Help text for Omnipod Pod type selection (1: appName) (2: appName)"), self.appName, self.appName))
                 }
                 Section {
-                    PodTypeChooser(podType: $podType, supportedPodTypes: supportedPodTypes)
+                    PodTypeChooser(podType: $podType, o5NotAvailable: o5NotAvailable)
                 }
                 .buttonStyle(PlainButtonStyle()) // Disable row highlighting on selection
             }
@@ -66,7 +66,7 @@ struct PodTypeSelection: View {
 
 struct PodTypeSelction_Previews: PreviewProvider {
     static var previews: some View {
-        PodTypeSelection(initialValue: dashType, supportedPodTypes: [erosType, dashType, omnipod5Type], didConfirm: { (newType) in }, didCancel: { })
+        PodTypeSelection(initialValue: dashType, o5NotAvailable: false, didConfirm: { (newType) in }, didCancel: { })
     }
 }
 
@@ -74,19 +74,20 @@ struct PodTypeChooser: View {
 
     @Binding private var podType: PodType?
 
-    let supportedPodTypes: [PodType]
+    let o5NotAvailable: Bool
 
-    init(podType: Binding<PodType?>, supportedPodTypes: [PodType]) {
-        self.supportedPodTypes = supportedPodTypes
+    init(podType: Binding<PodType?>, o5NotAvailable: Bool) {
         self._podType = podType
+        self.o5NotAvailable = o5NotAvailable
     }
 
     var body: some View {
-        ForEach(supportedPodTypes, id: \.rawValue) { podType in
+        let types = [ erosType, dashType, o5NotAvailable ? nil : omnipod5Type ].compactMap { $0 }
+        ForEach(types, id: \.rawValue) { podType in
             HStack {
                 CheckmarkListItem(
-                    title: Text(podType.localizedDescription),
-                    description: Text(podType.description),
+                    title: Text(podType.description),
+                    description: Text(podType.localizedDescription),
                     isSelected: Binding(
                                 get: { self.podType == podType },
                                 set: { isSelected in

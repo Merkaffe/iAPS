@@ -704,6 +704,7 @@
     },
     "Command error %1$u" : {
       "comment" : "Format string for invalid message error code (1: error code number)",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -712,6 +713,9 @@
           }
         }
       }
+    },
+    "Command error %1$u: %2$@" : {
+      "comment" : "Format string for invalid message error code (1: error code number) (2: error description)"
     },
     "Comms Issue" : {
       "comment" : "Status highlight that delivery is uncertain.",
@@ -1627,6 +1631,9 @@
         }
       }
     },
+    "Lot" : {
+      "comment" : "description label for lot pod details row"
+    },
     "Lot Number" : {
       "comment" : "description label for lot number pod details row",
       "localizations" : {
@@ -1846,6 +1853,9 @@
           }
         }
       }
+    },
+    "No certificate found" : {
+      "comment" : "Error message when no certificate found"
     },
     "No confidence reminders are used." : {
       "comment" : "Description for BeepPreference.silent",
@@ -2098,13 +2108,13 @@
     "Omnipod 5" : {
       "comment" : "Title string for Omnipod 5"
     },
-    "Omnipod 5 pods have a clear needle tab with a 12-character LOT number typically starting with 'PH1' or 'PP1'. The pod's \"SmartAdjust\" technology will not be used for closed loop control." : {
+    "Omnipod 5 Pods have a clear needle tab with a 12-character LOT number typically starting with 'PH1'. The Pod's \"SmartAdjust\" technology will not be used for closed loop control." : {
       "comment" : "Description for Omnipod 5 pods"
     },
     "Omnipod Classic" : {
       "comment" : "Title string for Omnipod Classic"
     },
-    "Omnipod Classic pods (also known as Eros pods) have a clear needle tab with a 6-character LOT number starting with 'L'. These pods require the use of a RileyLink to communicate with the iPhone." : {
+    "Omnipod Classic Pods (also known as Eros Pods) have a clear needle tab with a 6-character LOT number starting with 'L'. These Pods require the use of a RileyLink to communicate with the iPhone." : {
       "comment" : "Description for Omnipod Classic pods"
     },
     "Omnipod DASH" : {
@@ -2118,7 +2128,7 @@
         }
       }
     },
-    "Omnipod DASH pods have a blue needle tab with a 12-character LOT number typically starting with 'PD1'." : {
+    "Omnipod DASH Pods have a blue needle tab with a 12-character LOT number typically starting with 'PD1'." : {
       "comment" : "Description for Omnipod DASH pods"
     },
     "Omnipod Reminders" : {
@@ -2132,9 +2142,6 @@
           }
         }
       }
-    },
-    "Omnipod Type" : {
-      "comment" : "Title for Omnipod Type selection screen"
     },
     "oneNotUsed" : {
       "comment" : "Pod state oneNotUsed",
@@ -2380,8 +2387,8 @@
         }
       }
     },
-    "Please select if you'd like to switch from using %@ pods to another pod type or to some other pump type." : {
-
+    "Please select if you'd like to switch from using %1@ pods to another pod type or to some other pump type." : {
+      "comment" : "Message for switch insulin device action sheet (1: pod type)"
     },
     "Please try repositioning the pod or the RileyLink and try again" : {
       "comment" : "Recovery suggestion when no response is received from pod",
@@ -2588,8 +2595,12 @@
     "Pod Hours" : {
       "comment" : "description label for pod hours pod details row"
     },
+    "Pod is not in a state ready for cannula insertion" : {
+      "comment" : "Error message when cannula insertion fails because the pod is in an unexpected state"
+    },
     "Pod is not in a state ready for cannula insertion." : {
       "comment" : "Error message when cannula insertion fails because the pod is in an unexpected state",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2702,9 +2713,9 @@
       "comment" : "The format string for Pod Time: (1: formatted time)"
     },
     "Pod Type" : {
-      "comment" : "description label for pod type pod details row"
+      "comment" : "Title for Pod Type selection screen\ndescription label for pod type pod details row"
     },
-    "Pod type not configured." : {
+    "Pod type not configured" : {
       "comment" : "Error message when pod type is not configured"
     },
     "Poor signal strength" : {
@@ -2893,6 +2904,9 @@
           }
         }
       }
+    },
+    "Rebuild app with needed certificate data" : {
+      "comment" : "Recovery suggestion with missing certificate"
     },
     "Ref: " : {
       "comment" : "PDM Ref string line",
@@ -3117,8 +3131,8 @@
         }
       }
     },
-    "Select the particular Omnipod pod type to use with %1$@. Be sure to select the correct pod type or %2$@ will not be able to communicate with it." : {
-      "comment" : "Help text for Omnipod pod type selection (1: appName) (2: appName)"
+    "Select the particular Omnipod Pod type to use with %1$@. Be sure to select the correct Pod type or %2$@ will not be able to communicate with it." : {
+      "comment" : "Help text for Omnipod Pod type selection (1: appName) (2: appName)"
     },
     "Select the type of insulin that you will be using in this pod." : {
       "comment" : "Title text for insulin type confirmation page",
@@ -4017,8 +4031,12 @@
         }
       }
     },
+    "Your Pod is ready for use.\n\nThe default expiration reminder and low reservoir alerts have been configured. You can change the alerts for the current Pod in the Notification Settings." : {
+      "comment" : "Format string for instructions for setup complete view"
+    },
     "Your Pod is ready for use.\n\nThe default reminder was scheduled for this Pod at setup. You can change the reminder to a more convenient time in Pod Notification Settings." : {
       "comment" : "Format string for instructions for setup complete view",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {

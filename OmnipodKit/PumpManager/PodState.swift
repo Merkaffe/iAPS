@@ -9,6 +9,9 @@
 
 import Foundation
 import LoopKit
+import os.log
+
+private let log = OSLog(category: "PodState")
 
 enum SetupProgress: Int {
     case addressAssigned = 0
@@ -30,11 +33,11 @@ enum SetupProgress: Int {
     var primingNeverAttempted: Bool {
         return self.rawValue < SetupProgress.startingPrime.rawValue
     }
-    
+
     var primingNeeded: Bool {
         return self.rawValue < SetupProgress.priming.rawValue
     }
-    
+
     var needsInitialBasalSchedule: Bool {
         return self.rawValue < SetupProgress.initialBasalScheduleSet.rawValue
     }
@@ -120,10 +123,11 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         return false
     }
 
-    // Dash specific variables
+    // BLE specific variables
     var bleMessageTransportState: BleMessageTransportState
     var ltk: Data? = nil
     var bleIdentifier: String? = nil
+    var signingKey: Data? = nil // O5 only
 
     // Eros specific variables
     var erosMessageTransportState: ErosMessageTransportState
@@ -145,6 +149,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         bleMessageTransportState: BleMessageTransportState? = nil,
         ltk: Data? = nil,
         bleIdentifier: String? = nil,
+        signingKey: Data? = nil, // O5 only
 
         // Eros specific variables
         erosMessageTransportState: ErosMessageTransportState? = nil,
@@ -173,7 +178,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         self.configuredAlerts = [.slot7Expired: .waitingForPairingReminder]
         self.podTime = 0
 
-        if podType == erosType {
+        if podType.isEros {
             // Eros specific initializations, nonceState will be initialized on initial nonce resync()
             if let erosMessageTransportState = erosMessageTransportState {
                 self.erosMessageTransportState = erosMessageTransportState
@@ -185,6 +190,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             // BLE specific initializations
             self.ltk = ltk
             self.bleIdentifier = bleIdentifier
+            self.signingKey = signingKey // O5 only
             if let bleMessageTransportState = bleMessageTransportState {
                 self.bleMessageTransportState = bleMessageTransportState
             } else {
@@ -243,7 +249,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     }
 
     mutating func resyncNonce(syncWord: UInt16, sentNonce: UInt32, messageSequenceNum: Int) {
-        if self.podType == erosType {
+        if self.podType.isEros {
             // Need to initialize or reseed the pod's nonceState
             let sum = (sentNonce & 0xFFFF) + UInt32(crc16Table[messageSequenceNum]) + (lotNo & 0xFFFF) + (lotSeq & 0xFFFF)
             let seed = UInt16(sum & 0xFFFF) ^ syncWord
@@ -463,6 +469,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
     // MARK: - RawRepresentable
     public init?(rawValue: RawValue) {
+        log.bleDebug("[PodState] init with rawValue: %{public}@", String(describing: rawValue))
 
         guard
             let address = rawValue["address"] as? UInt32,
@@ -627,7 +634,8 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         if let podTypeRaw = rawValue["podType"] as? UInt8 {
             self.podType = PodType(rawValue: podTypeRaw)
         } else if rawValue["ltk"] != nil {
-            self.podType = dashType // OmniBLE
+            log.error("[PodState] init with rawValue has missing podType, assuming dashType")
+            self.podType = dashType // assume OmniBLE
         } else {
             self.podType = erosType // OmniKit
         }
@@ -639,15 +647,11 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
                 let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
             {
                 self.erosMessageTransportState = erosMessageTransportState
-            } else if let erosMessageTransportStateRaw = rawValue["messageTransportState"] as? ErosMessageTransportState.RawValue,
-                let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
-            {
-                self.erosMessageTransportState = erosMessageTransportState
             } else {
                 self.erosMessageTransportState = ErosMessageTransportState()
             }
 
-        case dashType,omnipod5Type:
+        case dashType, omnipod5Type:
             self.erosMessageTransportState = ErosMessageTransportState() /// dummy initialization
             if let bleMessageTransportStateRaw = rawValue["bleMessageTransportState"] as? BleMessageTransportState.RawValue,
                 let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
@@ -669,6 +673,27 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
                 self.bleIdentifier = bleIdentifier
             }
 
+            if podType.isO5 {
+                if let signingKeyString = rawValue["signingKey"] as? String {
+                    // This is the normal path for new O5 pods which should
+                    // have the 32-byte signingKey initialized during pairing.
+                    self.signingKey = Data(hexadecimalString: signingKeyString)
+                } else {
+                    // One time during conversion due to adding signingKey to PodState,
+                    // for new pods this will automatically be initialized during pairing.
+                    let controllerId = controllerIdForPodId(podId: address)
+                    self.signingKey = try? O5CertificateStore(controllerId: controllerId).signingKey.rawRepresentation
+                    if self.signingKey == nil {
+                        // Without a saved signingKey as well as the needed certificate for pdmId,
+                        // this pod will not be able to do any insulin, cancel, or deactivation commands.
+                        // This should only occur for an artificially created testing situation.
+                        log.default("@@@ initializion failed for 0x%08X, continuing in limited mode...", controllerId)
+                    } else {
+                        log.default("@@@ PodState signingKey initialized for 0x%08X", controllerId)
+                    }
+                }
+            }
+
         default:
             return nil
         }
@@ -683,7 +708,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "lotNo": lotNo,
             "lotSeq": lotSeq,
             "suspendState": suspendState.rawValue,
-            "finalizedDoses": finalizedDoses.map( { $0.rawValue }),
+            "finalizedDoses": finalizedDoses.map({ $0.rawValue }),
             "alerts": activeAlertSlots.rawValue,
             "setupProgress": setupProgress.rawValue,
             "insulinType": insulinType.rawValue,
@@ -704,14 +729,14 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         rawValue["podTime"] = podTime
         rawValue["podTimeUpdated"] = podTimeUpdated
         rawValue["setupUnitsDelivered"] = setupUnitsDelivered
-        
+
         if configuredAlerts.count > 0 {
             let rawConfiguredAlerts = Dictionary(uniqueKeysWithValues:
                                                     configuredAlerts.map { slot, alarm in (String(describing: slot.rawValue), alarm.rawValue) })
             rawValue["configuredAlerts"] = rawConfiguredAlerts
         }
 
-        if podType == erosType {
+        if podType.isEros {
             rawValue["erosMessageTransportState"] = erosMessageTransportState.rawValue
         } else {
             rawValue["bleMessageTransportState"] = bleMessageTransportState.rawValue
@@ -720,6 +745,10 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             }
             if let ltk = ltk {
                 rawValue["ltk"] = ltk.hexadecimalString
+            }
+            // O5 only
+            if let signingKey = signingKey {
+                rawValue["signingKey"] = signingKey.hexadecimalString
             }
         }
 

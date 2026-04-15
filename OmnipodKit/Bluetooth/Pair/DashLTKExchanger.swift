@@ -1,5 +1,5 @@
 //
-//  LTKExchanger.swift
+//  DashLTKExchanger.swift
 //  OmnipodKit
 //
 //  From OmniBLE/OmniBLE/Bluetooth/Pair/LTKExchanger.swift
@@ -9,7 +9,7 @@
 import Foundation
 import os.log
 
-class LTKExchanger {
+class DashLTKExchanger {
     // This is the binary representation of a "GetPodStatus command" for podID 0xffc32db used in the SP2 payload
     static let GET_POD_STATUS_HEX_COMMAND: Data = Data(hex: "ffc32dbd08030e0100008a")
 
@@ -24,10 +24,10 @@ class LTKExchanger {
     private let manager: PeripheralManager
     private let ids: Ids
     private let podAddress = Ids.notActivated()
-    private let keyExchange = try! KeyExchange(X25519KeyGenerator(), OmniRandomByteGenerator())
+    private let keyExchange = try! DashKeyExchange(X25519KeyGenerator(), OmniRandomByteGenerator())
     private var seq: UInt8 = 1
     
-    private let log = OSLog(category: "LTKExchanger")
+    private let log = OSLog(category: "DashLTKExchanger")
 
     init(manager: PeripheralManager, ids: Ids) {
         self.manager = manager
@@ -40,10 +40,10 @@ class LTKExchanger {
             sequenceNumber: seq,
             source: ids.myId,
             destination: podAddress,
-            keys: [LTKExchanger.SP1, LTKExchanger.SP2],
+            keys: [DashLTKExchanger.SP1, DashLTKExchanger.SP2],
             payloads: [ids.podId.address, sp2()]
         )
-        try throwOnSendError(sp1sp2.message, LTKExchanger.SP1 + LTKExchanger.SP2)
+        try throwOnSendError(sp1sp2.message, DashLTKExchanger.SP1 + DashLTKExchanger.SP2)
 
         seq += 1
         log.debug("Sending sps1")
@@ -51,10 +51,10 @@ class LTKExchanger {
             sequenceNumber: seq,
             source: ids.myId,
             destination: podAddress,
-            keys: [LTKExchanger.SPS1],
+            keys: [DashLTKExchanger.SPS1],
             payloads: [keyExchange.pdmPublic + keyExchange.pdmNonce]
         )
-        try throwOnSendError(sps1.message, LTKExchanger.SPS1)
+        try throwOnSendError(sps1.message, DashLTKExchanger.SPS1)
 
         log.debug("Reading sps1")
         let podSps1 = try manager.readMessagePacket()
@@ -70,16 +70,17 @@ class LTKExchanger {
             sequenceNumber: seq,
             source: ids.myId,
             destination: podAddress,
-            keys: [LTKExchanger.SPS2],
+            keys: [DashLTKExchanger.SPS2],
             payloads: [keyExchange.pdmConf]
         )
-        try throwOnSendError(sps2.message, LTKExchanger.SPS2)
+        try throwOnSendError(sps2.message, DashLTKExchanger.SPS2)
 
         let podSps2 = try manager.readMessagePacket()
         guard let _ = podSps2 else {
             throw PodProtocolError.pairingException("Could not read SPS2")
         }
         try validatePodSps2(podSps2!)
+        log.default("=== SPS2 PHASE COMPLETE ===")
         // No exception throwing after this point. It is possible that the pod saved the LTK
 
         seq += 1
@@ -88,7 +89,7 @@ class LTKExchanger {
             sequenceNumber: seq,
             source: ids.myId,
             destination: podAddress,
-            keys: [LTKExchanger.SP0GP0],
+            keys: [DashLTKExchanger.SP0GP0],
             payloads: [Data()]
         )
         let result = manager.sendMessagePacket(sp0gp0.message)
@@ -123,7 +124,7 @@ class LTKExchanger {
     private func processSps1FromPod(_ msg: MessagePacket) throws {
         log.debug("Received SPS1 from pod: %@", msg.payload.hexadecimalString)
 
-        let payload = try StringLengthPrefixEncoding.parseKeys([LTKExchanger.SPS1], msg.payload)[0]
+        let payload = try StringLengthPrefixEncoding.parseKeys([DashLTKExchanger.SPS1], msg.payload)[0]
         log.debug("SPS1 payload from pod: %@", payload.hexadecimalString)
         try keyExchange.updatePodPublicData(payload)
     }
@@ -131,10 +132,10 @@ class LTKExchanger {
     private func validatePodSps2(_ msg: MessagePacket) throws {
         log.debug("Received SPS2 from pod: %@", msg.payload.hexadecimalString)
 
-        let payload = try StringLengthPrefixEncoding.parseKeys([LTKExchanger.SPS2], msg.payload)[0]
+        let payload = try StringLengthPrefixEncoding.parseKeys([DashLTKExchanger.SPS2], msg.payload)[0]
         log.debug("SPS2 payload from pod: %@", payload.hexadecimalString)
 
-        if (payload.count != KeyExchange.CMAC_SIZE) {
+        if (payload.count != DashKeyExchange.CMAC_SIZE) {
             throw PodProtocolError.messageIOException("Invalid payload size")
         }
         try keyExchange.validatePodConf(payload)
@@ -143,15 +144,15 @@ class LTKExchanger {
     private func sp2() -> Data {
         // This is GetPodStatus command, with page 0 parameter.
         // We could replace that in the future with the serialized GetPodStatus()
-        return LTKExchanger.GET_POD_STATUS_HEX_COMMAND
+        return DashLTKExchanger.GET_POD_STATUS_HEX_COMMAND
     }
 
     private func validateP0(_ msg: MessagePacket) throws {
         log.debug("Received P0 from pod: %@", msg.payload.hexadecimalString)
 
-        let payload = try StringLengthPrefixEncoding.parseKeys([LTKExchanger.P0], msg.payload)[0]
+        let payload = try StringLengthPrefixEncoding.parseKeys([DashLTKExchanger.P0], msg.payload)[0]
         log.debug("P0 payload from pod: %@", payload.hexadecimalString)
-        if (payload != LTKExchanger.UNKNOWN_P0_PAYLOAD) {
+        if (payload != DashLTKExchanger.UNKNOWN_P0_PAYLOAD) {
             throw PodProtocolError.pairingException("Reveived invalid P0 payload: \(payload)")
         }
     }

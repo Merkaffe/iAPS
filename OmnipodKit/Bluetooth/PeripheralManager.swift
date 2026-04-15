@@ -69,6 +69,7 @@ class PeripheralManager: NSObject {
 
     private(set) weak var central: CBCentralManager?
 
+    let profile: BlePodProfile
     let configuration: Configuration
 
     // Confined to `queue`
@@ -82,14 +83,10 @@ class PeripheralManager: NSObject {
         self.peripheral = peripheral
         self.central = centralManager
 
-        assert(podType == dashType || podType == omnipod5Type)
+        assert(podType.isDash || podType.isO5)
         self.podType = podType
-        setServicePodType(podType: podType)
-        if podType == omnipod5Type {
-            self.configuration = .omnipod5
-        } else {
-            self.configuration = .omnipodDash
-        }
+        self.profile = podType.blePodProfile
+        self.configuration = profile.makePeripheralConfiguration()
 
         super.init()
 
@@ -144,17 +141,16 @@ extension PeripheralManager {
 
             if self.needsConfiguration || self.peripheral.services == nil {
                 do {
-                    self.log.default("Applying configuration")
+                    self.log.bleDebug("Applying configuration")
                     try self.applyConfiguration()
                     self.needsConfiguration = false
 
                     if let delegate = self.delegate {
                         try delegate.completeConfiguration(for: self)
-                        
-                        self.log.default("Delegate configuration notified")
+                        self.log.bleDebug("Delegate configuration notified")
                     }
 
-                    self.log.default("Peripheral configuration completed")
+                    self.log.bleDebug("Peripheral configuration completed")
                 } catch let error {
                     self.log.error("Error applying peripheral configuration: %{public}@", String(describing: error))
                     // Will retry
@@ -191,12 +187,15 @@ extension PeripheralManager {
 
         for (serviceUUID, characteristicUUIDs) in configuration.notifyingCharacteristics {
             guard let service = peripheral.services?.itemWithUUID(serviceUUID) else {
-                throw PeripheralManagerError.unknownCharacteristic
+                // Service not discovered — may be optional (e.g., heartbeat on unpaired O5 pods)
+                log.info("Skipping notifications for undiscovered service: %{public}@", serviceUUID.uuidString)
+                continue
             }
 
             for characteristicUUID in characteristicUUIDs {
                 guard let characteristic = service.characteristics?.itemWithUUID(characteristicUUID) else {
-                    throw PeripheralManagerError.unknownCharacteristic
+                    log.info("Skipping notifications for undiscovered characteristic: %{public}@", characteristicUUID.uuidString)
+                    continue
                 }
 
                 guard !characteristic.isNotifying else {
@@ -218,6 +217,12 @@ extension PeripheralManager {
         dispatchPrecondition(condition: .onQueue(queue))
         guard central?.state == .poweredOn && peripheral.state == .connected else {
             self.log.info("runCommand guard failed - bluetooth not running or peripheral not connected: peripheral %@", peripheral)
+            self.log.info("runCommand guard failed - not ready: peripheral=%{public}@ centralState=%{public}@ peripheralState=%{public}@ queueDepth=%{public}d commandConditions=%{public}@",
+                          peripheral,
+                          central.map { String(describing: $0.state) } ?? "nil",
+                          String(describing: peripheral.state),
+                          sessionQueue.operationCount,
+                          String(describing: commandConditions))
             throw PeripheralManagerError.notReady
         }
 
@@ -228,6 +233,7 @@ extension PeripheralManager {
         }
 
         guard commandConditions.isEmpty else {
+            log.error("runCommand precondition failed - pending command conditions already present: %{public}@", String(describing: commandConditions))
             throw PeripheralManagerError.emptyValue
         }
 
@@ -249,6 +255,14 @@ extension PeripheralManager {
 
         guard signaled else {
             self.log.info("runCommand lock timeout reached - not signalled")
+            let characteristicsReady = peripheral.getCommandCharacteristic(profile: profile) != nil && peripheral.getDataCharacteristic(profile: profile) != nil
+            self.log.error("runCommand timeout - not signalled: timeout=%{public}.3f pendingConditions=%{public}@ characteristicsReady=%{public}@ queueDepth=%{public}d centralState=%{public}@ peripheralState=%{public}@",
+                           timeout,
+                           String(describing: commandConditions),
+                           String(describing: characteristicsReady),
+                           sessionQueue.operationCount,
+                           central.map { String(describing: $0.state) } ?? "nil",
+                           String(describing: peripheral.state))
             throw PeripheralManagerError.timeout(commandConditions)
         }
 
@@ -322,6 +336,13 @@ extension PeripheralManager {
 
     /// - Throws: PeripheralManagerError
     func writeValue(_ value: Data, for characteristic: CBCharacteristic, type: CBCharacteristicWriteType, timeout: TimeInterval) throws {
+        if type == .withoutResponse {
+            log.bleDebug("[BLE RAW] WRITE %{public}@ type=withoutResponse canSend=%{public}@ (%{public}d bytes): %{public}@",
+                        characteristic.uuid.uuidString, String(describing: peripheral.canSendWriteWithoutResponse), value.count, value.hexadecimalString)
+        } else {
+            log.bleDebug("[BLE RAW] WRITE %{public}@ type=withResponse (%{public}d bytes): %{public}@",
+                        characteristic.uuid.uuidString, value.count, value.hexadecimalString)
+        }
         try runCommand(timeout: timeout) {
             if case .withResponse = type {
                 addCondition(.write(characteristic: characteristic))
@@ -413,6 +434,11 @@ extension PeripheralManager: CBPeripheralDelegate {
     }
 
     func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
+        if let error = error {
+            log.error("[BLE RAW] didWriteValueFor %{public}@ ERROR: %{public}@", characteristic.uuid.uuidString, String(describing: error))
+        } else {
+            log.bleDebug("[BLE RAW] didWriteValueFor %{public}@ OK", characteristic.uuid.uuidString)
+        }
         commandLock.lock()
         
         if let index = commandConditions.firstIndex(where: { (condition) -> Bool in
@@ -467,6 +493,10 @@ extension PeripheralManager: CBPeripheralDelegate {
         self.log.default("didReadRSSI: %{public}@", String(describing: RSSI))
     }
 
+    func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
+        log.bleDebug("[BLE RAW] peripheralIsReadyToSendWriteWithoutResponse — buffer was full, now ready")
+    }
+
 }
 
 
@@ -486,6 +516,8 @@ extension PeripheralManager {
     }
 
     func centralManager(_ central: CBCentralManager, didDisconnect peripheral: CBPeripheral, error: Error?) {
+        log.error("[DISCONNECT] PeripheralManager didDisconnect: error=%{public}@ peripheral=%{public}@",
+                  String(describing: error), peripheral)
         self.queue.async {
             self.idleStart = nil
         }
@@ -496,6 +528,15 @@ extension PeripheralManager {
         switch peripheral.state {
         case .connected:
             clearCommsQueues()
+
+            /// maximumWriteValueLength (MTU minus 3-byte overhead) is the max bytes to write in a single operation.
+            /// This may report 20 here (MTU 23) initially because iOS auto-negotiates the MTU asynchronously.
+            /// iOS should auto-negotiate a maximumWriteValueLength of 244 for the O5 to match packetLayout.maxPayloadSize.
+            /// completeConfiguration() polls until the maximumWriteValueLength settles before sending any protocol messages.
+            /// For O5 withoutResponse, any writes exceeding maximumWriteValueLength are silently truncated — NOT fragmented.
+            let maximumWriteValueLength = peripheral.maximumWriteValueLength(for: .withoutResponse)
+            self.log.bleDebug("PeripheralManager - didConnect - maximumWriteValueLength: %{public}d, packetMaxPayloadSize: %{public}d", maximumWriteValueLength, profile.packetLayout.maxPayloadSize)
+
             self.log.debug("PeripheralManager - didConnect - running assertConfiguration")
             assertConfiguration()
 
@@ -522,24 +563,24 @@ extension PeripheralManager {
 }
 
 extension CBPeripheral {
-    func getCommandCharacteristic() -> CBCharacteristic? {
-        guard let service = services?.itemWithUUID(OmnipodServiceUUID_service_cbUUID) else {
+    func getCommandCharacteristic(profile: BlePodProfile) -> CBCharacteristic? {
+        guard let service = services?.itemWithUUID(profile.serviceUUID) else {
             return nil
         }
 
-        let val = service.characteristics?.itemWithUUID(OmnipodCharacteristicUUID_command_cbUUID)
+        let val = service.characteristics?.itemWithUUID(profile.commandCharacteristicUUID)
         if val == nil {
             return nil
         }
         return val
     }
 
-    func getDataCharacteristic() -> CBCharacteristic? {
-        guard let service = services?.itemWithUUID(OmnipodServiceUUID_service_cbUUID) else {
+    func getDataCharacteristic(profile: BlePodProfile) -> CBCharacteristic? {
+        guard let service = services?.itemWithUUID(profile.serviceUUID) else {
             return nil
         }
 
-        let val = service.characteristics?.itemWithUUID(OmnipodCharacteristicUUID_data_cbUUID)
+        let val = service.characteristics?.itemWithUUID(profile.dataCharacteristicUUID)
         if val == nil {
             return nil
         }
@@ -547,6 +588,28 @@ extension CBPeripheral {
     }
 }
 
+
+// MARK: - O5 Heartbeat handling
+extension PeripheralManager {
+    /// Timestamp of the last heartbeat received from the O5 pod
+    private static var lastHeartbeatTime: Date?
+
+    static func mostRecentHeartbeatTime() -> Date? {
+        return lastHeartbeatTime
+    }
+
+    /// Handle a heartbeat notification from the O5 pod.
+    /// This resets the idle timer to keep the connection alive.
+    func handleHeartbeat() {
+        PeripheralManager.lastHeartbeatTime = Date()
+        log.debug("Received O5 heartbeat at %{public}@", String(describing: PeripheralManager.lastHeartbeatTime))
+
+        // Reset idle timer when we receive a heartbeat
+        self.queue.async {
+            self.idleStart = Date()
+        }
+    }
+}
 
 // MARK: - Command session management
 extension PeripheralManager {

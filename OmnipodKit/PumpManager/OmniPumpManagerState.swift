@@ -9,6 +9,9 @@
 
 import RileyLinkBLEKit
 import LoopKit
+import os.log
+
+private let log = OSLog(category: "OmniPumpManagerState")
 
 // XXX still needs be declared public with the current Trio implementation
 public struct OmniPumpManagerState: RawRepresentable, Equatable {
@@ -46,7 +49,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     var podAttachmentConfirmed: Bool
 
-    var activeAlerts: Set<PumpManagerAlert>
+    public internal(set) var activeAlerts: Set<PumpManagerAlert>
 
     var alertsWithPendingAcknowledgment: Set<PumpManagerAlert>
 
@@ -154,31 +157,38 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             self.controllerId = 0
             self.podId = 0
         } else {
-            let myId = createControllerId(topIdByte: podType.topIdByte)
-            self.controllerId = myId
-            self.podId = myId + 1
+            (self.controllerId, self.podId) = nextIds(podType: podType)
         }
+
+        log.debug("[OmniPumpManagerState] init finished: %{public}@",
+                  self.debugDescription)
 
     }
 
     public init?(rawValue: RawValue) {
+        log.bleDebug("[OmniPumpManagerState] init with rawValue: %{public}@", String(describing: rawValue))
 
         let isOnboarded = rawValue["isOnboarded"] as? Bool ?? false
-
-        let podType: PodType
-        if let podTypeRaw = rawValue["podType"] as? UInt8 {
-            podType = PodType(rawValue: podTypeRaw)
-        } else if rawValue["controllerId"] != nil {
-            podType = dashType // OmniBLE
-        } else {
-            podType = erosType // OmniKit
-        }
 
         let podState: PodState?
         if let podStateRaw = rawValue["podState"] as? PodState.RawValue {
             podState = PodState(rawValue: podStateRaw)
         } else {
             podState = nil
+        }
+
+        var podType: PodType
+        if let podTypeRaw = rawValue["podType"] as? UInt8 {
+            podType = PodType(rawValue: podTypeRaw)
+        } else if let podState = podState {
+            log.error("[OmniPumpManagerState] init with rawValue has no podType, using podState.podType=%{public}@",
+                      String(describing: podState.podType))
+            podType = podState.podType
+        } else if rawValue["controllerId"] != nil {
+            log.error("[OmniPumpManagerState] init with rawValue has no podType, assuming dashType")
+            podType = dashType // OmniBLE
+        } else {
+            podType = erosType // OmniKit
         }
 
         let timeZone: TimeZone
@@ -209,7 +219,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
         // Omnipod model specific values
         let rileyLinkConnectionManagerState: RileyLinkConnectionState?
-        let controllerId, podId: UInt32?
+        var controllerId, podId: UInt32?
         if podType.usesRileyLink {
             if let rileyLinkConnectionManagerStateRaw = rawValue["rileyLinkConnectionManagerState"] as? RileyLinkConnectionState.RawValue {
                 rileyLinkConnectionManagerState = RileyLinkConnectionState(rawValue: rileyLinkConnectionManagerStateRaw)
@@ -222,6 +232,28 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             rileyLinkConnectionManagerState = nil
             controllerId = rawValue["controllerId"] as? UInt32? ?? nil
             podId = rawValue["podId"] as? UInt32? ?? nil
+            /// O5 specific checks of controllerId with the O5CertificateStore
+            if podType.isO5, let myId = controllerId, myId != 0 {
+                // Verify that the O5CertificateStore contains info for myId
+                if O5CertificateStore.contains(myId) {
+                    log.default("@@@ Verified controller id 0x%08X has O5 certificate", myId)
+                } else if podState == nil {
+                    // With no pod, just pick a new available controllerId to use
+                    let newId = O5CertificateStore.pickControllerId
+                    controllerId = newId
+                    if newId != 0 {
+                        podId = newId + 1
+                        log.default("@@@ Switching O5 ids for certificate for 0x%08X", newId)
+                    } else {
+                        // There are no O5Certificates for any pdmId.
+                        // Since we don't have a podState, just force a new
+                        // pod selection and the O5 type will be disabled.
+                        podType = unknownOmnipodType
+                        podId = 0
+                        log.error("@@@ No O5 certificates found -- disabled O5 pod type selection")
+                    }
+                }
+            }
         }
 
         self.init(
@@ -297,17 +329,19 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         }
 
         if let prevPodStateRaw = rawValue["previousPodState"] as? PodState.RawValue {
-            previousPodState = PodState(rawValue: prevPodStateRaw)
+            self.previousPodState = PodState(rawValue: prevPodStateRaw)
         } else {
-            previousPodState = nil
+            self.previousPodState = nil
         }
 
-        // Some more Eros specific values
-        if let pairingAttemptAddress = rawValue["pairingAttemptAddress"] as? UInt32 {
-            self.pairingAttemptAddress = pairingAttemptAddress
+        if podType.isEros {
+            // Some more Eros specific values
+            if let pairingAttemptAddress = rawValue["pairingAttemptAddress"] as? UInt32 {
+                self.pairingAttemptAddress = pairingAttemptAddress
+            }
+            self.rileyLinkBatteryAlertLevel = rawValue["rileyLinkBatteryAlertLevel"] as? Int
+            self.lastRileyLinkBatteryAlertDate = rawValue["lastRileyLinkBatteryAlertDate"] as? Date ?? Date.distantPast
         }
-        rileyLinkBatteryAlertLevel = rawValue["rileyLinkBatteryAlertLevel"] as? Int
-        lastRileyLinkBatteryAlertDate = rawValue["lastRileyLinkBatteryAlertDate"] as? Date ?? Date.distantPast
     }
 
     public var rawValue: RawValue {
@@ -389,7 +423,7 @@ extension OmniPumpManagerState: CustomDebugStringConvertible {
             "* alertsWithPendingAcknowledgment: \(alertsWithPendingAcknowledgment)",
             "* acknowledgedTimeOffsetAlert: \(acknowledgedTimeOffsetAlert)",
             "* initialConfigurationCompleted: \(initialConfigurationCompleted)",
-            "* podType: \(podType.localizedDescription)",
+            "* podType: \(podType)",
             "",
         ].joined(separator: "\n")
         if podType.usesRileyLink {

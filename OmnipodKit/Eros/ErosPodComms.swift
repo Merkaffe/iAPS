@@ -161,8 +161,7 @@ class ErosPodComms: PodComms {
                 throw PodCommsError.activationTimeExceeded
             }
 
-            // It's unlikely that Insulet will release an updated Eros pod using any different fundemental values,
-            // so just verify that the fundemental pod constants returned match the expected constant values in the Pod struct.
+            // Verify that the fundemental pod constants returned match the expected constant values in the Pod struct.
             // To actually be able to handle different fundemental values in Loop things would need to be reworked to save
             // these values in some persistent PodState and then make sure that everything properly works using these values.
             var errorStrings: [String] = []
