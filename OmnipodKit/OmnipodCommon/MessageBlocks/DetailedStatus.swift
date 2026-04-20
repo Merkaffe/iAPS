@@ -112,7 +112,7 @@ struct DetailedStatus: PodInfo, Equatable {
     }
 
     // Returns an appropropriate DASH PDM style Ref string for DetailedStatus. DASH Ref codes are all of
-    // the form Ref: TT-VVVHH-IIIRR-FFF computed as {14|15|16|17|19}-{VV}{SSSS/60}-{NNNN/20}{RRRR/20}-PP.
+    // the form Ref: TT-VVVHH-IIIRR-FFF computed as {14|15|16|17|19}-{VV}{QQQQ/60}-{NNNN/20}{RRRR/20}-PP.
     var dashPdmRef: String? {
         let TT, VVV, HH, III, RR, FFF: UInt
 
@@ -152,7 +152,11 @@ struct DetailedStatus: PodInfo, Equatable {
         }
 
         VVV = UInt(data[17]) // raw DetailedStatus VV byte
-        HH = UInt(timeActive.hours) // whole # of hours
+        if let faultTime = faultEventTimeSinceActivation {
+            HH = UInt(faultTime.hours) // fault time in whole # of hours
+        } else {
+            HH = UInt(timeActive.hours) // active time in whole # of hours
+        }
         III = UInt(totalInsulinDelivered) // whole units of insulin
         RR = UInt(self.reservoirLevel) // whole reservoir units, special 51.15 value used for > 50U will become 51 as needed
         FFF = UInt(faultEventCode.rawValue) // actual fault code value
@@ -161,7 +165,7 @@ struct DetailedStatus: PodInfo, Equatable {
     }
 
     // Returns an appropropriate Eros PDM style Ref string for the Detailed Status.
-    // For most types, Ref: TT-VVVHH-IIIRR-FFF computed as {19|17}-{VV}{SSSS/60}-{NNNN/20}{RRRR/20}-PP
+    // For most types, Ref: TT-VVVHH-IIIRR-FFF computed as {19|17}-{VV}{QQQQ/60}-{NNNN/20}{RRRR/20}-PP
     var erosPdmRef: String? {
         let TT, VVV, HH, III, RR, FFF: UInt
 
@@ -186,7 +190,11 @@ struct DetailedStatus: PodInfo, Equatable {
             FFF = UInt(faultEventCode.rawValue)
         }
 
-        HH = UInt(timeActive.hours) // whole # of hours
+        if let faultTime = faultEventTimeSinceActivation {
+            HH = UInt(faultTime.hours) // fault time in whole # of hours
+        } else {
+            HH = UInt(timeActive.hours) // active time in whole # of hours
+        }
         III = UInt(totalInsulinDelivered) // whole units of insulin
         RR = UInt(self.reservoirLevel) // whole reservoir units, special 51.15 value used for > 50U will become 51 as needed
 
