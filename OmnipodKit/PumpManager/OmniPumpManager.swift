@@ -16,9 +16,6 @@ import UserNotifications
 import Combine
 import os.log
 
-fileprivate var getPodStatusMinTime: TimeInterval = .seconds(10) // a relatively brief period
-fileprivate var postConnectMinTime: TimeInterval = .seconds(90) // about half a typical DASH disconnect interval
-
 protocol PodStateObserver: AnyObject {
     func podStateDidUpdate(_ state: PodState?)
     func podConnectionStateDidChange(isConnected: Bool)
@@ -1445,25 +1442,26 @@ extension OmniPumpManager {
     }
 
     // Shared handler for getPodStatus() and post-connnect() that does a getStatus()
-    // (unless we just received a StatusResponse within minResponseInterval)
-    // and other associated actions that need to be regularly handled.
-    fileprivate func handlePodUpdatesAsNeeded(session: PodCommsSession, minResponseInterval: TimeInterval) -> StatusResponse? {
+    // (unless canOptimize is true and a StatusResponse had been recently received)
+    // and other associated actions that need to be regularly performed.
+    // Returns the getStatus() StatusResponse when the command isn't skipped.
+    fileprivate func handlePodUpdatesAsNeeded(session: PodCommsSession, canOptimize: Bool) -> StatusResponse? {
 
         // First see if a timed silence pod mode has ended
         handleSilencePodEnd(session: session)
 
-        // Perform a getStatus unless the time since the last response seen is less than minResponseInterval.
+        // Next do the getStatus() call unless we can optimize and it
+        // has been less than a couple of minutes since the last response.
         let timeSinceLastResponse = -(self.state.podState?.podTimeUpdated ?? .distantPast).timeIntervalSinceNow
         let status: StatusResponse?
-        if timeSinceLastResponse < minResponseInterval {
+        if canOptimize && timeSinceLastResponse < TimeInterval(minutes: 2) {
             self.log.debug("### skipping getStatus() with last status %@ ago", timeSinceLastResponse.timeIntervalStr)
             status = nil
         } else {
-            self.log.debug("### doing getStatus() with last status %@ ago", timeSinceLastResponse.timeIntervalStr)
             status = try? session.getStatus(noSeqGetStatus: true)
         }
 
-        // Silence and pending acknowledged alerts
+        // Silence any pending acknowledged alerts
         silenceAcknowledgedAlerts()
 
         // If we have new status, store the dosesForStorage which updates lastPumpDataReportDate
@@ -1481,7 +1479,12 @@ extension OmniPumpManager {
 
     // MARK: - Pump Commands
 
-    func getPodStatus(completion: ((_ result: PumpManagerResult<StatusResponse?>) -> Void)? = nil) {
+    // Performs a pod get status and performs other associated actions.
+    // If canOptimize, the getStatus can be skipped if a response has been recently returned.
+    // The returned StatusResponse will be nil if getStatus() was skipped as an optimization.
+    func getPodStatus(canOptimize: Bool = false,
+                      completion: ((_ result: PumpManagerResult<StatusResponse?>) -> Void)? = nil)
+    {
         guard state.hasActivePod else {
             completion?(.failure(PumpManagerError.configuration(OmniPumpManagerError.noPodPaired)))
             return
@@ -1491,7 +1494,7 @@ extension OmniPumpManager {
             do {
                 switch result {
                 case .success(let session):
-                    let status = self.handlePodUpdatesAsNeeded(session: session, minResponseInterval: getPodStatusMinTime)
+                    let status = self.handlePodUpdatesAsNeeded(session: session, canOptimize: canOptimize)
                     completion?(.success(status))
                 case .failure(let error):
                     self.evaluateStatus()
@@ -2344,7 +2347,7 @@ extension OmniPumpManager: PumpManager {
             return // No active pod
         case true?:
             log.default("Fetching status because pumpData is too old")
-            getPodStatus() { _ in
+            getPodStatus(canOptimize: true) { _ in
                 completion?(self.lastSync)
             }
         case false?:
@@ -3040,7 +3043,7 @@ extension OmniPumpManager: PodCommsDelegate {
         self.runSession(withName: "Post-connect status fetch") { result in
             switch result {
             case .success(let session):
-                let _ = self.handlePodUpdatesAsNeeded(session: session, minResponseInterval: postConnectMinTime)
+                let _ = self.handlePodUpdatesAsNeeded(session: session, canOptimize: true)
             case .failure:
                 // Errors can be ignored here.
                 break
