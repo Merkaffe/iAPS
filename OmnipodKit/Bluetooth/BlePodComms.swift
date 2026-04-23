@@ -242,7 +242,7 @@ class BlePodComms: PodComms {
         log.bleDebug("@@@ pairPod: podState transport state is %{public}@", self.podState!.bleMessageTransportState.inlineDescription)
     }
 
-    private func establishSession(ltk: Data, eapSeq: Int, msgSeq: Int = 1, isPairing: Bool = true) throws -> BleMessageTransportState? {
+    private func establishSession(ltk: Data, eapSeq: Int, msgSeq: Int = 1) throws -> BleMessageTransportState? {
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
 
@@ -300,9 +300,9 @@ class BlePodComms: PodComms {
             throw PodCommsError.noPodPaired
         }
 
-        let mts = try establishSession(ltk: ltk, eapSeq: podState!.incrementEapSeq(), isPairing: false)
+        let mts = try establishSession(ltk: ltk, eapSeq: podState!.incrementEapSeq())
         if mts == nil {
-            let mts = try establishSession(ltk: ltk, eapSeq: podState!.incrementEapSeq(), isPairing: false)
+            let mts = try establishSession(ltk: ltk, eapSeq: podState!.incrementEapSeq())
             if mts == nil {
                 throw PodCommsError.diagnosticMessage(str: "Received resynchronization SQN for the second time")
             }
