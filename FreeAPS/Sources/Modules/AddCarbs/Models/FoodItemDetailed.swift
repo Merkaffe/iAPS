@@ -248,7 +248,7 @@ struct FoodItemDetailed: Identifiable, Equatable {
         id: UUID? = nil,
         name: String,
         nutrition: FoodNutrition,
-        micronutrients: [MicronutrientValue],
+        micronutrients: [MicronutrientValue] = [],
         confidence: ConfidenceLevel? = nil,
         brand: String? = nil,
         standardServing: String? = nil,
@@ -401,6 +401,45 @@ extension FoodItemDetailed {
         )
     }
 
+    func micronutrientInThisPortion(_ nutrient: MicroNutrient) -> Decimal? {
+        guard let value = micronutrients.first(where: { $0.substance == nutrient }) else {
+            return nil
+        }
+
+        switch nutrition {
+        case let .per100(_, portion):
+            return value.amountPer100 / 100 * portion
+
+        case let .perServing(_, multiplier):
+            return value.amount * multiplier
+        }
+    }
+
+    func micronutrientInPortionOrServings(
+        _ nutrient: MicroNutrient,
+        portionOrMultiplier: Decimal
+    ) -> Decimal? {
+        guard let value = micronutrients.first(where: { $0.substance == nutrient }) else {
+            return nil
+        }
+
+        switch nutrition {
+        case .per100:
+            return value.amountPer100 / 100 * portionOrMultiplier
+
+        case .perServing:
+            return value.amount * portionOrMultiplier
+        }
+    }
+
+    var micronutrientTotals: [MicroNutrient: Decimal] {
+        Dictionary(
+            uniqueKeysWithValues: micronutrients.map {
+                ($0.substance, micronutrientInThisPortion($0.substance) ?? 0)
+            }
+        )
+    }
+
     /*
      func micronutrient(_ nutrient: MicroNutrient) -> Decimal? {
          micronutrients?[nutrient]
@@ -411,7 +450,7 @@ extension FoodItemDetailed {
              MicronutrientValue(
                  substance: $0.key,
                  amount: $0.value,
-                 amountPer100: $0.value // adjust if needed
+                 amountPer100: $0.value
              )
          }
          .sorted { $0.name < $1.name }
