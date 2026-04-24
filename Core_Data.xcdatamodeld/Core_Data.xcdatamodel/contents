@@ -30,6 +30,7 @@
         <attribute name="ketoProtectBasalAbsolut" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="ketoProtectBasalPercent" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="lowerISFrangeWeight" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="nightTime" optional="YES" attributeType="Transformable" valueTransformerName="NightTimeConfigurationTransformer" customClassName="NightTimeConfigurationBox"/>
         <attribute name="postMealISFweight" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="smbDeliveryRatioBGrange" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="smbDeliveryRatioMax" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
