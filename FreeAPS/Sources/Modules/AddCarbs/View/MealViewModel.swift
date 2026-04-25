@@ -2,11 +2,8 @@ import Foundation
 import SwiftUI
 
 final class MealViewModel: ObservableObject {
-    // MARK: - State
 
     @Published var items: [FoodItemDetailed] = []
-
-    // MARK: - Public Aggregation
 
     var mealNutritionValues: NutritionValues {
         nutritionValues(for: items)
@@ -83,8 +80,6 @@ final class MealViewModel: ObservableObject {
 
         return result
     }
-
-    // MARK: - Helpers
 
     var totalCalories: Decimal {
         mealNutritionValues.calories

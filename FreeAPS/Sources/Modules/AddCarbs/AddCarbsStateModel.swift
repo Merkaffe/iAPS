@@ -357,5 +357,15 @@ extension AddCarbs {
                 .filter { $0.amount > 0 || $0.amountPer100 > 0 }
                 .sorted { $0.name < $1.name }
         }
+
+        var aggregatedMicronutrients: [MicroNutrient: Decimal] {
+            var result: [MicroNutrient: Decimal] = [:]
+
+            for value in micronutrients {
+                result[value.substance, default: 0] += value.amount
+            }
+
+            return result
+        }
     }
 }

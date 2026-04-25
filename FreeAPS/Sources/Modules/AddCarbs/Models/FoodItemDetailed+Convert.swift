@@ -57,7 +57,7 @@ extension FoodItemDetailed {
             nutrition: nutritionPer100 ?
                 .per100(values: nutritionValues, portionSize: (preset.portionSize as Decimal?) ?? 100) :
                 .perServing(values: nutritionValues, servingsMultiplier: 1),
-            micronutrients: micronutrients,
+            micronutrients: preset.micronutrientValuesTyped(),
             standardServing: preset.standardServing,
             standardServingSize: preset.standardServingSize as Decimal?,
             units: mealUnits,

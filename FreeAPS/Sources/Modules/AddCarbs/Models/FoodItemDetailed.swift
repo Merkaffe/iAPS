@@ -211,8 +211,6 @@ struct FoodItemDetailed: Identifiable, Equatable {
 
     let micronutrients: [MicronutrientValue]
 
-    // let micronutrients: [MicroNutrient: Decimal]?
-
     let assessmentNotes: String?
 
     let imageURL: String?
