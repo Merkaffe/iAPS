@@ -17,7 +17,7 @@ struct FoodItemRow: View {
     private var isSaved: Bool {
         savedFoodIds.contains(foodItem.id)
     }
-    
+
     private var topMicronutrients: [MicronutrientValue] {
         foodItem.micronutrients
             .filter { ($0.amount > 0 || $0.amountPer100 > 0) }
@@ -25,7 +25,7 @@ struct FoodItemRow: View {
             .prefix(3)
             .map { $0 }
     }
-    
+
     private func formatted(_ value: Decimal) -> String {
         let number = NSDecimalNumber(decimal: value)
         let formatter = NumberFormatter()
@@ -135,6 +135,22 @@ struct FoodItemRow: View {
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 12)
+
+            if !topMicronutrients.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(topMicronutrients) { micronutrient in
+                        Text("\(micronutrient.name): \(formatted(micronutrient.amount)) \(micronutrient.unit)")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color(.systemGray5))
+                            .clipShape(Capsule())
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+            }
         }
         .padding(.top, isFirst ? 8 : 0)
         .padding(.bottom, isLast ? 8 : 0)

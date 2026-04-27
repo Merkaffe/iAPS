@@ -198,6 +198,24 @@ private struct FoodItemsSelectorItemRow: View {
 
     private let displayNutrients: [NutrientType] = [.carbs, .protein, .fat]
 
+    private var topMicronutrients: [MicronutrientValue] {
+        foodItem.micronutrients
+            .filter { $0.amount > 0 || $0.amountPer100 > 0 }
+            .sorted { $0.name < $1.name }
+            .prefix(3)
+            .map { $0 }
+    }
+
+    private func formatted(_ value: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 0
+
+        let number = NSDecimalNumber(decimal: value)
+        return formatter.string(from: number) ?? "\(number)"
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Main Row Content
@@ -295,6 +313,7 @@ private struct FoodItemsSelectorItemRow: View {
                                 Spacer().frame(maxWidth: .infinity)
                             }
                         }
+
                         if foodItem.caloriesInThisPortion > 0 {
                             NutritionBadgePlainStacked(
                                 value: foodItem.caloriesInThisPortion,
@@ -307,6 +326,23 @@ private struct FoodItemsSelectorItemRow: View {
                         }
                     }
                     .padding(.trailing, 40)
+
+                    if !topMicronutrients.isEmpty {
+                        HStack(spacing: 6) {
+                            ForEach(topMicronutrients) { micronutrient in
+                                Text("\(micronutrient.name): \(formatted(micronutrient.amount)) \(micronutrient.unit)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 3)
+                                    .background(Color(.systemGray5))
+                                    .clipShape(Capsule())
+                            }
+                        }
+                        .padding(.top, 4)
+                        .padding(.trailing, 40)
+                    }
                 }
             }
             .padding(.horizontal, 16)

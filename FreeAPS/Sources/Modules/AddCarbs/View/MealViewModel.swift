@@ -2,7 +2,6 @@ import Foundation
 import SwiftUI
 
 final class MealViewModel: ObservableObject {
-
     @Published var items: [FoodItemDetailed] = []
 
     var mealNutritionValues: NutritionValues {
