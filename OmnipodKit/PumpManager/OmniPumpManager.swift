@@ -952,7 +952,7 @@ extension OmniPumpManager {
             default:
                 podComms = PodComms(podState: nil, podType: newValue)
             }
-            self.podComms = podComms
+            self.lockedPodComms = Locked(podComms)
 
             self.localizedTitle = newValue.description // set the OmniSettingsView title
 
