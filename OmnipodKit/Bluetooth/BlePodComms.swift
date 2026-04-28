@@ -30,20 +30,27 @@ class BlePodComms: PodComms {
 
     private var needsSessionEstablishment: Bool = false
 
-    private let bluetoothManager = BluetoothManager()
+    private let bluetoothManager: BluetoothManager
 
-    override init(podState: PodState?, podType: PodType, myId: UInt32 = 0, podId: UInt32 = 0) {
+    init(podState: PodState?, podType: PodType, myId: UInt32 = 0, podId: UInt32 = 0, bluetoothManager: BluetoothManager) {
+        self.bluetoothManager = bluetoothManager
         super.init(podState: podState, podType: podType, myId: myId, podId: podId)
-        bluetoothManager.podType = podType
         bluetoothManager.connectionDelegate = self
-        if podState != nil && myId != 0 {
+        reconfigure(podType: podType, myId: myId, podId: podId)
+        if let podState = podState, let bleIdentifier = podState.bleIdentifier {
+            bluetoothManager.connectToDevice(uuidString: bleIdentifier)
+        }
+    }
+
+    func reconfigure(podType: PodType, myId: UInt32, podId: UInt32) {
+        prepForNewPod(myId: myId, podId: podId)
+        bluetoothManager.podType = podType
+        if myId != 0 {
             bluetoothManager.setUuidPdmId(myId)
         } else {
             bluetoothManager.setUuidPdmId(nil)
         }
-        if let podState = podState, let bleIdentifier = podState.bleIdentifier {
-            bluetoothManager.connectToDevice(uuidString: bleIdentifier)
-        }
+        manager = nil
     }
 
     override func forgetPod() {
