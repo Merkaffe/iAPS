@@ -330,18 +330,11 @@ private struct FoodItemsSelectorItemRow: View {
                     if !topMicronutrients.isEmpty {
                         HStack(spacing: 6) {
                             ForEach(topMicronutrients) { micronutrient in
-                                Text("\(micronutrient.name): \(formatted(micronutrient.amount)) \(micronutrient.unit)")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(1)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 3)
-                                    .background(Color(.systemGray5))
-                                    .clipShape(Capsule())
+                                MicronutrientBadge(micronutrient: micronutrient)
                             }
                         }
-                        .padding(.top, 4)
-                        .padding(.trailing, 40)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 12)
                     }
                 }
             }

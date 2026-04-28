@@ -139,13 +139,7 @@ struct FoodItemRow: View {
             if !topMicronutrients.isEmpty {
                 HStack(spacing: 6) {
                     ForEach(topMicronutrients) { micronutrient in
-                        Text("\(micronutrient.name): \(formatted(micronutrient.amount)) \(micronutrient.unit)")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color(.systemGray5))
-                            .clipShape(Capsule())
+                        MicronutrientBadge(micronutrient: micronutrient)
                     }
                 }
                 .padding(.horizontal, 16)
