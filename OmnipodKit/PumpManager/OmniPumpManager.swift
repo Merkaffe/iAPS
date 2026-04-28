@@ -823,6 +823,7 @@ extension OmniPumpManager {
                 imageName: "exclamationmark.circle.fill",
                 state: .critical)
         case .active:
+            let timeSinceLastResponse = date.timeIntervalSince(state.podState?.podTimeUpdated ?? .distantPast)
             if let reservoirPercent = state.reservoirLevel?.percentage, reservoirPercent == 0 {
                 return PumpStatusHighlight(
                     localizedMessage: LocalizedString("No Insulin", comment: "Status highlight that a pump is out of insulin."),
@@ -833,7 +834,7 @@ extension OmniPumpManager {
                     localizedMessage: LocalizedString("Insulin Suspended", comment: "Status highlight that insulin delivery was suspended."),
                     imageName: "pause.circle.fill",
                     state: .warning)
-            } else if date.timeIntervalSince(state.lastPumpDataReportDate ?? .distantPast) > .minutes(12) {
+            } else if timeSinceLastResponse > .minutes(12) {
                 return PumpStatusHighlight(
                     localizedMessage: LocalizedString("Signal Loss", comment: "Status highlight when communications with the pod haven't happened recently."),
                     imageName: "exclamationmark.circle.fill",
@@ -1440,9 +1441,50 @@ extension OmniPumpManager {
         }
     }
 
+    // Shared handler for getPodStatus() and post-connnect() that does a getStatus()
+    // (unless canOptimize is true and a StatusResponse had been recently received)
+    // and other associated actions that need to be regularly performed.
+    // Returns the getStatus() StatusResponse when the command isn't skipped.
+    fileprivate func handlePodUpdatesAsNeeded(session: PodCommsSession, canOptimize: Bool) -> StatusResponse? {
+
+        // First see if a timed silence pod mode has ended
+        handleSilencePodEnd(session: session)
+
+        // Next do the getStatus() call unless we can optimize and it
+        // has been less than a couple of minutes since the last response.
+        let timeSinceLastResponse = -(self.state.podState?.podTimeUpdated ?? .distantPast).timeIntervalSinceNow
+        let status: StatusResponse?
+        if canOptimize && timeSinceLastResponse < TimeInterval(minutes: 2) {
+            self.log.debug("### skipping getStatus() with last status %@ ago", timeSinceLastResponse.timeIntervalStr)
+            status = nil
+        } else {
+            status = try? session.getStatus(noSeqGetStatus: true)
+        }
+
+        // Silence any pending acknowledged alerts
+        silenceAcknowledgedAlerts()
+
+        // If we have new status, store the dosesForStorage which updates lastPumpDataReportDate
+        if status != nil {
+            session.dosesForStorage() { (doses) -> Bool in
+                return store(doses: doses, in: session)
+            }
+        }
+
+        // Finally, issue a heartbeat if needed
+        issueHeartbeatIfNeeded()
+
+        return status
+    }
+
     // MARK: - Pump Commands
 
-    func getPodStatus(completion: ((_ result: PumpManagerResult<StatusResponse>) -> Void)? = nil) {
+    // Performs a pod get status and performs other associated actions.
+    // If canOptimize, the getStatus can be skipped if a response has been recently returned.
+    // The returned StatusResponse will be nil if getStatus() was skipped as an optimization.
+    func getPodStatus(canOptimize: Bool = false,
+                      completion: ((_ result: PumpManagerResult<StatusResponse?>) -> Void)? = nil)
+    {
         guard state.hasActivePod else {
             completion?(.failure(PumpManagerError.configuration(OmniPumpManagerError.noPodPaired)))
             return
@@ -1452,18 +1494,12 @@ extension OmniPumpManager {
             do {
                 switch result {
                 case .success(let session):
-                    self.handleSilencePodEnd(session: session)
-
-                    let status = try session.getStatus(noSeqGetStatus: true)
-                    session.dosesForStorage({ (doses) -> Bool in
-                        self.store(doses: doses, in: session)
-                    })
+                    let status = self.handlePodUpdatesAsNeeded(session: session, canOptimize: canOptimize)
                     completion?(.success(status))
                 case .failure(let error):
                     self.evaluateStatus()
                     throw error
                 }
-                self.issueHeartbeatIfNeeded()
             } catch let error {
                 completion?(.failure(.communication(error as? LocalizedError)))
                 self.log.error("Failed to fetch pod status: %{public}@", String(describing: error))
@@ -2311,17 +2347,14 @@ extension OmniPumpManager: PumpManager {
             return // No active pod
         case true?:
             log.default("Fetching status because pumpData is too old")
-            getPodStatus() { (response) in
+            getPodStatus(canOptimize: true) { _ in
                 completion?(self.lastSync)
-                if self.state.podType.usesRileyLink {
-                    // non-Eros pods handles this in podCommsDidEstablishSession()
-                    self.silenceAcknowledgedAlerts()
-                }
             }
         case false?:
             log.default("Skipping status update because pumpData is fresh")
             completion?(self.lastSync)
             silenceAcknowledgedAlerts()
+            issueHeartbeatIfNeeded()
         }
     }
 
@@ -3010,14 +3043,7 @@ extension OmniPumpManager: PodCommsDelegate {
         self.runSession(withName: "Post-connect status fetch") { result in
             switch result {
             case .success(let session):
-                self.handleSilencePodEnd(session: session)
-
-                let _ = try? session.getStatus(noSeqGetStatus: true)
-                self.silenceAcknowledgedAlerts()
-                session.dosesForStorage() { (doses) -> Bool in
-                    return self.store(doses: doses, in: session)
-                }
-                self.issueHeartbeatIfNeeded()
+                let _ = self.handlePodUpdatesAsNeeded(session: session, canOptimize: true)
             case .failure:
                 // Errors can be ignored here.
                 break
