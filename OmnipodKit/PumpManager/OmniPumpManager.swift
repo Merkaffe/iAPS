@@ -96,7 +96,6 @@ public class OmniPumpManager: RileyLinkPumpManager {
     private lazy var cancellables = Set<AnyCancellable>()
 
     private var rileylinkConnected: Bool = false
-    private let bluetoothManager = BluetoothManager()
 
     init(state: OmniPumpManagerState, rileyLinkDeviceProvider: RileyLinkDeviceProvider, dateGenerator: @escaping () -> Date = Date.init) {
         self.lockedState = Locked(state)
@@ -107,13 +106,7 @@ public class OmniPumpManager: RileyLinkPumpManager {
             let erosPodComms = ErosPodComms.init(podState: state.podState, podType: podType)
             podComms = erosPodComms
         case dashType, omnipod5Type:
-            let blePodComms = BlePodComms.init(
-                podState: state.podState,
-                podType: podType,
-                myId: state.controllerId,
-                podId: state.podId,
-                bluetoothManager: self.bluetoothManager
-            )
+            let blePodComms = BlePodComms.init(podState: state.podState, podType: podType, myId: state.controllerId, podId: state.podId)
             podComms = blePodComms
         default:
             podComms = PodComms(podState: state.podState, podType: podType)
@@ -933,28 +926,13 @@ extension OmniPumpManager {
                 let erosPodComms = ErosPodComms.init(podState: nil, podType: newValue)
                 podComms = erosPodComms
             case dashType, omnipod5Type:
-                if let existingBlePodComms = lockedPodComms.value as? BlePodComms {
-                    existingBlePodComms.reconfigure(
-                        podType: newValue,
-                        myId: state.controllerId,
-                        podId: state.podId
-                    )
-                    podComms = existingBlePodComms
-                } else {
-                    let blePodComms = BlePodComms.init(
-                        podState: nil,
-                        podType: newValue,
-                        myId: state.controllerId,
-                        podId: state.podId,
-                        bluetoothManager: bluetoothManager
-                    )
-                    podComms = blePodComms
-                }
+                let blePodComms = BlePodComms.init(podState: nil, podType: newValue, myId: state.controllerId, podId: state.podId)
+                podComms = blePodComms
             default:
                 podComms = PodComms(podState: nil, podType: newValue)
             }
-            self.lockedPodComms = Locked(podComms)
 
+            self.lockedPodComms = Locked(podComms)
             self.localizedTitle = newValue.description // set the OmniSettingsView title
 
             setState { (state) in
@@ -1078,13 +1056,7 @@ extension OmniPumpManager {
             let erosPodComms = ErosPodComms.init(podState: podState, podType: state.podType)
             podComms = erosPodComms
         } else {
-            let blePodComms = BlePodComms.init(
-                podState: podState,
-                podType: state.podType,
-                myId: state.controllerId,
-                podId: state.podId,
-                bluetoothManager: self.bluetoothManager
-            )
+            let blePodComms = BlePodComms.init(podState: podState, podType: state.podType, myId: state.controllerId, podId: state.podId)
             podComms = blePodComms
         }
 
