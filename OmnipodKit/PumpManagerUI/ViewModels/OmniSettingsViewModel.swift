@@ -308,6 +308,8 @@ class OmniSettingsViewModel: ObservableObject {
 
     // Stop using the OmnipodKit pumpManager altogether
     func stopUsingPumpTypeTapped() {
+        // Prevent a later "Bluetooth use unsupported on this device" error
+        self.pumpManager.forgetBluetoothManager()
         pumpManager.notifyDelegateOfDeactivation {
             DispatchQueue.main.async {
                 self.didFinish?()

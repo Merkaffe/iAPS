@@ -30,11 +30,11 @@ class BlePodComms: PodComms {
 
     private var needsSessionEstablishment: Bool = false
 
-    private let bluetoothManager = BluetoothManager()
+    private var bluetoothManager: BluetoothManager!
 
     override init(podState: PodState?, podType: PodType, myId: UInt32 = 0, podId: UInt32 = 0) {
         super.init(podState: podState, podType: podType, myId: myId, podId: podId)
-        bluetoothManager.podType = podType
+        bluetoothManager = BluetoothManager(podType: podType)
         bluetoothManager.connectionDelegate = self
         if podState != nil && myId != 0 {
             bluetoothManager.setUuidPdmId(myId)
@@ -53,6 +53,14 @@ class BlePodComms: PodComms {
             bluetoothManager.disconnectFromDevice(uuidString: manager.peripheral.identifier.uuidString)
         }
         super.forgetPod()
+    }
+
+    // Removes references to the bluetoothManager to avoid future
+    // "Bluetooth use unsupported on this device" errors on the
+    // next BlePodComms instantiation and subsequent usage.
+    func forgetBluetoothManager() {
+        bluetoothManager.connectionDelegate = nil
+        bluetoothManager = nil
     }
 
     func connectToNewPod(_ completion: @escaping (Result<Omni, Error>) -> Void) {

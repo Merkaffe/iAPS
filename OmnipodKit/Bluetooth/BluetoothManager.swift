@@ -94,7 +94,7 @@ class BluetoothManager: NSObject {
 
     weak var connectionDelegate: OmniConnectionDelegate?
 
-    var podType: PodType = unknownOmnipodType
+    private let podType: PodType
 
     private let log = OSLog(category: "BluetoothManager")
 
@@ -140,7 +140,8 @@ class BluetoothManager: NSObject {
     // MARK: - Synchronization
     private let managerQueue = DispatchQueue(label: "com.OmnipodKit.bluetoothManagerQueue", qos: .unspecified)
 
-    override init() {
+    init(podType: PodType) {
+        self.podType = podType
         super.init()
 
         managerQueue.sync {

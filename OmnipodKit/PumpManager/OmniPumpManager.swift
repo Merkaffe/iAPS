@@ -920,6 +920,8 @@ extension OmniPumpManager {
                 return
             }
 
+            forgetBluetoothManager()
+
             let podComms: PodComms
             switch newValue {
             case erosType:
@@ -1032,6 +1034,14 @@ extension OmniPumpManager {
         } else {
             prepForNewPod()
             completion()
+        }
+    }
+
+    // If applicable forget the BluetoothManager for current podComms
+    // to avoid future "Bluetooth use unsupported on this device" errors.
+    func forgetBluetoothManager() {
+        if let blePodComms = self.lockedPodComms.value as? BlePodComms {
+            blePodComms.forgetBluetoothManager()
         }
     }
 
