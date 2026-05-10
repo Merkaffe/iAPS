@@ -33544,6 +33544,9 @@
         }
       }
     },
+    "No certificates loaded." : {
+      "comment" : "Empty state for the Pod Certificate Details view"
+    },
     "No confidence reminders are used." : {
       "comment" : "Description for BeepPreference.silent",
       "extractionState" : "manual",
@@ -35163,9 +35166,6 @@
           }
         }
       }
-    },
-    "No saved certificates" : {
-      "comment" : "Empty state for the Pod Certificates view"
     },
     "No, Continue With Pod" : {
       "comment" : "Continue pairing button title of in pairing cancel modal",
@@ -43266,8 +43266,8 @@
         }
       }
     },
-    "Pod Certificates" : {
-      "comment" : "Text for pod certificates navigation link\nnavigation title for pod certificates"
+    "Pod Certificate Details" : {
+      "comment" : "Text for pod certificate details navigation link\nnavigation title for pod certificate details"
     },
     "Pod deactivated successfully. Continue." : {
       "comment" : "Deactivate pod action button accessibility label when deactivation complete",
