@@ -37760,6 +37760,9 @@
         }
       }
     },
+    "Omnipod 5 Setup" : {
+      "comment" : "Title for the Omnipod 5 key setup screen"
+    },
     "Omnipod Classic" : {
       "comment" : "Title string for Omnipod Classic",
       "extractionState" : "manual",
