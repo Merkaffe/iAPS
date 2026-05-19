@@ -203,7 +203,10 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
         case .o5KeySetup:
             let view = O5KeySetupView(
                 o5KeypairsNotAvailable: O5CertificateStore.isEmpty,
-                didContinue: { [weak self] in self?.stepFinished() },
+                didContinue: { [weak self] in
+                    self?.pumpManager.refreshO5IdsFromCertStore()
+                    self?.stepFinished()
+                },
                 didCancel: { [weak self] in self?.setupCanceled() }
             )
             let hostedView = hostingController(rootView: view)
