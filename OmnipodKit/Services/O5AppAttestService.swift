@@ -8,8 +8,10 @@
 import Foundation
 import CryptoKit
 import DeviceCheck
+import Network
 
 let o5KeyManagerBaseURL = "https://api.osaid-keymanager.org"
+private let omnipodkitApiVersion = "1.0.0"
 
 struct O5AuthError: Error {
     let message: String
@@ -26,6 +28,8 @@ struct O5AuthError: Error {
 /// Ordered phases of the keypair fetch flow. UI consumers can use `index` /
 /// `totalSteps` to drive a determinate progress bar.
 enum O5KeyFetchProgress: Int, CaseIterable {
+    case checkingInternetConnection
+    case checkingKeymanagerServiceStatus
     case checkingDeviceSupport
     case resolvingAppIdentity
     case generatingAttestKey
@@ -38,6 +42,10 @@ enum O5KeyFetchProgress: Int, CaseIterable {
 
     var localizedDescription: String {
         switch self {
+        case .checkingInternetConnection:
+            return LocalizedString("Checking Internet connection…", comment: "O5 fetch progress: internet pre-check")
+        case .checkingKeymanagerServiceStatus:
+            return LocalizedString("Checking server status…", comment: "O5 fetch progress: server status")
         case .checkingDeviceSupport:
             return LocalizedString("Checking device support…", comment: "O5 fetch progress: device support")
         case .resolvingAppIdentity:
@@ -89,6 +97,12 @@ class O5AppAttestService {
     // MARK: - Async flow
 
     private func performFetchFlow(progress: (O5KeyFetchProgress) -> Void) async throws -> O5RegistrationData {
+        progress(.checkingInternetConnection)
+        try await checkInternetConnection()
+
+        progress(.checkingKeymanagerServiceStatus)
+        try await checkServerStatus()
+
         progress(.checkingDeviceSupport)
         let attestService = DCAppAttestService.shared
         guard attestService.isSupported else {
@@ -117,6 +131,78 @@ class O5AppAttestService {
             challenge: challenge,
             appId: appId
         )
+    }
+
+    // MARK: - Pre-flight checks
+
+    /// One-shot link-layer reachability check. Throws an offline-flavored
+    /// `O5AuthError` when the device has no usable path within `timeout`.
+    /// Cheap optimistic check — cannot detect captive portals or DNS
+    /// failures; those still surface as URLErrors from later HTTP requests.
+    private func checkInternetConnection(timeout: TimeInterval = 2.0) async throws {
+        let monitor = NWPathMonitor()
+        defer { monitor.cancel() }
+
+        let satisfied: Bool = await withCheckedContinuation { continuation in
+            let queue = DispatchQueue(label: "org.nightscout.o5-reachability")
+            var resumed = false
+            let resume: (Bool) -> Void = { value in
+                queue.async {
+                    guard !resumed else { return }
+                    resumed = true
+                    continuation.resume(returning: value)
+                }
+            }
+            monitor.pathUpdateHandler = { path in
+                resume(path.status == .satisfied)
+            }
+            monitor.start(queue: queue)
+            queue.asyncAfter(deadline: .now() + timeout) {
+                resume(false)
+            }
+        }
+
+        if !satisfied {
+            throw O5AuthError(message: LocalizedString(
+                "Could not connect to the internet to fetch an Omnipod 5 Pod Certificate. Please connect to Wi-Fi or Cellular Data and try again.",
+                comment: "O5 fetch failure: offline at pre-flight"))
+        }
+    }
+
+    /// Calls the OSAID Keymanager service-status endpoint. If the server
+    /// reports `available: false`, the user-facing `message` is surfaced
+    /// verbatim and the flow aborts. Non-2xx HTTP and transport failures
+    /// flow through the existing `performRequest` → `authError` path.
+    /// Unparseable 2xx responses are treated as failures (fail-closed),
+    /// not as implicit availability.
+    private func checkServerStatus() async throws {
+        var request = URLRequest(url: URL(string: "\(o5KeyManagerBaseURL)/api/status/ios")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "omnipodkit_api_version": omnipodkitApiVersion,
+        ])
+
+        let (data, response) = try await performRequest(request)
+
+        let unavailable = LocalizedString(
+            "The required server is temporarily unavailable. Please try again later.",
+            comment: "O5 fetch: keymanager unavailable or malformed status response")
+
+        guard let json = parseJSON(data) else {
+            throw O5AuthError(message: unavailable, httpStatusCode: response.statusCode)
+        }
+        guard let available = json["available"] as? Bool else {
+            throw O5AuthError(message: unavailable, httpStatusCode: response.statusCode)
+        }
+
+        if available { return }
+
+        let trimmed = (json["message"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayed = (trimmed?.isEmpty == false) ? trimmed! : unavailable
+        throw O5AuthError(message: displayed, httpStatusCode: response.statusCode)
     }
 
     // MARK: - App Attest

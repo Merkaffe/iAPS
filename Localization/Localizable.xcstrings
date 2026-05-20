@@ -12322,6 +12322,18 @@
     "Checking device support…" : {
       "comment" : "O5 fetch progress: device support"
     },
+    "Checking Internet connection…" : {
+      "comment" : "O5 fetch progress: internet pre-check"
+    },
+    "Checking server status…" : {
+      "comment" : "O5 fetch progress: server status"
+    },
+    "Could not connect to the internet to fetch an Omnipod 5 Pod Certificate. Please connect to Wi-Fi or Cellular Data and try again." : {
+      "comment" : "O5 fetch failure: offline at pre-flight"
+    },
+    "The required server is temporarily unavailable. Please try again later." : {
+      "comment" : "O5 fetch: keymanager unavailable or malformed status response"
+    },
     "Checking Insertion" : {
       "comment" : "Insert cannula action button accessibility label checking insertion",
       "extractionState" : "manual",
