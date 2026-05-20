@@ -33586,7 +33586,7 @@
       }
     },
     "No certificates loaded." : {
-      "comment" : "Empty state for the Pod Certificate Details view"
+      "comment" : "Empty state for the Pod Certificate view"
     },
     "No confidence reminders are used." : {
       "comment" : "Description for BeepPreference.silent",
@@ -43310,8 +43310,8 @@
         }
       }
     },
-    "Pod Certificate Details" : {
-      "comment" : "Text for pod certificate details navigation link\nnavigation title for pod certificate details"
+    "Pod Certificate" : {
+      "comment" : "Text for pod certificate navigation link in OmniSettingsView\nnavigation title for pod certificate view"
     },
     "Pod deactivated successfully. Continue." : {
       "comment" : "Deactivate pod action button accessibility label when deactivation complete",
@@ -70394,6 +70394,9 @@
     },
     "You will be unable to pair to an Omnipod 5 pod until you reconnect to the internet to download a new certificate." : {
       "comment" : "Confirmation message when forgetting a saved O5 certificate"
+    },
+    "Your current Omnipod 5 pod session will not be affected, but you will be unable to pair to a new Omnipod 5 pod until you reconnect to the internet to download a new certificate." : {
+      "comment" : "Confirmation message when forgetting a saved O5 certificate while a pod session is active"
     },
     "You will now begin the process of configuring your reminders, selecting your insulin type, selecting the Omnipod pod type you will be using, filling your Pod with insulin, pairing to your device and placing it on your body." : {
       "comment" : "bodyText for PodSetupView",

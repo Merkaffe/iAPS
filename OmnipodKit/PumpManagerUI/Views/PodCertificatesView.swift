@@ -2,9 +2,9 @@
 //  PodCertificatesView.swift
 //  OmnipodKit
 //
-//  Lists the loaded O5 certificates one row per controller; tapping a row
-//  navigates to a per-certificate detail view that holds the destructive
-//  "Forget Saved Certificate" action. A "+" toolbar button imports a
+//  Shows the loaded O5 certificate(s). For the common single-cert case the
+//  detail content is rendered inline; with multiple certs we fall back to a
+//  list-of-rows with per-cert navigation. A "+" toolbar button imports a
 //  .o5keypair file directly into the registry and Keychain.
 //
 //  Built-in certificates (compiled into the binary) are listed read-only —
@@ -26,24 +26,34 @@ struct PodCertificatesView: View {
         var id: UInt32 { data.controllerId }
     }
 
+    let hasActivePod: Bool
+
     @State private var rows: [Row] = []
     @State private var showingFileImporter = false
     @State private var importError: String?
 
-    private let title = LocalizedString("Pod Certificate Details", comment: "navigation title for pod certificate details")
+    private let title = LocalizedString("Pod Certificate", comment: "navigation title for pod certificate view")
 
     var body: some View {
         List {
             if rows.isEmpty {
                 Section {
-                    Text(LocalizedString("No certificates loaded.", comment: "Empty state for the Pod Certificate Details view"))
+                    Text(LocalizedString("No certificates loaded.", comment: "Empty state for the Pod Certificate view"))
                         .foregroundColor(.secondary)
                 }
+            } else if rows.count == 1 {
+                certificateContent(
+                    data: rows[0].data,
+                    source: rows[0].source,
+                    hasActivePod: hasActivePod,
+                    onForgotten: { reload() }
+                )
             } else {
                 ForEach(rows) { row in
                     NavigationLink(destination: PodCertificateDetailView(
                         data: row.data,
                         source: row.source,
+                        hasActivePod: hasActivePod,
                         onForgotten: { reload() }
                     )) {
                         VStack(alignment: .leading, spacing: 4) {
@@ -87,8 +97,8 @@ struct PodCertificatesView: View {
 
     private func reload() {
         // Make sure both built-in (dlsym) and Keychain-persisted certs are populated
-        // before we read the registry — opening this view in the diagnostics screen
-        // shouldn't depend on the pairing flow having run first.
+        // before we read the registry — opening this view shouldn't depend on the
+        // pairing flow having run first.
         _ = O5CertificateStore.isEmpty
 
         rows = O5RegistrationData.allValues
@@ -133,37 +143,81 @@ struct PodCertificateDetailView: View {
 
     let data: O5RegistrationData
     let source: O5RegistrationSource
+    let hasActivePod: Bool
     let onForgotten: () -> Void
 
     @Environment(\.presentationMode) private var presentationMode
-    @State private var pendingForget = false
-
-    private let confirmMessage = LocalizedString(
-        "You will be unable to pair to an Omnipod 5 pod until you reconnect to the internet to download a new certificate.",
-        comment: "Confirmation message when forgetting a saved O5 certificate"
-    )
 
     var body: some View {
         List {
-            Section {
-                Text(dump())
-                    .font(Font.system(size: 12).monospaced())
-                    .textSelection(.enabled)
-            }
-
-            if source != .builtIn {
-                Section {
-                    Button(role: .destructive) {
-                        pendingForget = true
-                    } label: {
-                        Text(LocalizedString("Forget Saved Certificate", comment: "Destructive button to remove a saved O5 certificate"))
-                    }
+            certificateContent(
+                data: data,
+                source: source,
+                hasActivePod: hasActivePod,
+                onForgotten: {
+                    onForgotten()
+                    presentationMode.wrappedValue.dismiss()
                 }
-            }
+            )
         }
         .insetGroupedListStyle()
         .navigationTitle(String(format: "Controller 0x%08X", data.controllerId))
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+@ViewBuilder
+fileprivate func certificateContent(
+    data: O5RegistrationData,
+    source: O5RegistrationSource,
+    hasActivePod: Bool,
+    onForgotten: @escaping () -> Void
+) -> some View {
+    Section {
+        Text(dump(data: data, source: source))
+            .font(Font.system(size: 12).monospaced())
+            .textSelection(.enabled)
+    }
+
+    if source != .builtIn {
+        Section {
+            ForgetCertificateButton(
+                controllerId: data.controllerId,
+                hasActivePod: hasActivePod,
+                onForgotten: onForgotten
+            )
+        }
+    }
+}
+
+private struct ForgetCertificateButton: View {
+
+    let controllerId: UInt32
+    let hasActivePod: Bool
+    let onForgotten: () -> Void
+
+    @State private var pendingForget = false
+
+    private var confirmMessage: String {
+        if hasActivePod {
+            return LocalizedString(
+                "Your current Omnipod 5 pod session will not be affected, but you will be unable to pair to a new Omnipod 5 pod until you reconnect to the internet to download a new certificate.",
+                comment: "Confirmation message when forgetting a saved O5 certificate while a pod session is active"
+            )
+        } else {
+            return LocalizedString(
+                "You will be unable to pair to an Omnipod 5 pod until you reconnect to the internet to download a new certificate.",
+                comment: "Confirmation message when forgetting a saved O5 certificate"
+            )
+        }
+    }
+
+    var body: some View {
+        Button(role: .destructive) {
+            pendingForget = true
+        } label: {
+            Text(LocalizedString("Forget Saved Certificate", comment: "Destructive button to remove a saved O5 certificate"))
+        }
         .confirmationDialog(
             confirmMessage,
             isPresented: $pendingForget,
@@ -177,29 +231,25 @@ struct PodCertificateDetailView: View {
     }
 
     private func forget() {
-        try? O5CertificateKeychain.delete(controllerId: data.controllerId)
-        O5RegistrationData.remove(controllerId: data.controllerId)
+        try? O5CertificateKeychain.delete(controllerId: controllerId)
+        O5RegistrationData.remove(controllerId: controllerId)
         onForgotten()
-        presentationMode.wrappedValue.dismiss()
     }
+}
 
-    private func dump() -> String {
-        var lines: [String] = []
-        lines.append("## O5RegistrationData")
-        lines.append("* source: \(label(for: source))")
-        lines.append(String(format: "* controllerId: %u (0x%08X)", data.controllerId, data.controllerId))
-        //lines.append("* privateKey: \(data.privateKeyHex)")
-        lines.append("* publicKey: \(data.publicKeyHex)")
-        //lines.append("* intermediateCA: \(data.intermediateCABase64)")
-        //lines.append("* tlsCertificate: \(data.tlsCertificateBase64)")
-        return lines.joined(separator: "\n")
-    }
+fileprivate func dump(data: O5RegistrationData, source: O5RegistrationSource) -> String {
+    var lines: [String] = []
+    lines.append("## O5RegistrationData")
+    lines.append("* source: \(sourceLabel(source))")
+    lines.append(String(format: "* controllerId: %u (0x%08X)", data.controllerId, data.controllerId))
+    lines.append("* publicKey: \(data.publicKeyHex)")
+    return lines.joined(separator: "\n")
+}
 
-    private func label(for source: O5RegistrationSource) -> String {
-        switch source {
-        case .builtIn:  return "Built-in (compiled into app)"
-        case .imported: return "Imported (.o5keypair file)"
-        case .fetched:  return "Fetched (downloaded from API)"
-        }
+fileprivate func sourceLabel(_ source: O5RegistrationSource) -> String {
+    switch source {
+    case .builtIn:  return "Built-in (compiled into app)"
+    case .imported: return "Imported (.o5keypair file)"
+    case .fetched:  return "Fetched (downloaded from API)"
     }
 }

@@ -97,10 +97,6 @@ struct PodDiagnosticsView: View  {
                     .foregroundColor(Color.primary)
             }
 
-            NavigationLink(destination: PodCertificatesView()) {
-                FrameworkLocalText("Pod Certificate Details", comment: "Text for pod certificate details navigation link")
-                    .foregroundColor(Color.primary)
-            }
         }
         .insetGroupedListStyle()
         .navigationTitle(title)
