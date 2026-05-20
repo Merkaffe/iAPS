@@ -12322,27 +12322,6 @@
     "Checking device support…" : {
       "comment" : "O5 fetch progress: device support"
     },
-    "Checking Internet connection…" : {
-      "comment" : "O5 fetch progress: internet pre-check"
-    },
-    "Checking server status…" : {
-      "comment" : "O5 fetch progress: server status"
-    },
-    "Could not connect to the Internet to fetch an Omnipod 5 Pod Certificate." : {
-      "comment" : "O5 fetch failure: offline at pre-flight, primary line"
-    },
-    "Please connect to Wi-Fi or Cellular Data and try again." : {
-      "comment" : "O5 fetch failure: offline at pre-flight, recovery suggestion"
-    },
-    "Please try again later." : {
-      "comment" : "O5 fetch: malformed status response, recovery suggestion"
-    },
-    "The key-management server is temporarily unavailable." : {
-      "comment" : "O5 fetch: keymanager-reported unavailable, no message"
-    },
-    "The key-management server is temporarily unavailable: received unexpected response." : {
-      "comment" : "O5 fetch: malformed status response, primary line"
-    },
     "Checking Insertion" : {
       "comment" : "Insert cannula action button accessibility label checking insertion",
       "extractionState" : "manual",
@@ -12504,6 +12483,12 @@
           }
         }
       }
+    },
+    "Checking Internet connection…" : {
+      "comment" : "O5 fetch progress: internet pre-check"
+    },
+    "Checking server status…" : {
+      "comment" : "O5 fetch progress: server status"
     },
     "Checking..." : {
       "comment" : "Cannula insertion button text while checking insertion",
@@ -14934,6 +14919,9 @@
           }
         }
       }
+    },
+    "Could not connect to the Internet to fetch an Omnipod 5 Pod Certificate." : {
+      "comment" : "O5 fetch failure: offline at pre-flight, primary line"
     },
     "Critical Alerts" : {
       "comment" : "Title for critical alerts description",
@@ -37800,7 +37788,7 @@
       }
     },
     "Omnipod 5 Setup" : {
-      "comment" : "Title for the Omnipod 5 key setup screen"
+      "comment" : "Title for O5 key fetch view\nTitle for the Omnipod 5 key setup screen"
     },
     "Omnipod Classic" : {
       "comment" : "Title string for Omnipod Classic",
@@ -41202,6 +41190,9 @@
         }
       }
     },
+    "Please connect to Wi-Fi or Cellular Data and try again." : {
+      "comment" : "O5 fetch failure: offline at pre-flight, recovery suggestion"
+    },
     "Please deactivate the pod. When deactivation is complete, you may pair a new pod." : {
       "comment" : "Instructions for deactivate pod when pod not on body",
       "extractionState" : "manual",
@@ -42497,6 +42488,9 @@
           }
         }
       }
+    },
+    "Please try again later." : {
+      "comment" : "O5 fetch: malformed status response, recovery suggestion"
     },
     "Please try repositioning the pod or the RileyLink and try again" : {
       "comment" : "Recovery suggestion when no response is received from pod",
@@ -51414,14 +51408,6 @@
     "Ready to pair with an Omnipod 5 Pod." : {
       "comment" : "Description when O5 keypairs are available"
     },
-    "Retrieve an Omnipod 5 Pod Certificate to continue." : {
-      "comment" : "Recovery suggestion with missing certificate",
-      "extractionState" : "manual"
-    },
-    "Retrieve Pod Certificate" : {
-      "comment" : "Button text to navigate to O5 certificate download from a pair pod failure",
-      "extractionState" : "manual"
-    },
     "Ref: " : {
       "comment" : "PDM Ref string line",
       "extractionState" : "manual",
@@ -53371,6 +53357,14 @@
           }
         }
       }
+    },
+    "Retrieve an Omnipod 5 Pod Certificate to continue." : {
+      "comment" : "Recovery suggestion with missing certificate",
+      "extractionState" : "manual"
+    },
+    "Retrieve Pod Certificate" : {
+      "comment" : "Button text to navigate to O5 certificate download from a pair pod failure",
+      "extractionState" : "manual"
     },
     "Retrieving Pump Manager Details..." : {
       "comment" : "button title when retrieving pump manager details",
@@ -61970,6 +61964,12 @@
         }
       }
     },
+    "The key-management server is temporarily unavailable: received unexpected response." : {
+      "comment" : "O5 fetch: malformed status response, primary line"
+    },
+    "The key-management server is temporarily unavailable." : {
+      "comment" : "O5 fetch: keymanager-reported unavailable, no message"
+    },
     "The reminders above will not sound on your device when it is in Silent or Do Not Disturb mode. There are other critical Pod alerts that will sound on your device even when set to Silent or Do Not Disturb mode.\n\nThe Pod will also use audible beeps for all Pod reminders and alerts except when the Pod is Silenced." : {
       "comment" : "Description text for critical alerts",
       "extractionState" : "manual",
@@ -70239,9 +70239,6 @@
     "You will be unable to pair with an Omnipod 5 Pod until you reconnect to the Internet to download a new certificate." : {
       "comment" : "Confirmation message when forgetting a saved O5 certificate"
     },
-    "Your current Omnipod 5 Pod session will not be affected, but you will be unable to pair with a new Omnipod 5 Pod until you reconnect to the Internet to download a new certificate." : {
-      "comment" : "Confirmation message when forgetting a saved O5 certificate while a pod session is active"
-    },
     "You will now begin the process of configuring your reminders, selecting your insulin type, selecting the Omnipod pod type you will be using, filling your Pod with insulin, pairing to your device and placing it on your body." : {
       "comment" : "bodyText for PodSetupView",
       "extractionState" : "manual",
@@ -70403,6 +70400,9 @@
           }
         }
       }
+    },
+    "Your current Omnipod 5 Pod session will not be affected, but you will be unable to pair with a new Omnipod 5 Pod until you reconnect to the Internet to download a new certificate." : {
+      "comment" : "Confirmation message when forgetting a saved O5 certificate while a pod session is active"
     },
     "Your insulin delivery will not be automatically adjusted until the temporary basal rate finishes or is canceled." : {
       "comment" : "Description text on manual temp basal action sheet",
@@ -71053,5 +71053,5 @@
       }
     }
   },
-  "version" : "1.0"
+  "version" : "1.1"
 }
