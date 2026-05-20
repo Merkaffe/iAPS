@@ -70239,7 +70239,7 @@
     "You will be unable to pair with an Omnipod 5 Pod until you reconnect to the Internet to download a new certificate." : {
       "comment" : "Confirmation message when forgetting a saved O5 certificate"
     },
-    "Your current Omnipod 5 pod session will not be affected, but you will be unable to pair with a new Omnipod 5 Pod until you reconnect to the Internet to download a new certificate." : {
+    "Your current Omnipod 5 Pod session will not be affected, but you will be unable to pair with a new Omnipod 5 Pod until you reconnect to the Internet to download a new certificate." : {
       "comment" : "Confirmation message when forgetting a saved O5 certificate while a pod session is active"
     },
     "You will now begin the process of configuring your reminders, selecting your insulin type, selecting the Omnipod pod type you will be using, filling your Pod with insulin, pairing to your device and placing it on your body." : {

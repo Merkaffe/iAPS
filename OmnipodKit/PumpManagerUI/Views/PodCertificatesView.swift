@@ -208,7 +208,7 @@ private struct ForgetCertificateButton: View {
     private var confirmMessage: String {
         if hasActivePod {
             return LocalizedString(
-                "Your current Omnipod 5 pod session will not be affected, but you will be unable to pair with a new Omnipod 5 Pod until you reconnect to the Internet to download a new certificate.",
+                "Your current Omnipod 5 Pod session will not be affected, but you will be unable to pair with a new Omnipod 5 Pod until you reconnect to the Internet to download a new certificate.",
                 comment: "Confirmation message when forgetting a saved O5 certificate while a pod session is active"
             )
         } else {
