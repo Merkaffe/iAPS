@@ -167,7 +167,7 @@ class O5AppAttestService {
         if !satisfied {
             throw O5AuthError(
                 message: LocalizedString(
-                    "Could not connect to the internet to fetch an Omnipod 5 Pod Certificate.",
+                    "Could not connect to the Internet to fetch an Omnipod 5 Pod Certificate.",
                     comment: "O5 fetch failure: offline at pre-flight, primary line"),
                 recoverySuggestion: LocalizedString(
                     "Please connect to Wi-Fi or Cellular Data and try again.",
