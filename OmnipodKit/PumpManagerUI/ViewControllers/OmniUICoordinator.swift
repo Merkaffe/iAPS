@@ -287,6 +287,9 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             viewModel.didRequestDeactivation = { [weak self] in
                 self?.navigateTo(.deactivate)
             }
+            viewModel.didRequestO5KeySetup = { [weak self] in
+                self?.navigateTo(.o5KeySetup)
+            }
 
             let view = hostingController(rootView: PairPodView(viewModel: viewModel).onAppear(perform: {UIApplication.shared.isIdleTimerDisabled = true}), onDisappear: {UIApplication.shared.isIdleTimerDisabled = false})
             view.navigationItem.title = String(format: LocalizedString("Pair %1$@ Pod", comment: "Title for pod pairing screen (1: pod type brief name)"), self.podType.briefName)
