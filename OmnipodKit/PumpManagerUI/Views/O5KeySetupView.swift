@@ -36,7 +36,7 @@ struct O5KeySetupView: View {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
                                 .font(.title2)
-                            Text(LocalizedString("Ready to connect to an Omnipod 5 pod.", comment: "Description when O5 keypairs are available"))
+                            Text(LocalizedString("Ready to pair with an Omnipod 5 Pod.", comment: "Description when O5 keypairs are available"))
                         }
                         .padding(.vertical, 4)
                     }

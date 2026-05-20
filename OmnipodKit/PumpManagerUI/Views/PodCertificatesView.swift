@@ -38,7 +38,7 @@ struct PodCertificatesView: View {
         List {
             if rows.isEmpty {
                 Section {
-                    Text(LocalizedString("No certificates loaded.", comment: "Empty state for the Pod Certificate view"))
+                    Text(LocalizedString("No certificates loaded", comment: "Empty state for the Pod Certificate view"))
                         .foregroundColor(.secondary)
                 }
             } else if rows.count == 1 {
@@ -208,12 +208,12 @@ private struct ForgetCertificateButton: View {
     private var confirmMessage: String {
         if hasActivePod {
             return LocalizedString(
-                "Your current Omnipod 5 pod session will not be affected, but you will be unable to pair to a new Omnipod 5 pod until you reconnect to the internet to download a new certificate.",
+                "Your current Omnipod 5 pod session will not be affected, but you will be unable to pair with a new Omnipod 5 Pod until you reconnect to the Internet to download a new certificate.",
                 comment: "Confirmation message when forgetting a saved O5 certificate while a pod session is active"
             )
         } else {
             return LocalizedString(
-                "You will be unable to pair to an Omnipod 5 pod until you reconnect to the internet to download a new certificate.",
+                "You will be unable to pair with an Omnipod 5 Pod until you reconnect to the Internet to download a new certificate.",
                 comment: "Confirmation message when forgetting a saved O5 certificate"
             )
         }
