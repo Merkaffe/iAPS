@@ -15,11 +15,13 @@ private let omnipodkitApiVersion = "1.0.0"
 
 struct O5AuthError: Error {
     let message: String
+    let recoverySuggestion: String?
     let httpStatusCode: Int?
     let underlyingError: Error?
 
-    init(message: String, httpStatusCode: Int? = nil, underlyingError: Error? = nil) {
+    init(message: String, recoverySuggestion: String? = nil, httpStatusCode: Int? = nil, underlyingError: Error? = nil) {
         self.message = message
+        self.recoverySuggestion = recoverySuggestion
         self.httpStatusCode = httpStatusCode
         self.underlyingError = underlyingError
     }
@@ -163,9 +165,13 @@ class O5AppAttestService {
         }
 
         if !satisfied {
-            throw O5AuthError(message: LocalizedString(
-                "Could not connect to the internet to fetch an Omnipod 5 Pod Certificate. Please connect to Wi-Fi or Cellular Data and try again.",
-                comment: "O5 fetch failure: offline at pre-flight"))
+            throw O5AuthError(
+                message: LocalizedString(
+                    "Could not connect to the internet to fetch an Omnipod 5 Pod Certificate.",
+                    comment: "O5 fetch failure: offline at pre-flight, primary line"),
+                recoverySuggestion: LocalizedString(
+                    "Please connect to Wi-Fi or Cellular Data and try again.",
+                    comment: "O5 fetch failure: offline at pre-flight, recovery suggestion"))
         }
     }
 
@@ -186,21 +192,33 @@ class O5AppAttestService {
 
         let (data, response) = try await performRequest(request)
 
-        let unavailable = LocalizedString(
-            "The required server is temporarily unavailable. Please try again later.",
-            comment: "O5 fetch: keymanager unavailable or malformed status response")
+        let malformedMessage = LocalizedString(
+            "The key-management server is temporarily unavailable: received unexpected response.",
+            comment: "O5 fetch: malformed status response, primary line")
+        let malformedRecovery = LocalizedString(
+            "Please try again later.",
+            comment: "O5 fetch: malformed status response, recovery suggestion")
 
         guard let json = parseJSON(data) else {
-            throw O5AuthError(message: unavailable, httpStatusCode: response.statusCode)
+            throw O5AuthError(
+                message: malformedMessage,
+                recoverySuggestion: malformedRecovery,
+                httpStatusCode: response.statusCode)
         }
         guard let available = json["available"] as? Bool else {
-            throw O5AuthError(message: unavailable, httpStatusCode: response.statusCode)
+            throw O5AuthError(
+                message: malformedMessage,
+                recoverySuggestion: malformedRecovery,
+                httpStatusCode: response.statusCode)
         }
 
         if available { return }
 
         let trimmed = (json["message"] as? String)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
+        let unavailable = LocalizedString(
+            "The key-management server is temporarily unavailable.",
+            comment: "O5 fetch: keymanager-reported unavailable, no message")
         let displayed = (trimmed?.isEmpty == false) ? trimmed! : unavailable
         throw O5AuthError(message: displayed, httpStatusCode: response.statusCode)
     }

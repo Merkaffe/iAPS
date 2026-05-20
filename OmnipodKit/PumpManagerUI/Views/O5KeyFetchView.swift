@@ -12,6 +12,7 @@ import LoopKitUI
 struct O5KeyFetchView: View {
 
     @State private var errorMessage: String?
+    @State private var errorDetail: String?
     @State private var currentStep: O5KeyFetchProgress?
 
     let onKeypairReceived: (O5RegistrationData) -> Void
@@ -26,22 +27,20 @@ struct O5KeyFetchView: View {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
                         .foregroundColor(.red)
-                    if let step = currentStep {
-                        Text(String(format: LocalizedString("Failed at step %d of %d: %@",
-                                                            comment: "Format for fetch failure with step number"),
-                                    step.index,
-                                    O5KeyFetchProgress.totalSteps,
-                                    step.localizedDescription))
-                            .foregroundColor(.secondary)
-                            .font(.footnote)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
                     Text("\(errorMessage)")
                         .foregroundColor(.red)
                         .font(.subheadline)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
+
+                    if let errorDetail = errorDetail {
+                        Text(errorDetail)
+                            .foregroundColor(.red)
+                            .font(.subheadline)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                    }
 
                     Button(action: { performFetch() }) {
                         Text(LocalizedString("Retry", comment: "O5 key fetch retry button"))
@@ -86,6 +85,7 @@ struct O5KeyFetchView: View {
 
     private func performFetch() {
         errorMessage = nil
+        errorDetail = nil
         currentStep = nil
 
         O5AppAttestService().fetchKeypair(
@@ -98,6 +98,7 @@ struct O5KeyFetchView: View {
                     self.onKeypairReceived(registrationData)
                 case .failure(let error):
                     self.errorMessage = error.message
+                    self.errorDetail = error.recoverySuggestion
                 }
             }
         )

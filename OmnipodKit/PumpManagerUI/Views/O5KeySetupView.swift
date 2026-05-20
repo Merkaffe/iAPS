@@ -76,7 +76,7 @@ struct O5KeySetupView: View {
                         showingFetchSheet = false
                     }
                 )
-                .navigationTitle(LocalizedString("Omnipod 5 Keys", comment: "Title for O5 key fetch view"))
+                .navigationTitle(LocalizedString("Omnipod 5 Setup", comment: "Title for O5 key fetch view"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
