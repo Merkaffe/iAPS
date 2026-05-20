@@ -29,7 +29,7 @@ struct O5KeySetupView: View {
             List {
                 Section {
                     if o5KeypairsNotAvailable {
-                        Text(LocalizedString("We need to briefly connect to the internet to download a certificate in order to pair Omnipod 5 pods. An internet connection won't be required after you complete this one-time step.", comment: "Description when O5 keypairs are not available"))
+                        Text(LocalizedString("When you hit 'Continue,' a certificate will be downloaded and stored in order to pair with Omnipod 5 Pods.", comment: "Description when O5 keypairs are not available"))
                         .padding(.vertical, 4)
                     } else {
                         HStack(spacing: 12) {

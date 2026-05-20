@@ -24495,9 +24495,6 @@
         }
       }
     },
-    "Have an '.o5keypair' file to use instead?" : {
-      "comment" : "Link to import an o5keypair file"
-    },
     "hour" : {
       "comment" : "Unit for singular hour in pod life remaining",
       "extractionState" : "manual",
@@ -69084,7 +69081,7 @@
         }
       }
     },
-    "We need to briefly connect to the internet to download a certificate in order to pair Omnipod 5 pods. An internet connection won't be required after you complete this one-time step." : {
+    "When you hit 'Continue,' a certificate will be downloaded and stored in order to pair with Omnipod 5 Pods." : {
       "comment" : "Description when O5 keypairs are not available"
     },
     "Yes" : {
