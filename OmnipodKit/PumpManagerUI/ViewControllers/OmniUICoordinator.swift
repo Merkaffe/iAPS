@@ -516,6 +516,16 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             if self.podType == unknownOmnipodType {
                 return .selectPodType // need to first select a pod type
             }
+            // O5 selected, no cert, no active pod: route through pod-type
+            // reselection so the user can either switch pod type or proceed
+            // into the O5 cert download (via resolveRoutingStep's
+            // .podTypeSelected → .o5KeySetup interception) instead of
+            // landing in Settings where Pair Pod would fail.
+            if self.podType == omnipod5Type
+                && O5CertificateStore.isEmpty
+                && pumpManager.podCommState == .noPod {
+                return .selectPodType
+            }
             return .settings
         }
     }
