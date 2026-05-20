@@ -67,13 +67,6 @@ struct PodCertificatesView: View {
                 }
             }
 
-            if let importError {
-                Section {
-                    Text(importError)
-                        .foregroundColor(.red)
-                        .font(.subheadline)
-                }
-            }
         }
         .insetGroupedListStyle()
         .navigationTitle(title)
@@ -91,6 +84,20 @@ struct PodCertificatesView: View {
         }
         .fileImporter(isPresented: $showingFileImporter, allowedContentTypes: [.json, .item]) { result in
             handleImport(result)
+        }
+        .alert(
+            LocalizedString("Import Failed", comment: "Title of o5keypair import-failed alert"),
+            isPresented: Binding(
+                get: { importError != nil },
+                set: { if !$0 { importError = nil } }
+            ),
+            presenting: importError
+        ) { _ in
+            Button(LocalizedString("OK", comment: "OK button for import-failed alert")) {
+                importError = nil
+            }
+        } message: { message in
+            Text(message)
         }
         .task { reload() }
     }

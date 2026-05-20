@@ -24996,6 +24996,9 @@
     "Import .o5keypair file" : {
       "comment" : "Toolbar action to import an o5keypair file"
     },
+    "Import Failed" : {
+      "comment" : "Title of o5keypair import-failed alert"
+    },
     "Imported (.o5keypair file)" : {
       "comment" : "O5 cert source: imported"
     },
