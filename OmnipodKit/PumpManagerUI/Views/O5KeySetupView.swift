@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import UniformTypeIdentifiers
 import LoopKit
 import LoopKitUI
 
@@ -16,8 +15,6 @@ struct O5KeySetupView: View {
 
     @State private var o5KeypairsNotAvailable: Bool
     @State private var showingFetchSheet = false
-    @State private var showingFileImporter = false
-    @State private var fileImportError: String?
     private var didContinue: () -> Void
     private var didCancel: () -> Void
 
@@ -44,20 +41,6 @@ struct O5KeySetupView: View {
                         .padding(.vertical, 4)
                     }
                 }
-
-                if o5KeypairsNotAvailable {
-                    Section {
-                        Button(action: { showingFileImporter = true }) {
-                            Text(LocalizedString("Have an '.o5keypair' file to use instead?", comment: "Link to import an o5keypair file"))
-                        }
-
-                        if let fileImportError = fileImportError {
-                            Text(fileImportError)
-                                .foregroundColor(.red)
-                                .font(.subheadline)
-                        }
-                    }
-                }
             }
             .insetGroupedListStyle()
 
@@ -78,27 +61,6 @@ struct O5KeySetupView: View {
                 Button(LocalizedString("Cancel", comment: "Cancel button title"), action: {
                     didCancel()
                 })
-            }
-        }
-        .fileImporter(isPresented: $showingFileImporter, allowedContentTypes: [.json, .item]) { result in
-            fileImportError = nil
-            switch result {
-            case .success(let url):
-                let accessed = url.startAccessingSecurityScopedResource()
-                defer { if accessed { url.stopAccessingSecurityScopedResource() } }
-
-                guard let data = try? Data(contentsOf: url),
-                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                      let registrationData = O5RegistrationData.fromJSON(json)
-                else {
-                    fileImportError = LocalizedString("The selected file is not a valid .o5keypair file.", comment: "Error when o5keypair file import fails")
-                    return
-                }
-                O5RegistrationData.install(registrationData, source: .imported)
-                try? O5CertificateKeychain.save(registrationData, source: .imported)
-                o5KeypairsNotAvailable = false
-            case .failure(let error):
-                fileImportError = error.localizedDescription
             }
         }
         .sheet(isPresented: $showingFetchSheet) {
