@@ -206,6 +206,10 @@ class PairPodViewModel: ObservableObject, Identifiable {
                     if self.podPairer.podCommState == .noPod {
                         let pairAndPrimeError = OmniPairingError.pumpManagerError(error)
                         self.state = .error(pairAndPrimeError)
+                    } else if case .fault = self.podPairer.podCommState {
+                        // Some pod fault or failure has occurred
+                        let pairAndPrimeError = OmniPairingError.pumpManagerError(error)
+                        self.state = .error(pairAndPrimeError)
                     } else if self.autoRetryAttempted || disableAutoPairRetry {
                         self.autoRetryAttempted = false // allow for an auto retry on the next user attempt
                         let pairAndPrimeError = OmniPairingError.pumpManagerError(error)
@@ -239,7 +243,11 @@ class PairPodViewModel: ObservableObject, Identifiable {
         switch state {
         case .error(let error):
             if !error.recoverable {
-                self.didRequestDeactivation?()
+                if podIsActivated {
+                    self.didRequestDeactivation?()
+                } else {
+                    self.didCancelSetup?()
+                }
             } else {
                 // Retry
                 pairAndPrime()
@@ -295,8 +303,8 @@ enum OmniPairingError : LocalizedError {
             case .connection:
                 return true
             case .deviceState:
-                return true
-            default:
+                return false // returned for pairing pod faults/failures
+            case .uncertainDelivery:
                 return true
             }
         }
