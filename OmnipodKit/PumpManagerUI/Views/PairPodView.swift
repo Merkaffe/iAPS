@@ -65,7 +65,9 @@ struct PairPodView: View {
                         .padding(.bottom, 8)
                     }
                 }
-                if self.viewModel.error != nil && self.viewModel.podIsActivated {
+
+                if self.viewModel.error?.recoverable == true && self.viewModel.podIsActivated {
+                    // A recoverable error with an active pod state, offer deactivate option
                     Button(action: {
                         self.viewModel.didRequestDeactivation?()
                     }) {
@@ -75,8 +77,9 @@ struct PairPodView: View {
                     }
                     .disabled(self.viewModel.state.isProcessing)
                 }
-                
-                if (self.viewModel.error == nil || self.viewModel.error?.recoverable == true) {
+
+                if (self.viewModel.error?.recoverable != false) {
+                    // No errors or a recoverable error
                     Button(action: {
                         self.viewModel.continueButtonTapped()
                     }) {
@@ -106,7 +109,8 @@ struct PairPodView: View {
                         self.viewModel.continueButtonTapped()
                     }) {
                         Text("Abort")
-                            .actionButtonStyle(.primary)
+                            .actionButtonStyle(self.viewModel.podIsActivated ?
+                                .destructive : .primary)
                     }
                     .disabled(false)
                     .zIndex(1)
