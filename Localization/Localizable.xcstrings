@@ -11371,6 +11371,9 @@
         }
       }
     },
+    "Certificate Details" : {
+      "comment" : "Text for certificate navigation link in OmniSettingsView"
+    },
     "Change Pod now. Insulin delivery will stop 8 hours after the Pod has expired or when no more insulin remains." : {
       "comment" : "The action string on pod status page when pod expired",
       "extractionState" : "manual",
@@ -43366,7 +43369,7 @@
       }
     },
     "Pod Certificate" : {
-      "comment" : "Text for pod certificate navigation link in OmniSettingsView\nnavigation title for pod certificate view"
+      "comment" : "navigation title for pod certificate view"
     },
     "Pod deactivated successfully. Continue." : {
       "comment" : "Deactivate pod action button accessibility label when deactivation complete",

@@ -585,7 +585,7 @@ struct OmniSettingsView: View  {
             if self.viewModel.podType.isO5 {
                 Section() {
                     NavigationLink(destination: PodCertificatesView(hasActivePod: !viewModel.noPod)) {
-                        FrameworkLocalText("Pod Certificate", comment: "Text for pod certificate navigation link in OmniSettingsView")
+                        FrameworkLocalText("Certificate Details", comment: "Text for certificate navigation link in OmniSettingsView")
                             .foregroundColor(Color.primary)
                     }
                 }
