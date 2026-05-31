@@ -44,6 +44,8 @@ class OmniSettingsViewModel: ObservableObject {
 
     @Published var silencePodPreference: SilencePodPreference
 
+    @Published var podKeepAlivePreference: PodKeepAlive
+
     @Published var silencePodEnd: Date?
 
     @Published var hasConnection: Bool // replaces both rileylinkConnected and isConnected
@@ -261,6 +263,7 @@ class OmniSettingsViewModel: ObservableObject {
         podCommState = pumpManager.podCommState
         beepPreference = pumpManager.beepPreference
         silencePodPreference = pumpManager.silencePod ? .enabled : .disabled
+        podKeepAlivePreference = Storage.shared.podKeepAlive.value
         silencePodEnd = pumpManager.silencePodEnd
         hasConnection = pumpManager.hasConnection
         insulinType = pumpManager.insulinType
@@ -418,6 +421,10 @@ class OmniSettingsViewModel: ObservableObject {
         }
     }
 
+    func setPodKeepAlive(_ podKeepAlivePreference: PodKeepAlive) {
+        self.podKeepAlivePreference = podKeepAlivePreference
+    }
+
     func didChangeInsulinType(_ newType: InsulinType?) {
         self.pumpManager.insulinType = newType
     }
@@ -455,7 +462,9 @@ class OmniSettingsViewModel: ObservableObject {
             case .occluded, .occlusionCheckStartup1, .occlusionCheckStartup2, .occlusionCheckTimeouts1, .occlusionCheckTimeouts2, .occlusionCheckTimeouts3, .occlusionCheckPulseIssue, .occlusionCheckBolusProblem, .occlusionCheckAboveThreshold, .occlusionCheckValueTooHigh:
                 return LocalizedString("Pod Occlusion", comment: "Error message for reservoir view when pod occlusion checks failed")
             default:
-                return String(format: LocalizedString("Pod Fault %1$03d", comment: "Error message for reservoir view during general pod fault: (1: fault code value)"), status.faultEventCode.rawValue)
+                return String(format: LocalizedString("Pod Fault %1$@",
+                                comment: "Error message for reservoir view during general pod fault: (1: fault code value)"),
+                                String(format: "%03u", status.faultEventCode.rawValue))
             }
         case .active:
             if isPodDataStale {
