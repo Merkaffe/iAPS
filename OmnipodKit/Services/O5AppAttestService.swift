@@ -11,7 +11,7 @@ import DeviceCheck
 import Network
 
 let o5KeyManagerBaseURL = "https://api.osaid-keymanager.org"
-private let omnipodkitApiVersion = "1.0.0"
+private let omnipodkitApiVersion = "1.1"
 
 struct O5AuthError: Error {
     let message: String
@@ -72,19 +72,37 @@ class O5AppAttestService {
         return URLSession(configuration: config)
     }()
 
+    /// Bearer token used to authenticate keymanager calls. Set mid-flow only when the
+    /// status endpoint reports `available:false` + `authSupported:true`; once set, it is
+    /// attached to every subsequent request via `performRequest`. Held in memory only —
+    /// never persisted.
+    private var authToken: String?
+
     /// Runs the full App Attest + keypair fetch flow.
     /// Calls `progress` on the main queue before starting each phase, then `completion`
     /// on the main queue with the final result.
+    ///
+    /// `requestToken` is invoked (on the main queue) only when the server reports that
+    /// access is gated behind a setup token. The UI should prompt the user and call the
+    /// supplied callback with the entered token, or `nil` to cancel.
     func fetchKeypair(
         progress: @escaping (O5KeyFetchProgress) -> Void = { _ in },
+        requestToken: @escaping (@escaping (String?) -> Void) -> Void = { $0(nil) },
         completion: @escaping (Result<O5RegistrationData, O5AuthError>) -> Void
     ) {
         let report: (O5KeyFetchProgress) -> Void = { step in
             DispatchQueue.main.async { progress(step) }
         }
+        let askToken: () async -> String? = {
+            await withCheckedContinuation { continuation in
+                DispatchQueue.main.async {
+                    requestToken { token in continuation.resume(returning: token) }
+                }
+            }
+        }
         Task {
             do {
-                let result = try await performFetchFlow(progress: report)
+                let result = try await performFetchFlow(progress: report, requestToken: askToken)
                 DispatchQueue.main.async { completion(.success(result)) }
             } catch let error as O5AuthError {
                 DispatchQueue.main.async { completion(.failure(error)) }
@@ -98,12 +116,27 @@ class O5AppAttestService {
 
     // MARK: - Async flow
 
-    private func performFetchFlow(progress: (O5KeyFetchProgress) -> Void) async throws -> O5RegistrationData {
+    private func performFetchFlow(
+        progress: (O5KeyFetchProgress) -> Void,
+        requestToken: () async -> String?
+    ) async throws -> O5RegistrationData {
         progress(.checkingInternetConnection)
         try await checkInternetConnection()
 
         progress(.checkingKeymanagerServiceStatus)
-        try await checkServerStatus()
+        switch try await checkServerStatus() {
+        case .available:
+            break
+        case .unavailable(let message, let statusCode):
+            throw O5AuthError(message: message, httpStatusCode: statusCode)
+        case .authRequired:
+            guard let token = await requestToken() else {
+                throw O5AuthError(message: LocalizedString(
+                    "Setup cancelled.",
+                    comment: "O5 fetch: user dismissed the setup token prompt"))
+            }
+            authToken = token
+        }
 
         progress(.checkingDeviceSupport)
         let attestService = DCAppAttestService.shared
@@ -175,13 +208,24 @@ class O5AppAttestService {
         }
     }
 
-    /// Calls the OSAID Keymanager service-status endpoint. If the server
-    /// reports `available: false`, the user-facing `message` is surfaced
-    /// verbatim and the flow aborts. Non-2xx HTTP and transport failures
-    /// flow through the existing `performRequest` → `authError` path.
-    /// Unparseable 2xx responses are treated as failures (fail-closed),
-    /// not as implicit availability.
-    private func checkServerStatus() async throws {
+    /// Outcome of the service-status check.
+    private enum ServerStatus {
+        /// `available: true` — proceed with the normal (unauthenticated) flow.
+        case available
+        /// `available: false` + `authSupported: true` — access is gated behind a
+        /// setup token; prompt the user and authenticate subsequent calls.
+        case authRequired
+        /// `available: false` (auth not supported) — surface the server message and abort.
+        case unavailable(message: String, statusCode: Int?)
+    }
+
+    /// Calls the OSAID Keymanager service-status endpoint and classifies the response.
+    /// When the server reports `available: false`, an `authSupported: true` flag diverts
+    /// the flow into token-gated authentication; otherwise the user-facing `message` is
+    /// surfaced verbatim and the flow aborts. Non-2xx HTTP and transport failures flow
+    /// through the existing `performRequest` → `authError` path. Unparseable 2xx responses
+    /// are treated as failures (fail-closed), not as implicit availability.
+    private func checkServerStatus() async throws -> ServerStatus {
         var request = URLRequest(url: URL(string: "\(o5KeyManagerBaseURL)/api/status/ios")!)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -212,7 +256,13 @@ class O5AppAttestService {
                 httpStatusCode: response.statusCode)
         }
 
-        if available { return }
+        if available { return .available }
+
+        // Gated availability: the server is reachable but withholding public access,
+        // and explicitly advertises token-based auth. Anything else fails closed.
+        if json["authSupported"] as? Bool == true {
+            return .authRequired
+        }
 
         let trimmed = (json["message"] as? String)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -220,7 +270,7 @@ class O5AppAttestService {
             "The key-management server is temporarily unavailable.",
             comment: "O5 fetch: keymanager-reported unavailable, no message")
         let displayed = (trimmed?.isEmpty == false) ? trimmed! : unavailable
-        throw O5AuthError(message: displayed, httpStatusCode: response.statusCode)
+        return .unavailable(message: displayed, statusCode: response.statusCode)
     }
 
     // MARK: - App Attest
@@ -376,6 +426,11 @@ class O5AppAttestService {
     // MARK: - Helpers
 
     private func performRequest(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        var request = request
+        if let authToken = authToken {
+            request.setValue("Bearer \(authToken)", forHTTPHeaderField: "Authorization")
+        }
+
         let (data, response): (Data, URLResponse)
         do {
             (data, response) = try await session.data(for: request)

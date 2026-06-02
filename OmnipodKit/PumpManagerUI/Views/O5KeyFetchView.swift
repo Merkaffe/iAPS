@@ -15,6 +15,12 @@ struct O5KeyFetchView: View {
     @State private var errorDetail: String?
     @State private var currentStep: O5KeyFetchProgress?
 
+    // Token prompt: shown only when the server reports access is gated behind a setup
+    // token. The token is held in memory for the duration of the fetch and never persisted.
+    @State private var showTokenPrompt = false
+    @State private var token = ""
+    @State private var tokenContinuation: ((String?) -> Void)?
+
     let onKeypairReceived: (O5RegistrationData) -> Void
     let onCancel: () -> Void
 
@@ -76,6 +82,53 @@ struct O5KeyFetchView: View {
         .onAppear {
             performFetch()
         }
+        .sheet(isPresented: $showTokenPrompt) {
+            tokenPromptView
+        }
+    }
+
+    private var tokenPromptView: some View {
+        NavigationView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text(LocalizedString("Enter the setup token for Omnipod 5 testing",
+                                     comment: "O5 token prompt explanation"))
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+
+                SecureField(LocalizedString("Setup token", comment: "O5 token field placeholder"),
+                            text: $token)
+                    .textContentType(.password)
+                    .disableAutocorrection(true)
+                    .autocapitalization(.none)
+                    .textFieldStyle(.roundedBorder)
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle(LocalizedString("Setup Token", comment: "O5 token prompt title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(LocalizedString("Cancel", comment: "O5 token prompt cancel button")) {
+                        finishTokenPrompt(with: nil)
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(LocalizedString("Continue", comment: "O5 token prompt continue button")) {
+                        finishTokenPrompt(with: token)
+                    }
+                    .disabled(token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+        .interactiveDismissDisabled()
+    }
+
+    private func finishTokenPrompt(with value: String?) {
+        showTokenPrompt = false
+        let continuation = tokenContinuation
+        tokenContinuation = nil
+        continuation?(value)
     }
 
     private var progressFraction: Double {
@@ -91,6 +144,11 @@ struct O5KeyFetchView: View {
         O5AppAttestService().fetchKeypair(
             progress: { step in
                 self.currentStep = step
+            },
+            requestToken: { provide in
+                self.token = ""
+                self.tokenContinuation = provide
+                self.showTokenPrompt = true
             },
             completion: { result in
                 switch result {
