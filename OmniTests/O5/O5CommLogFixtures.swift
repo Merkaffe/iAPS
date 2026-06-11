@@ -63,6 +63,15 @@ enum O5CommLogFixtures {
         return data
     }()
 
+    // MARK: - VersionResponse
+
+    static let assignVersionResponse = hex("011509000306000205020e986131000818a305a741afa203b8")
+    static let assignVersionResponseAddress: UInt32 = 0xA741AFA2
+    static let setupVersionResponse = hex("011b13881008340a5009000306000205030e986131000818a3002a1c6e02b5")
+    static let capturedLot: UInt32 = 0x0E986131
+    static let capturedTid: UInt32 = 0x000818A3
+    static let capturedPodAddress: UInt32 = 0x002A1C6E
+
     // MARK: - BolusExtraCommand 0x12
 
     static let oneUnitBolusExtra = hex("17120000c800030d400000000000000100c80000")
