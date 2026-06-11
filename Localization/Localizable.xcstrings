@@ -6807,6 +6807,9 @@
         }
       }
     },
+    "A new certificate will be used for the next Omnipod 5 Pod pairing." : {
+      "comment" : "Confirmation message when a new certificate will be used"
+    },
     "Abort" : {
       "comment" : "The text for an \"Abort\" button.",
       "extractionState" : "manual",
@@ -12158,7 +12161,7 @@
       }
     },
     "Certificate Details" : {
-      "comment" : "Text for certificate navigation link in OmniSettingsView"
+      "comment" : "Text for Certificate Details row and page\nText for certificate navigation link in OmniSettingsView"
     },
     "Change Pod now. Insulin delivery will stop 8 hours after the Pod has expired or when no more insulin remains." : {
       "comment" : "The action string on pod status page when pod expired",
@@ -16057,9 +16060,6 @@
         }
       }
     },
-    "Could not connect to the Internet to fetch an Omnipod 5 Pod Certificate." : {
-      "comment" : "O5 fetch failure: offline at pre-flight, primary line"
-    },
     "Critical Alerts" : {
       "comment" : "Title for critical alerts description",
       "extractionState" : "manual",
@@ -19461,6 +19461,9 @@
           }
         }
       }
+    },
+    "Downloaded (in O5 Setup)" : {
+      "comment" : "O5 cert source: downloaded"
     },
     "Downloading certificate…" : {
       "comment" : "O5 fetch progress: download"
@@ -24814,9 +24817,6 @@
         }
       }
     },
-    "Fetched (downloaded from API)" : {
-      "comment" : "O5 cert source: fetched"
-    },
     "Fill a new %1$@ pod with U-100 Insulin (leave %2$@ needle cap on)." : {
       "comment" : "Label text for step 1 of non-Eros pair pod instructions (1: pod type name) (2: pod tab color",
       "extractionState" : "manual",
@@ -26929,13 +26929,13 @@
         }
       }
     },
-    "Import .o5keypair file" : {
-      "comment" : "Toolbar action to import an o5keypair file"
-    },
     "Import Failed" : {
       "comment" : "Title of o5keypair import-failed alert"
     },
-    "Imported (.o5keypair file)" : {
+    "Import o5keypair file" : {
+      "comment" : "Toolbar action to import an o5keypair file"
+    },
+    "Imported (o5keypair file)" : {
       "comment" : "O5 cert source: imported"
     },
     "Incorrect Response" : {
@@ -45903,9 +45903,6 @@
         }
       }
     },
-    "Pod Certificate" : {
-      "comment" : "navigation title for pod certificate view"
-    },
     "Pod deactivated successfully. Continue." : {
       "comment" : "Deactivate pod action button accessibility label when deactivation complete",
       "extractionState" : "manual",
@@ -57420,9 +57417,6 @@
     "Retrieve an Omnipod 5 Pod Certificate to continue." : {
       "comment" : "Recovery suggestion with missing certificate"
     },
-    "Retrieve Pod Certificate" : {
-      "comment" : "Button text to navigate to O5 certificate download from a pair pod failure"
-    },
     "Retrieving Pump Manager Details..." : {
       "comment" : "button title when retrieving pump manager details",
       "extractionState" : "manual",
@@ -65058,6 +65052,9 @@
         }
       }
     },
+    "Tap ‘Continue’ to download a certificate to be stored in order to pair with Omnipod 5 Pods." : {
+      "comment" : "Description when O5 keypairs are not available"
+    },
     "Temp Basal" : {
       "comment" : "Pump Event title for UnfinalizedDose with doseType of .tempBasal",
       "extractionState" : "manual",
@@ -66516,6 +66513,9 @@
         }
       }
     },
+    "The Internet connection appears to be offline." : {
+      "comment" : "O5 fetch failure: offline at pre-flight, primary line"
+    },
     "The key-management server is temporarily unavailable: received unexpected response." : {
       "comment" : "O5 fetch: malformed status response, primary line"
     },
@@ -66684,7 +66684,7 @@
         }
       }
     },
-    "The selected file is not a valid .o5keypair file." : {
+    "The selected file is not a valid o5keypair file." : {
       "comment" : "Error when o5keypair file import fails"
     },
     "The time on your pump is different from the current time. Do you want to update the time on your pump to the current time?" : {
@@ -67820,6 +67820,9 @@
           }
         }
       }
+    },
+    "This certificate will be permanently deleted." : {
+      "comment" : "Confirmation message when forgetting a saved O5 certificate"
     },
     "This PumpManager has not been configured with a maximum basal rate because it was added before manual temp basal was a feature. Please set a new maximum basal rate." : {
       "comment" : "Alert format string for missing temp basal configuration.",
@@ -73975,9 +73978,6 @@
         }
       }
     },
-    "When you hit 'Continue,' a certificate will be downloaded and stored in order to pair with Omnipod 5 Pods." : {
-      "comment" : "Description when O5 keypairs are not available"
-    },
     "Yes" : {
       "comment" : "Button label for user to answer cannula was properly inserted",
       "extractionState" : "manual",
@@ -75436,8 +75436,8 @@
         }
       }
     },
-    "You will be unable to pair with an Omnipod 5 Pod until you reconnect to the Internet to download a new certificate." : {
-      "comment" : "Confirmation message when forgetting a saved O5 certificate"
+    "You will be unable to pair with a new Omnipod 5 Pod until you reconnect to the Internet to download a new certificate." : {
+      "comment" : "Confirmation message when a new certificate will need to be downloaded"
     },
     "You will now begin the process of configuring your reminders, selecting your insulin type, selecting the Omnipod pod type you will be using, filling your Pod with insulin, pairing to your device and placing it on your body." : {
       "comment" : "bodyText for PodSetupView",
@@ -75601,7 +75601,7 @@
         }
       }
     },
-    "Your current Omnipod 5 Pod session will not be affected, but you will be unable to pair with a new Omnipod 5 Pod until you reconnect to the Internet to download a new certificate." : {
+    "Your current Omnipod 5 Pod session will not be affected. " : {
       "comment" : "Confirmation message when forgetting a saved O5 certificate while a pod session is active"
     },
     "Your insulin delivery will not be automatically adjusted until the temporary basal rate finishes or is canceled." : {

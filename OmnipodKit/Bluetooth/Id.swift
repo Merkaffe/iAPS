@@ -78,18 +78,15 @@ func nextIds(podType: PodType, controllerId: UInt32 = 0, podId: UInt32 = 0) -> (
     } else {
         // For O5, the created controllerId must match a value in the O5 CertificateStore
         if controllerId == 0 || !O5CertificateStore.contains(controllerId) {
+            // Select a new controllerId, will be 0 if none currently available
             myControllerId = O5CertificateStore.pickControllerId
             basePodId = myControllerId // so nextPodId will be myControllerId + 1
-            if controllerId != 0 {
-                print("@@@ Switched O5 controller id from \(controllerId) to \(myControllerId)")
-            }
         }
         // else a typical situation to keep the controllerId and rotate the podId
     }
 
     if controllerId == 0 {
         // Return the newly created controllerId with a podId of one more
-        print("@@@ Created new controller id \(myControllerId)")
         return (controllerId: myControllerId, podId: myControllerId + 1)
     }
 
