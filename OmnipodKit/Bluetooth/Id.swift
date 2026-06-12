@@ -71,7 +71,7 @@ func nextIds(podType: PodType, controllerId: UInt32 = 0, podId: UInt32 = 0) -> (
     if podType.isDash {
         if controllerId == 0 {
             // Create a new semi-randomized base DASH controllerId
-            myControllerId = createDashControllerId(podType: podType)
+            myControllerId = createDashControllerId()
             basePodId = myControllerId // so nextPodId will be myControllerId + 1
         }
         // else a typical situation to keep the controllerId and rotate the podId
@@ -115,6 +115,6 @@ fileprivate func nextPodId(lastPodId: UInt32) -> UInt32 {
 /// Creates a base controllerId to be used directly when controlling DASH pods.
 /// The top byte will be set for the given pod type, the bottom 2 bits will be
 /// clear for use with the cycling 3 podIds, while the other 22 bits are random.
-fileprivate func createDashControllerId(podType: PodType) -> UInt32 {
-    return (UInt32(podType.topIdByte) << 24) | ((arc4random() & 0x003FFFFF) << 2)
+fileprivate func createDashControllerId() -> UInt32 {
+    return (UInt32(dashType.topIdByte) << 24) | ((arc4random() & 0x003FFFFF) << 2)
 }
