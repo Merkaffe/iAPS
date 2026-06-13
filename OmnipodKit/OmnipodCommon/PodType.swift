@@ -16,15 +16,15 @@ struct PodType: CustomStringConvertible, Equatable {
 
         case productIdUnknown = 0x0 // can be used before actual pod type is known
 
-        // 1 is unsupported, larger form factor first gen Omnipod using 4 batteries
+        // 1 is unsupported, probably the larger form factor first gen Omnipod using 4 batteries
 
-        case productIdEros = 2 // Omnipod Eros (PM=PI=2.x.y), AKA "Omnipod Classic (gen 3)"
+        case productIdEros = 2 // Omnipod Eros AKA "Omnipod Classic (gen 3)"
 
-        // 3 is unsupported & unknown, perhaps a later gen Eros or an early gen DASH NXP BLE
+        // 3 is unsupported & unknown, maybe an early gen DASH or for other medical use
 
         case productIdDash = 4 // Omnipod DASH, both TWI BOARD (firmware 4.x.y) or NXP BLE (firmware 3.x.y)
 
-        case productIdOmnipod5 = 5 // Still needs to be verified!!!
+        case productIdOmnipod5 = 5 // Omnipod 5, all lot types (PP1, PH1, PR1)
 
     }
 
@@ -150,8 +150,8 @@ struct PodType: CustomStringConvertible, Equatable {
     // The Eros PDM uses 0x1F for the top byte of the 32 bit Id address.
     // The Dash PDM uses the PDM's SN << 2 for the bottom 5 nibbles and some
     // unknown values for the top 3 nibbles of its fixed 32-bit controller Id.
-    // The Omnipod 5 PDM also seems to use the PDM's SN << 2 for the basis
-    // of the its fixed 32-bit controller Id that pod Id's will be derived from.
+    // The Omnipod 5 controller uses its SN << 2 for the basis of its fixed 32-bit,
+    // but this can't be customized since it must match the certificate's value.
     var topIdByte: UInt8 {
         switch podType {
         case .productIdEros:
@@ -159,7 +159,7 @@ struct PodType: CustomStringConvertible, Equatable {
         case .productIdDash:
             return 0x17
         case .productIdOmnipod5:
-            return 0x00 // place holder until we can get created podId working
+            return 0x00 // not actually used; comes from certifcate controllerId
         default:
             return 0x0
         }
@@ -179,8 +179,8 @@ struct PodType: CustomStringConvertible, Equatable {
 }
 
 /* convenience constants */
+let unknownOmnipodType = PodType(podType: .productIdUnknown)
 let erosType = PodType(podType: .productIdEros)
 let dashType = PodType(podType: .productIdDash)
 let omnipod5Type = PodType(podType: .productIdOmnipod5)
-let unknownOmnipodType = PodType(podType: .productIdUnknown)
 
