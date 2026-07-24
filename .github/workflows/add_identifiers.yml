@@ -17,7 +17,13 @@ jobs:
       # Checks-out the repo
       - name: Checkout Repo
         uses: actions/checkout@v5
-      
+
+      - name: Set special variables
+        run: |
+          if [ ! -z ${{ vars.APP_IDENTIFIER }}  ]; then
+            echo "APP_IDENTIFIER=${{ vars.APP_IDENTIFIER }}" >> $GITHUB_ENV
+          fi
+
       # Ensure compatible Bundler version for Fastlane (fastlane requires bundler < 3)
       - name: Install Bundler 2.x
         run: |
