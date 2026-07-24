@@ -100,7 +100,8 @@ platform :ios do
         UI.user_error!(
           "The provisioning profile for #{id} does not include the App Group #{app_group_id}. " \
           "Assign it in the Apple Developer portal (Identifiers -> #{id} -> App Groups -> Configure -> select \"Loop App Group\"), " \
-          "then delete the stale AppStore_#{id}.mobileprovision from your Match-Secrets repo (match reuses the existing profile, so it must be removed to force a fresh one) and re-run '3. Create Certificates' before building again. " \
+          "then run the build again: assigning the App Group invalidates the old profile, so it is normally regenerated automatically. " \
+          "If the build still fails with this error, delete AppStore_#{id}.mobileprovision from your Match-Secrets repo to force a fresh profile, then build again. " \
           "See the \"Add App Group to Bundle Identifiers\" section in fastlane/testflight.md."
         )
       end
