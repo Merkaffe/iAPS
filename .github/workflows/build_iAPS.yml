@@ -92,9 +92,9 @@ jobs:
         run: |
           echo "Available Xcode versions:"
           ls -d /Applications/Xcode*.app
-          XCODE=$(ls -d /Applications/Xcode_27.1*.app | sort -V | tail -1)
+          XCODE=$(ls -d /Applications/Xcode_27*.app | sort -V | tail -1)
           if [ -z "$XCODE" ]; then
-            echo "::error::Xcode 27.1x NOT found on this runner"
+            echo "::error::Xcode 27.x NOT found on this runner"
             exit 1
           fi
           echo "Selecting $XCODE"
